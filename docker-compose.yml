@@ -1,0 +1,96 @@
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: slprd-poc-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: synapse
+      POSTGRES_PASSWORD: synapse
+      POSTGRES_DB: synapse
+      POSTGRES_INITDB_ARGS: "--locale=C --encoding=UTF8"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend
+
+  synapse:
+    image: ghcr.io/element-hq/synapse:v1.148.0
+    container_name: slprd-poc-synapse
+    restart: unless-stopped
+    environment:
+      - SYNAPSE_CONFIG_PATH=/data/cfg/homeserver.yaml
+    depends_on:
+      - postgres
+    volumes:
+      - ./.docker/synapse/tmp:/data:Z
+      - ./.docker/synapse/homeserver.yaml:/data/cfg/homeserver.yaml:Z
+    networks:
+      - backend
+
+  coturn:
+    image: coturn/coturn:4-alpine
+    container_name: slprd-poc-coturn
+    restart: unless-stopped
+    volumes:
+      - ./.docker/coturn/turnserver.conf:/etc/coturn/turnserver.conf
+    ports:
+      - "3478:3478/udp"
+      - "3478:3478/tcp"
+
+  livekit:
+    image: livekit/livekit-server:v1.9.11
+    container_name: slprd-poc-livekit
+    command: --dev --config /etc/livekit.yaml
+    restart: unless-stopped
+    volumes:
+      - ./.docker/livekit/livekit.yaml:/etc/livekit.yaml
+    networks:
+      - backend
+
+  lk-jwt:
+    image: ghcr.io/element-hq/lk-jwt-service:0.4.1
+    container_name: slprd-poc-lk-jwt
+    restart: unless-stopped
+    environment:
+      - LIVEKIT_JWT_PORT=6080
+      - LIVEKIT_URL=wss://matrix-rtc.m.localhost/livekit/sfu
+      - LIVEKIT_KEY=devkey
+      - LIVEKIT_SECRET=secret
+      - LIVEKIT_INSECURE_SKIP_VERIFY_TLS=YES_I_KNOW_WHAT_I_AM_DOING
+      - LIVEKIT_FULL_ACCESS_HOMESERVERS=*
+    networks:
+      - backend
+    depends_on:
+      - synapse
+      - livekit
+
+  nginx:
+    image: nginx:latest
+    container_name: slprd-poc-nginx
+    hostname: synapse.m.localhost
+    restart: unless-stopped
+    volumes:
+      - ./.docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./.docker/nginx/dev_tls_m.localhost.key:/root/ssl/key.pem:ro
+      - ./.docker/nginx/dev_tls_m.localhost.crt:/root/ssl/cert.pem:ro
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8448:8448"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      backend:
+        aliases:
+          - synapse.m.localhost
+          - matrix-rtc.m.localhost
+    depends_on:
+      - synapse
+      - livekit
+      - lk-jwt
+
+volumes:
+  postgres_data:
+
+networks:
+  backend:

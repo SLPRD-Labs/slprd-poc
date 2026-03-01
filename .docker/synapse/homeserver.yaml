@@ -1,0 +1,53 @@
+# Configuration file for Synapse.
+#
+# This is a YAML file: see [1] for a quick introduction. Note in particular
+# that *indentation is important*: all the elements of a list or dictionary
+# should have the same indentation.
+#
+# [1] https://docs.ansible.com/ansible/latest/reference_appendices/YAMLSyntax.html
+#
+# For more information on how to configure Synapse, including a complete accounting of
+# each option, go to docs/usage/configuration/config_documentation.md or
+# https://element-hq.github.io/synapse/latest/usage/configuration/config_documentation.html
+server_name: "synapse.m.localhost"
+public_baseurl: https://synapse.m.localhost/
+
+pid_file: /data/homeserver.pid
+listeners:
+  - port: 8008
+    resources:
+      - compress: false
+        names:
+          - client
+          - federation
+          - openid
+    tls: false
+    type: http
+    x_forwarded: true
+database:
+  name: psycopg2
+  args:
+    user: synapse
+    password: synapse
+    database: synapse
+    host: postgres
+    cp_min: 5
+    cp_max: 10
+log_config: "/data/localhost.log.config"
+media_store_path: /data/media_store
+registration_shared_secret: "oWf@iMwc@cYEK.*Jz.EAPEq83csCJOhQGxFf6QxMBbkS^yWXxT"
+report_stats: false
+macaroon_secret_key: "HpiVX.7hMjg9.U#oI;nX:juq@D4R4HUjH04QVrhUvBoyz7QVm="
+form_secret: "L=e1eL:Q2SECUN6=E5~ZP3GTQA&B08^P^WhQs7oJ.;a-.hvmJW"
+signing_key_path: "/data/localhost.signing.key"
+trusted_key_servers:
+  - server_name: "matrix.org"
+turn_uris:
+  - "turn:localhost:3478?transport=udp"
+  - "turn:localhost:3478?transport=tcp"
+turn_shared_secret: "supersecret"
+turn_user_lifetime: 86400000
+turn_allow_guests: true
+federation_domain_whitelist: []
+
+# vim:ft=yaml
