@@ -1,7 +1,9 @@
 import type { MatrixSession } from "@/contexts/auth-context/auth-context";
 import { MatrixClientContext } from "@/contexts/matrix-client-context/matrix-client-context";
-import type { MatrixClient } from "matrix-js-sdk";
-import { ClientEvent, createClient, SyncState } from "matrix-js-sdk";
+import { clientService } from "@/services/matrix/client";
+import { useQueryClient } from "@tanstack/react-query";
+import type { ClientEventHandlerMap, MatrixClient } from "matrix-js-sdk";
+import { ClientEvent, createClient, RoomEvent, RoomStateEvent, SyncState } from "matrix-js-sdk";
 import type { FC, PropsWithChildren } from "react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -14,9 +16,9 @@ export const MatrixClientContextProvider: FC<Props> = props => {
         () =>
             createClient({
                 baseUrl: props.session.baseUrl,
-                accessToken: props.session.accessToken,
-                deviceId: props.session.deviceId,
                 userId: props.session.userId,
+                deviceId: props.session.deviceId,
+                accessToken: props.session.accessToken,
                 refreshToken: props.session.refreshToken,
                 useLivekitForGroupCalls: true
             }),
@@ -25,38 +27,76 @@ export const MatrixClientContextProvider: FC<Props> = props => {
 
     const [ready, setReady] = useState(false);
 
+    const queryClient = useQueryClient();
+
     useEffect(() => {
-        const listener = (state: SyncState) => {
+        const onClientSync: ClientEventHandlerMap[ClientEvent.Sync] = state => {
             if (state === SyncState.Prepared) {
                 setReady(true);
+
+                client.on(ClientEvent.Room, onClientRoom);
+                client.on(RoomEvent.Name, onClientRoom);
+                client.on(RoomEvent.MyMembership, onRoomMyMembership);
+                client.on(RoomEvent.AccountData, onRoomAccountData);
+                client.on(RoomStateEvent.Events, onRoomStateEvents);
+                client.on(RoomStateEvent.Members, onRoomStateMembers);
+                client.on(ClientEvent.AccountData, onClientAccountData);
             }
         };
 
-        client.once(ClientEvent.Sync, listener);
-
-        void (async () => {
-            console.log("Starting Matrix client...");
-            await client.startClient({
-                clientWellKnownPollPeriod: 60 * 10
-            });
-
-            const clientWellKnown = await client.waitForClientWellKnown();
-
-            /* eslint-disable */
-            const rtcFoci = clientWellKnown?.["org.matrix.msc4143.rtc_foci"];
-            if (rtcFoci && Array.isArray(rtcFoci)) {
-                client.setLivekitServiceURL(
-                    rtcFoci.find(t => t.type === "livekit" && "livekit_service_url" in t)
-                        ?.livekit_service_url
-                );
+        const onClientRoom: ClientEventHandlerMap[ClientEvent.Room] = room => {
+            if (room.isSpaceRoom()) {
+                void queryClient.invalidateQueries({ queryKey: ["spaces"] });
             }
-            /* eslint-enable */
-        })();
+        };
+
+        const onRoomMyMembership: ClientEventHandlerMap[RoomEvent.MyMembership] = room => {
+            if (room.isSpaceRoom()) {
+                void queryClient.invalidateQueries({ queryKey: ["spaces"] });
+            }
+        };
+
+        /* eslint-disable */
+        const onRoomAccountData: ClientEventHandlerMap[RoomEvent.AccountData] = (
+            event,
+            room,
+            prevEvent
+        ) => {};
+
+        const onRoomStateEvents: ClientEventHandlerMap[RoomStateEvent.Events] = (
+            event,
+            state,
+            prevEvent
+        ) => {};
+
+        const onRoomStateMembers: ClientEventHandlerMap[RoomStateEvent.Members] = (
+            event,
+            state,
+            member
+        ) => {};
+
+        const onClientAccountData: ClientEventHandlerMap[ClientEvent.AccountData] = (
+            event,
+            lastEvent
+        ) => {};
+        /* eslint-enable */
+
+        client.once(ClientEvent.Sync, onClientSync);
+
+        void clientService.start(client);
 
         return () => {
-            client.removeListener(ClientEvent.Sync, listener);
+            client.removeListener(ClientEvent.Sync, onClientSync);
+
+            client.removeListener(ClientEvent.Room, onClientRoom);
+            client.removeListener(RoomEvent.Name, onClientRoom);
+            client.removeListener(RoomEvent.MyMembership, onRoomMyMembership);
+            client.removeListener(RoomEvent.AccountData, onRoomAccountData);
+            client.removeListener(RoomStateEvent.Events, onRoomStateEvents);
+            client.removeListener(RoomStateEvent.Members, onRoomStateMembers);
+            client.removeListener(ClientEvent.AccountData, onClientAccountData);
         };
-    }, [client]);
+    }, [client, queryClient]);
 
     return <MatrixClientContext value={{ client, ready }}>{props.children}</MatrixClientContext>;
 };
