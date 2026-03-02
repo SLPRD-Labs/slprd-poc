@@ -22,8 +22,9 @@ services:
     depends_on:
       - postgres
     volumes:
-      - ./.docker/synapse/tmp:/data:Z
-      - ./.docker/synapse/homeserver.yaml:/data/cfg/homeserver.yaml:Z
+      - ./.docker/synapse/tmp:/data
+      - ./.docker/synapse/homeserver.yaml:/data/cfg/homeserver.yaml
+      - ./.docker/synapse/localhost.log.config:/data/localhost.log.config
     networks:
       - backend
 
@@ -32,7 +33,7 @@ services:
     container_name: slprd-poc-coturn
     restart: unless-stopped
     volumes:
-      - ./.docker/coturn/turnserver.conf:/etc/coturn/turnserver.conf:Z
+      - ./.docker/coturn/turnserver.conf:/etc/coturn/turnserver.conf
     ports:
       - "3478:3478/udp"
       - "3478:3478/tcp"
@@ -43,7 +44,7 @@ services:
     command: --dev --config /etc/livekit.yaml
     restart: unless-stopped
     volumes:
-      - ./.docker/livekit/livekit.yaml:/etc/livekit.yaml:Z
+      - ./.docker/livekit/livekit.yaml:/etc/livekit.yaml
     networks:
       - backend
 
@@ -70,9 +71,9 @@ services:
     hostname: synapse.m.localhost
     restart: unless-stopped
     volumes:
-      - ./.docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:Z
-      - ./.docker/nginx/dev_tls_m.localhost.key:/root/ssl/key.pem:Z
-      - ./.docker/nginx/dev_tls_m.localhost.crt:/root/ssl/cert.pem:Z
+      - ./.docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./.docker/nginx/dev_tls_m.localhost.key:/root/ssl/key.pem
+      - ./.docker/nginx/dev_tls_m.localhost.crt:/root/ssl/cert.pem
     ports:
       - "80:80"
       - "443:443"
@@ -91,6 +92,7 @@ services:
 
 volumes:
   postgres_data:
+  synapse_data:
 
 networks:
   backend:
