@@ -1,15 +1,18 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useRoomAvatarUrl } from "@/hooks/use-room-avatar-url";
 import { Link } from "@tanstack/react-router";
 import type { Room } from "matrix-js-sdk";
 import type { FC } from "react";
 
 interface Props {
-    room: Room;
+    space: Room;
 }
 
-export const NavSpace: FC<Props> = ({ room }) => {
+export const NavSpace: FC<Props> = ({ space }) => {
+    const avatarUrl = useRoomAvatarUrl(space);
+
     return (
         <Tooltip>
             <TooltipTrigger
@@ -19,18 +22,20 @@ export const NavSpace: FC<Props> = ({ room }) => {
                             className="p-0"
                             isActive
                             render={
-                                <Link to="/space/$spaceId" params={{ spaceId: room.roomId }}>
+                                <Link to="/space/$spaceId" params={{ spaceId: space.roomId }}>
                                     <Avatar className="rounded-md after:rounded-md">
                                         <AvatarImage
-                                            src="https://github.com/shadcn.png"
-                                            alt="@shadcn"
+                                            src={avatarUrl ?? undefined}
+                                            alt={space.name}
                                             className="rounded-md grayscale"
                                         />
-                                        <AvatarFallback className="rounded-md">
-                                            {room.name.charAt(0).toUpperCase()}
-                                        </AvatarFallback>
+                                        {avatarUrl !== undefined && (
+                                            <AvatarFallback className="rounded-md">
+                                                {space.name.charAt(0).toUpperCase()}
+                                            </AvatarFallback>
+                                        )}
                                     </Avatar>
-                                    <span>{room.name}</span>
+                                    <span>{space.name}</span>
                                 </Link>
                             }
                         />
@@ -38,7 +43,7 @@ export const NavSpace: FC<Props> = ({ room }) => {
                 }
             />
             <TooltipContent side="right" align="center">
-                {room.name}
+                {space.name}
             </TooltipContent>
         </Tooltip>
     );

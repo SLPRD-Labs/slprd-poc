@@ -66,8 +66,8 @@ export const AppSidebar: FC<Props> = props => {
                         <SidebarGroupContent className="px-1.5 md:px-0">
                             <SidebarMenu className="gap-1">
                                 {roomQuery.isSuccess &&
-                                    roomQuery.data.rootSpaces.map(room => (
-                                        <NavSpace key={room.roomId} room={room} />
+                                    roomQuery.data.rootSpaces.map(s => (
+                                        <NavSpace key={s.roomId} space={s} />
                                     ))}
                             </SidebarMenu>
                         </SidebarGroupContent>
