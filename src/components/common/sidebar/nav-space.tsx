@@ -19,7 +19,7 @@ export const NavSpace: FC<Props> = ({ room }) => {
                             className="px-2.5 md:px-2"
                             isActive
                             render={
-                                <Link to="/">
+                                <Link to="/space/$spaceId" params={{ spaceId: room.roomId }}>
                                     <Mail />
                                     <span>{room.name}</span>
                                 </Link>

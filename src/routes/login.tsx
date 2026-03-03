@@ -12,7 +12,7 @@ export const Route = createFileRoute("/login")({
         };
     },
     beforeLoad: ({ context, search }) => {
-        if (context.auth.session !== null) {
+        if (context.authContext.session !== null) {
             // eslint-disable-next-line @typescript-eslint/only-throw-error
             throw redirect({ to: search.redirect });
         }

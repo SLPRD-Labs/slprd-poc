@@ -1,4 +1,4 @@
-import type { MatrixSession } from "@/contexts/auth-context/auth-context";
+import { useAuthContext } from "@/contexts/auth-context/auth-context";
 import { MatrixClientContext } from "@/contexts/matrix-client-context/matrix-client-context";
 import { clientService } from "@/services/matrix/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -14,29 +14,33 @@ import {
 import type { FC, PropsWithChildren } from "react";
 import { useEffect, useMemo, useState } from "react";
 
-interface Props extends PropsWithChildren {
-    session: MatrixSession;
-}
+export const MatrixClientContextProvider: FC<PropsWithChildren> = ({ children }) => {
+    const { session } = useAuthContext();
 
-export const MatrixClientContextProvider: FC<Props> = props => {
-    const client = useMemo<MatrixClient>(
-        () =>
-            createClient({
-                baseUrl: props.session.baseUrl,
-                userId: props.session.userId,
-                deviceId: props.session.deviceId,
-                accessToken: props.session.accessToken,
-                refreshToken: props.session.refreshToken,
-                useLivekitForGroupCalls: true
-            }),
-        [props.session]
-    );
+    const client = useMemo<MatrixClient>(() => {
+        if (session == null) {
+            return createClient({ baseUrl: import.meta.env.VITE_DEFAULT_HOMESERVER_BASE_URL });
+        }
+
+        return createClient({
+            baseUrl: session.baseUrl,
+            userId: session.userId,
+            deviceId: session.deviceId,
+            accessToken: session.accessToken,
+            refreshToken: session.refreshToken,
+            useLivekitForGroupCalls: true
+        });
+    }, [session]);
 
     const [ready, setReady] = useState(false);
 
     const queryClient = useQueryClient();
 
     useEffect(() => {
+        if (session === null) {
+            return;
+        }
+
         const onClientSync: ClientEventHandlerMap[ClientEvent.Sync] = state => {
             if (state === SyncState.Prepared) {
                 setReady(true);
@@ -113,8 +117,10 @@ export const MatrixClientContextProvider: FC<Props> = props => {
             client.removeListener(RoomStateEvent.Events, onRoomStateEvents);
             client.removeListener(RoomStateEvent.Members, onRoomStateMembers);
             client.removeListener(ClientEvent.AccountData, onClientAccountData);
-        };
-    }, [client, queryClient]);
 
-    return <MatrixClientContext value={{ client, ready }}>{props.children}</MatrixClientContext>;
+            setReady(false);
+        };
+    }, [session, client, queryClient]);
+
+    return <MatrixClientContext value={{ client, ready }}>{children}</MatrixClientContext>;
 };
