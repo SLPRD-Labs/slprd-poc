@@ -16,6 +16,9 @@ if (!rootElement) {
 
 const root = createRoot(rootElement);
 
+const t
+	= "";
+
 root.render(
     <StrictMode>
         <AuthContextProvider>
