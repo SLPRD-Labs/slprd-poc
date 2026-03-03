@@ -11,4 +11,4 @@ npm run dev
 ```
 
 > Don't forget to trust the certificate of the Synapse and LiveKit server in your browser, otherwise the client won't be able to connect to it.  
-  You can do this by going to `https://synapse.m.localhost` and `https://matrix-rtc.m.localhost`, and accepting the warning.
+> You can do this by going to `https://synapse.m.localhost` and `https://matrix-rtc.m.localhost`, and accepting the warning.
