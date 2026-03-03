@@ -27,6 +27,7 @@ export const AppSidebar: FC<Props> = props => {
     const roomQuery = useQuery({
         queryKey: ["spaces", "root", "invited"],
         queryFn: () => spaceService.getRootAndInvitedSpaces(client),
+        staleTime: Infinity,
         enabled: ready
     });
 

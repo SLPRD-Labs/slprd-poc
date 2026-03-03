@@ -3,7 +3,14 @@ import { MatrixClientContext } from "@/contexts/matrix-client-context/matrix-cli
 import { clientService } from "@/services/matrix/client";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ClientEventHandlerMap, MatrixClient } from "matrix-js-sdk";
-import { ClientEvent, createClient, RoomEvent, RoomStateEvent, SyncState } from "matrix-js-sdk";
+import {
+    ClientEvent,
+    createClient,
+    EventTimeline,
+    RoomEvent,
+    RoomStateEvent,
+    SyncState
+} from "matrix-js-sdk";
 import type { FC, PropsWithChildren } from "react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -45,7 +52,13 @@ export const MatrixClientContextProvider: FC<Props> = props => {
         };
 
         const onClientRoom: ClientEventHandlerMap[ClientEvent.Room] = room => {
-            if (room.isSpaceRoom()) {
+            const nameEvents =
+                room
+                    .getLiveTimeline()
+                    .getState(EventTimeline.BACKWARDS)
+                    ?.getStateEvents(RoomEvent.Name) ?? [];
+
+            if (room.isSpaceRoom() && nameEvents.length > 0) {
                 void queryClient.invalidateQueries({ queryKey: ["spaces"] });
             }
         };
@@ -56,30 +69,35 @@ export const MatrixClientContextProvider: FC<Props> = props => {
             }
         };
 
-        /* eslint-disable */
-        const onRoomAccountData: ClientEventHandlerMap[RoomEvent.AccountData] = (
-            event,
-            room,
-            prevEvent
-        ) => {};
+        const onRoomAccountData: ClientEventHandlerMap[RoomEvent.AccountData] = (_, room) => {
+            if (room.isSpaceRoom()) {
+                void queryClient.invalidateQueries({ queryKey: ["spaces"] });
+            }
+        };
 
-        const onRoomStateEvents: ClientEventHandlerMap[RoomStateEvent.Events] = (
-            event,
-            state,
-            prevEvent
-        ) => {};
+        const onRoomStateEvents: ClientEventHandlerMap[RoomStateEvent.Events] = (_, state) => {
+            const room = client.getRoom(state.roomId);
 
-        const onRoomStateMembers: ClientEventHandlerMap[RoomStateEvent.Members] = (
-            event,
-            state,
-            member
-        ) => {};
+            if (room?.isSpaceRoom()) {
+                void queryClient.invalidateQueries({ queryKey: ["spaces"] });
+            }
+        };
 
-        const onClientAccountData: ClientEventHandlerMap[ClientEvent.AccountData] = (
-            event,
-            lastEvent
-        ) => {};
-        /* eslint-enable */
+        const onRoomStateMembers: ClientEventHandlerMap[RoomStateEvent.Members] = (_, state) => {
+            const room = client.getRoom(state.roomId);
+
+            if (room?.isSpaceRoom()) {
+                void queryClient.invalidateQueries({ queryKey: ["spaces"] });
+            }
+        };
+
+        const onClientAccountData: ClientEventHandlerMap[ClientEvent.AccountData] = event => {
+            const room = client.getRoom(event.getRoomId());
+
+            if (room?.isSpaceRoom()) {
+                void queryClient.invalidateQueries({ queryKey: ["spaces"] });
+            }
+        };
 
         client.once(ClientEvent.Sync, onClientSync);
 

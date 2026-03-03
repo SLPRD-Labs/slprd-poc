@@ -1,8 +1,8 @@
 import type { MatrixSession } from "@/contexts/auth-context/auth-context";
 import { AuthContext } from "@/contexts/auth-context/auth-context";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 import { createClient } from "matrix-js-sdk";
 import type { FC, PropsWithChildren } from "react";
-import { useState } from "react";
 
 export interface LoginOpts {
     baseUrl: string;
@@ -10,14 +10,8 @@ export interface LoginOpts {
     password: string;
 }
 
-const rawSession = localStorage.getItem("session");
-let storedMatrixSession: MatrixSession | null = null;
-if (rawSession !== null) {
-    storedMatrixSession = JSON.parse(rawSession) as MatrixSession;
-}
-
 export const AuthContextProvider: FC<PropsWithChildren> = ({ children }) => {
-    const [session, setSession] = useState<MatrixSession | null>(storedMatrixSession);
+    const [session, setSession] = useLocalStorage<MatrixSession | null>("session", null);
 
     const login = async (opts: LoginOpts): Promise<void> => {
         const authClient = createClient({ baseUrl: opts.baseUrl });
@@ -39,12 +33,10 @@ export const AuthContextProvider: FC<PropsWithChildren> = ({ children }) => {
             refreshToken: loginResponse.refresh_token
         };
 
-        localStorage.setItem("session", JSON.stringify(matrixSession));
         setSession(matrixSession);
     };
 
     const logout = (): void => {
-        localStorage.removeItem("session");
         setSession(null);
     };
 

@@ -10,10 +10,6 @@ interface Props {
 }
 
 export const NavSpace: FC<Props> = ({ room }) => {
-    "use no memo";
-
-    console.log(room.name);
-
     return (
         <Tooltip>
             <TooltipTrigger
