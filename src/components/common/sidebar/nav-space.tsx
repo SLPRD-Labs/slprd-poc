@@ -1,7 +1,7 @@
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Link } from "@tanstack/react-router";
-import { Mail } from "lucide-react";
 import type { Room } from "matrix-js-sdk";
 import type { FC } from "react";
 
@@ -16,11 +16,20 @@ export const NavSpace: FC<Props> = ({ room }) => {
                 render={
                     <SidebarMenuItem>
                         <SidebarMenuButton
-                            className="px-2.5 md:px-2"
+                            className="p-0"
                             isActive
                             render={
                                 <Link to="/space/$spaceId" params={{ spaceId: room.roomId }}>
-                                    <Mail />
+                                    <Avatar className="rounded-md after:rounded-md">
+                                        <AvatarImage
+                                            src="https://github.com/shadcn.png"
+                                            alt="@shadcn"
+                                            className="rounded-md grayscale"
+                                        />
+                                        <AvatarFallback className="rounded-md">
+                                            {room.name.charAt(0).toUpperCase()}
+                                        </AvatarFallback>
+                                    </Avatar>
                                     <span>{room.name}</span>
                                 </Link>
                             }
