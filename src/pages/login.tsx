@@ -46,7 +46,7 @@ export const Login: FC = () => {
                     void handleSubmit(e);
                 }}
             >
-                <img className="w-[60px] mx-auto h-[50px]" src={logo} alt="logo" />
+                <img className="mx-auto h-12.5 w-15" src={logo} alt="logo" />
                 <div className="text-center">
                     <h2 className="text-2xl font-bold text-slate-900">Bon retour parmi nous</h2>
                     <p className="mt-1 text-sm text-slate-500">Accédez à votre espace S.L.P.R.D</p>
