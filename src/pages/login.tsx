@@ -46,7 +46,7 @@ export const Login: FC = () => {
 
     return (
         <div className="flex h-screen items-center justify-center p-4">
-            <Card className="w-full max-w-100 ">
+            <Card className="w-full max-w-100">
                 <CardHeader className="flex flex-col items-center gap-4 pt-10 pb-2">
                     <img className="block h-12 w-auto" src={logo} alt="logo" />
                     <div className="text-center">
