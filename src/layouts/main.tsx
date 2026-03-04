@@ -1,4 +1,3 @@
-import { Header } from "@/components/common/header/header";
 import { AppSidebar } from "@/components/common/sidebar/sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { CallContextProvider } from "@/contexts/call-context/call-context-provider";

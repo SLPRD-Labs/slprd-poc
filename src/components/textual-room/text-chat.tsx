@@ -84,7 +84,7 @@ export const TextChat: FC<Props> = ({ roomId }) => {
             <div
                 ref={scrollRef}
                 onScroll={handleScroll}
-                className="flex-1 overflow-y-auto py-2"
+                className="flex flex-1 overflow-y-auto py-2 flex-col"
             >
                 {isLoadingMore && (
                     <div className="flex justify-center py-2 text-xs text-muted-foreground">
