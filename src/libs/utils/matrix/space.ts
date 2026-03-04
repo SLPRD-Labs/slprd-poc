@@ -1,4 +1,4 @@
-import type { MatrixEvent } from "matrix-js-sdk";
+import type { MatrixEvent, Room } from "matrix-js-sdk";
 
 export const getChildOrder = (e: MatrixEvent): [string | undefined, number, string] => {
     return [sanitizeOrder(e), e.getTs(), e.getStateKey() ?? ""];
@@ -19,4 +19,14 @@ export const sanitizeOrder = (e: MatrixEvent): string | undefined => {
     }
 
     return order;
+};
+
+export const partitionSpacesAndRooms = (rooms: Room[]): [Room[], Room[]] => {
+    return rooms.reduce<[Room[], Room[]]>(
+        (res, r) => {
+            res[r.isSpaceRoom() ? 0 : 1].push(r);
+            return res;
+        },
+        [[], []]
+    );
 };

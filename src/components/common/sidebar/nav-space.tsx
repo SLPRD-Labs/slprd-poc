@@ -8,9 +8,10 @@ import type { FC } from "react";
 
 interface Props {
     space: Room;
+    isActive?: boolean;
 }
 
-export const NavSpace: FC<Props> = ({ space }) => {
+export const NavSpace: FC<Props> = ({ space, isActive }) => {
     const avatarUrl = useRoomAvatarUrl(space);
 
     return (
@@ -19,8 +20,8 @@ export const NavSpace: FC<Props> = ({ space }) => {
                 render={
                     <SidebarMenuItem>
                         <SidebarMenuButton
-                            className="p-0"
-                            isActive
+                            className="p-0 group-data-[collapsible=icon]:p-0!"
+                            isActive={isActive}
                             render={
                                 <Link to="/space/$spaceId" params={{ spaceId: space.roomId }}>
                                     <Avatar className="rounded-md after:rounded-md">

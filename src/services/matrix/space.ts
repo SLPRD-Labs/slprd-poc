@@ -1,5 +1,5 @@
 import { getMyMembership } from "@/libs/utils/matrix/room";
-import { getChildOrder, sanitizeOrder } from "@/libs/utils/matrix/space";
+import { getChildOrder, partitionSpacesAndRooms, sanitizeOrder } from "@/libs/utils/matrix/space";
 import type { MatrixClient, Room } from "matrix-js-sdk";
 import { EventTimeline, EventType, KnownMembership } from "matrix-js-sdk";
 
@@ -32,6 +32,41 @@ class SpaceService {
             rootSpaces,
             invitedSpaces
         };
+    }
+
+    public getRoomsBySpaceId(client: MatrixClient, spaceId: string): Room[] {
+        const traverseSpace = (spaceId: string, parentPath: Set<string>): Set<string> | null => {
+            if (parentPath.has(spaceId)) {
+                return null;
+            }
+
+            const space = client.getRoom(spaceId);
+            if (!space) {
+                return null;
+            }
+
+            const [childSpaces, childRooms] = partitionSpacesAndRooms(
+                this.getChildren(client, space)
+            );
+
+            const roomIds = new Set(childRooms.map(r => r.roomId));
+
+            const newPath = new Set(parentPath).add(spaceId);
+
+            childSpaces.forEach(childSpace => {
+                traverseSpace(childSpace.roomId, newPath);
+            });
+
+            return new Set(
+                [...roomIds].flatMap(roomId => {
+                    return client.getRoomUpgradeHistory(roomId, true, true).map(r => r.roomId);
+                })
+            );
+        };
+
+        const rooms = traverseSpace(spaceId, new Set()) ?? new Set();
+
+        return [...rooms].map(r => client.getRoom(r)).filter(r => r !== null);
     }
 
     private filterRootSpaces(client: MatrixClient, joinedSpaces: Room[]): Room[] {
