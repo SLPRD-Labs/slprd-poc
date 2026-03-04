@@ -1,4 +1,5 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { NavThemeSwitcher } from "@/components/common/sidebar/nav-theme-switcher";
+import { NavUserAvatar } from "@/components/common/sidebar/nav-user-avatar";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -14,18 +15,28 @@ import {
     SidebarMenuItem,
     useSidebar
 } from "@/components/ui/sidebar";
-import { BadgeCheck, Bell, ChevronsUpDown, CreditCard, LogOut, Sparkles } from "lucide-react";
+import { useAuthContext } from "@/contexts/auth-context/auth-context";
+import { useCurrentUserQuery } from "@/hooks/use-current-user-query";
+import { useNavigate } from "@tanstack/react-router";
+import { ChevronsUpDown, LogOut } from "lucide-react";
+import type { FC } from "react";
 
-export function NavUser({
-    user
-}: {
-    user: {
-        name: string;
-        email: string;
-        avatar: string;
-    };
-}) {
+export const NavUser: FC = () => {
+    const { logout } = useAuthContext();
+    const navigate = useNavigate();
+
     const { isMobile } = useSidebar();
+
+    const currentUserQuery = useCurrentUserQuery();
+
+    if (!currentUserQuery.isSuccess || currentUserQuery.data === null) {
+        return null;
+    }
+
+    const handleLogout = () => {
+        logout();
+        void navigate({ to: "/login", replace: true });
+    };
 
     return (
         <SidebarMenu>
@@ -37,18 +48,7 @@ export function NavUser({
                                 size="lg"
                                 className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground md:h-8 md:p-0"
                             >
-                                <Avatar className="h-8 w-8 rounded-md after:rounded-md">
-                                    <AvatarImage
-                                        src={user.avatar}
-                                        alt={user.name}
-                                        className="rounded-md"
-                                    />
-                                    <AvatarFallback className="rounded-md">CN</AvatarFallback>
-                                </Avatar>
-                                <div className="grid flex-1 text-left text-sm leading-tight">
-                                    <span className="truncate font-medium">{user.name}</span>
-                                    <span className="truncate text-xs">{user.email}</span>
-                                </div>
+                                <NavUserAvatar currentUser={currentUserQuery.data} />
                                 <ChevronsUpDown className="ml-auto size-4" />
                             </SidebarMenuButton>
                         }
@@ -62,45 +62,14 @@ export function NavUser({
                         <DropdownMenuGroup>
                             <DropdownMenuLabel className="p-0 font-normal">
                                 <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                                    <Avatar className="h-8 w-8 rounded-md after:rounded-md">
-                                        <AvatarImage
-                                            src={user.avatar}
-                                            alt={user.name}
-                                            className="rounded-md"
-                                        />
-                                        <AvatarFallback className="rounded-md">CN</AvatarFallback>
-                                    </Avatar>
-                                    <div className="grid flex-1 text-left text-sm leading-tight">
-                                        <span className="truncate font-medium">{user.name}</span>
-                                        <span className="truncate text-xs">{user.email}</span>
-                                    </div>
+                                    <NavUserAvatar currentUser={currentUserQuery.data} />
                                 </div>
                             </DropdownMenuLabel>
                         </DropdownMenuGroup>
                         <DropdownMenuSeparator />
-                        <DropdownMenuGroup>
-                            <DropdownMenuItem>
-                                <Sparkles />
-                                Upgrade to Pro
-                            </DropdownMenuItem>
-                        </DropdownMenuGroup>
+                        <NavThemeSwitcher />
                         <DropdownMenuSeparator />
-                        <DropdownMenuGroup>
-                            <DropdownMenuItem>
-                                <BadgeCheck />
-                                Account
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                                <CreditCard />
-                                Billing
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                                <Bell />
-                                Notifications
-                            </DropdownMenuItem>
-                        </DropdownMenuGroup>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem>
+                        <DropdownMenuItem variant="destructive" onClick={handleLogout}>
                             <LogOut />
                             Log out
                         </DropdownMenuItem>
@@ -109,4 +78,4 @@ export function NavUser({
             </SidebarMenuItem>
         </SidebarMenu>
     );
-}
+};

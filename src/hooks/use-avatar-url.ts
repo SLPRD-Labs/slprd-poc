@@ -1,8 +1,7 @@
 import { useMatrixClientContext } from "@/contexts/matrix-client-context/matrix-client-context";
-import type { Room } from "matrix-js-sdk";
 import { useEffect, useState } from "react";
 
-export const useRoomAvatarUrl = (room: Room): string | null | undefined => {
+export const useAvatarUrl = (mxcAvatarUrl?: string | null): string | null | undefined => {
     const { client } = useMatrixClientContext();
 
     const [avatarUrl, setAvatarUrl] = useState<string | null>();
@@ -15,9 +14,8 @@ export const useRoomAvatarUrl = (room: Room): string | null | undefined => {
         void (async () => {
             const accessToken = client.getAccessToken();
 
-            const mxcAvatarUrl = room.getMxcAvatarUrl();
             let avatarUrl: string | null;
-            if (mxcAvatarUrl !== null) {
+            if (mxcAvatarUrl !== undefined && mxcAvatarUrl !== null) {
                 avatarUrl = client.mxcUrlToHttp(mxcAvatarUrl, 32, 32, "crop", true, true, true);
             } else {
                 avatarUrl = null;
@@ -57,7 +55,7 @@ export const useRoomAvatarUrl = (room: Room): string | null | undefined => {
                 URL.revokeObjectURL(objectUrl);
             }
         };
-    }, [client, room]);
+    }, [client, mxcAvatarUrl]);
 
     return avatarUrl;
 };
