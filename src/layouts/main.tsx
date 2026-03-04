@@ -1,4 +1,3 @@
-import { Header } from "@/components/common/header/header";
 import { AppSidebar } from "@/components/common/sidebar/sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { CallContextProvider } from "@/contexts/call-context/call-context-provider";
@@ -14,11 +13,8 @@ export const MainLayout: FC = () => {
         <CallContextProvider>
             <SidebarProvider style={style}>
                 <AppSidebar />
-                <SidebarInset>
-                    <Header />
-                    <main className="flex grow flex-col">
-                        <Outlet />
-                    </main>
+                <SidebarInset className="h-dvh overflow-hidden">
+                    <Outlet />
                 </SidebarInset>
             </SidebarProvider>
         </CallContextProvider>

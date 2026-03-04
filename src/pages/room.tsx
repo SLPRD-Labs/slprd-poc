@@ -1,3 +1,4 @@
+import { TextChat } from "@/components/textual-room/text-chat";
 import { useMatrixClientContext } from "@/contexts/matrix-client-context/matrix-client-context";
 import { Route } from "@/routes/_mainLayout/space/$spaceId/room/$roomId";
 import { useQuery } from "@tanstack/react-query";
@@ -27,8 +28,11 @@ export const Room: FC = () => {
     }
 
     return (
-        <span>
-            Room {roomQuery.data?.name} in Space {spaceQuery.data?.name}
-        </span>
+        <div className="flex h-full flex-col">
+            <div className="flex border-b p-3">
+                <h2 className="font-semibold"># {roomQuery.data?.name}</h2>
+            </div>
+            <TextChat roomId={roomId} />
+        </div>
     );
 };
