@@ -45,8 +45,8 @@ export const Login: FC = () => {
     };
 
     return (
-        <div className="flex h-screen items-center justify-center bg-slate-100 p-4">
-            <Card className="w-full max-w-100 overflow-hidden rounded-2xl border-none bg-white shadow-xl">
+        <div className="flex h-screen items-center justify-center p-4">
+            <Card className="w-full max-w-100 ">
                 <CardHeader className="flex flex-col items-center gap-4 pt-10 pb-2">
                     <img className="block h-12 w-auto" src={logo} alt="logo" />
                     <div className="text-center">
@@ -65,12 +65,7 @@ export const Login: FC = () => {
                         className="flex flex-col gap-4"
                     >
                         <div className="grid gap-1.5">
-                            <Label
-                                htmlFor="homeserver"
-                                className="text-xs font-bold text-slate-600 uppercase"
-                            >
-                                URL du serveur
-                            </Label>
+                            <Label htmlFor="homeserver">URL du serveur</Label>
                             <Input
                                 id="homeserver"
                                 placeholder="https://matrix.org"
@@ -82,12 +77,7 @@ export const Login: FC = () => {
                         </div>
 
                         <div className="grid gap-1.5">
-                            <Label
-                                htmlFor="username"
-                                className="text-xs font-bold text-slate-600 uppercase"
-                            >
-                                Nom d&#39;utilisateur
-                            </Label>
+                            <Label htmlFor="username">Nom d&#39;utilisateur</Label>
                             <Input
                                 id="username"
                                 placeholder="@user:matrix.org"
@@ -100,18 +90,8 @@ export const Login: FC = () => {
 
                         <div className="grid gap-1.5">
                             <div className="flex items-center justify-between">
-                                <Label
-                                    htmlFor="password"
-                                    className="text-xs font-bold text-slate-600 uppercase"
-                                >
-                                    Mot de passe
-                                </Label>
-                                <button
-                                    type="button"
-                                    className="text-primary text-xs font-medium hover:underline"
-                                >
-                                    Mot de passe oublié ?
-                                </button>
+                                <Label htmlFor="password">Mot de passe</Label>
+                                <Button variant="ghost">Mot de passe oublié ?</Button>
                             </div>
                             <Input
                                 id="password"
@@ -130,15 +110,10 @@ export const Login: FC = () => {
                             </div>
                         )}
 
-                        <Button type="submit" className="mt-2 py-6 text-base" disabled={loading}>
+                        <Button type="submit" className="mt-2 py-6" disabled={loading}>
                             {loading ? "Connexion..." : "Se connecter"}
                         </Button>
                     </form>
-                    <p className="mt-6 text-center text-xs text-slate-500 mb-0">
-                        En continuant, vous acceptez nos Conditions d&#39;utilisation et notre
-                        Politique de confidentialité.
-                    </p>
-                    <p className="text-center text-xs text-slate-500 m-0">© 2026 S.L.P.R.D.</p>
                 </CardContent>
             </Card>
         </div>
