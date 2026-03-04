@@ -53,9 +53,14 @@ class SpaceService {
 
             const newPath = new Set(parentPath).add(spaceId);
 
-            childSpaces.forEach(childSpace => {
-                traverseSpace(childSpace.roomId, newPath);
-            });
+            for (const childSpace of childSpaces) {
+                const childRooms = traverseSpace(childSpace.roomId, newPath);
+                if (childRooms !== null) {
+                    for (const childRoom of childRooms) {
+                        roomIds.add(childRoom);
+                    }
+                }
+            }
 
             return new Set(
                 [...roomIds].flatMap(roomId => {
@@ -87,7 +92,9 @@ class SpaceService {
         }
 
         for (const detachedNode of detachedNodes) {
-            if (!detachedNodes.has(detachedNode)) continue;
+            if (!detachedNodes.has(detachedNode)) {
+                continue;
+            }
             rootSpaces.push(detachedNode);
             this.markTreeChildren(client, detachedNode, detachedNodes);
         }
@@ -145,13 +152,15 @@ class SpaceService {
         const stack = [rootSpace];
         while (stack.length) {
             const space = stack.pop();
-            if (!space) continue;
+            if (!space) {
+                continue;
+            }
             unseen.delete(space);
-            this.getChildSpaces(client, space).forEach(space => {
-                if (unseen.has(space)) {
-                    stack.push(space);
+            for (const childSpace of this.getChildSpaces(client, space)) {
+                if (unseen.has(childSpace)) {
+                    stack.push(childSpace);
                 }
-            });
+            }
         }
     }
 
