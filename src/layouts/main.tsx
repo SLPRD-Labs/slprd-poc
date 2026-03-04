@@ -14,11 +14,8 @@ export const MainLayout: FC = () => {
         <CallContextProvider>
             <SidebarProvider style={style}>
                 <AppSidebar />
-                <SidebarInset>
-                    <Header />
-                    <main className="flex grow flex-col">
-                        <Outlet />
-                    </main>
+                <SidebarInset className="h-dvh overflow-hidden">
+                    <Outlet />
                 </SidebarInset>
             </SidebarProvider>
         </CallContextProvider>

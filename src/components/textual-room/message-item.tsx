@@ -40,7 +40,9 @@ const MessageItem: FC<{ event: MatrixEvent }> = ({ event }) => {
                     }
                 </span>
             </span>
-            <span className="text-sm">{event.getContent().body}</span>
+            <span className="text-sm whitespace-pre-wrap wrap-break-word">
+                {event.getContent().body}
+            </span>
         </div>
     );
 };
