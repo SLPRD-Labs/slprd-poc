@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import type { MatrixClient, User, MatrixEvent} from "matrix-js-sdk";
+import type { MatrixClient, User, MatrixEvent } from "matrix-js-sdk";
 import { UserEvent } from "matrix-js-sdk";
 
 export type PresenceStatus = "online" | "offline" | "unavailable";

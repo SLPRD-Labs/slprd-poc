@@ -30,7 +30,7 @@ export const Room: FC = () => {
 
     return (
         <div className="flex h-full w-full">
-            <div className="flex h-full flex-col w-full">
+            <div className="flex h-full w-full flex-col">
                 <div className="flex border-b p-3">
                     <h2 className="font-semibold"># {roomQuery.data?.name}</h2>
                 </div>

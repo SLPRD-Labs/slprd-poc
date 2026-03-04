@@ -26,9 +26,8 @@ export const PresenceSidenav: FC = () => {
             </div>
 
             {/* eslint-disable-next-line @typescript-eslint/no-unused-vars */}
-            {Object.entries(presence).filter(([_, data]) => data.status === "offline").length > 0 && (
-                <hr className="border-gray-500" />
-            )}
+            {Object.entries(presence).filter(([_, data]) => data.status === "offline").length >
+                0 && <hr className="border-gray-500" />}
 
             <div className="flex flex-col gap-2">
                 {/* eslint-disable-next-line @typescript-eslint/no-unused-vars */}
