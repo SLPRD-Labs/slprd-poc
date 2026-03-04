@@ -134,11 +134,11 @@ export const Login: FC = () => {
                             {loading ? "Connexion..." : "Se connecter"}
                         </Button>
                     </form>
-
-                    <p className="mt-6 text-center text-xs text-slate-500">
+                    <p className="mt-6 text-center text-xs text-slate-500 mb-0">
                         En continuant, vous acceptez nos Conditions d&#39;utilisation et notre
-                        Politique de confidentialité. © 2026 S.L.P.R.D.
+                        Politique de confidentialité.
                     </p>
+                    <p className="text-center text-xs text-slate-500 m-0">© 2026 S.L.P.R.D.</p>
                 </CardContent>
             </Card>
         </div>
