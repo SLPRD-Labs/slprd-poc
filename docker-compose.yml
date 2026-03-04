@@ -92,7 +92,6 @@ services:
 
 volumes:
   postgres_data:
-  synapse_data:
 
 networks:
   backend:
