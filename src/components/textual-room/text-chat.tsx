@@ -1,6 +1,8 @@
 import { useMatrixClientContext } from "@/contexts/matrix-client-context/matrix-client-context";
-import { MatrixEvent, RoomEvent } from "matrix-js-sdk";
-import { type FC, useCallback, useEffect, useRef, useState } from "react";
+import type { MatrixEvent } from "matrix-js-sdk";
+import { RoomEvent } from "matrix-js-sdk";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { FC } from "react";
 import { Button } from "../ui/button";
 import { ArrowDown, SendHorizonal } from "lucide-react";
 import MessageItem from "./message-item";
@@ -12,12 +14,13 @@ interface Props {
 
 export const TextChat: FC<Props> = ({ roomId }) => {
     const { client } = useMatrixClientContext();
-    const [messages, setMessages] = useState<MatrixEvent[]>(() =>
-        client.getRoom(roomId)
-            ?.getLiveTimeline()
-            .getEvents()
-            .filter(event => event.getType() === "m.room.message")
-            ?? []
+    const [messages, setMessages] = useState<MatrixEvent[]>(
+        () =>
+            client
+                .getRoom(roomId)
+                ?.getLiveTimeline()
+                .getEvents()
+                .filter(event => event.getType() === "m.room.message") ?? []
     );
     const [input, setInput] = useState("");
     const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -25,17 +28,20 @@ export const TextChat: FC<Props> = ({ roomId }) => {
     const bottomRef = useRef<HTMLDivElement>(null);
 
     const refreshMessages = useCallback(() => {
-        const events = client.getRoom(roomId)
-            ?.getLiveTimeline()
-            .getEvents()
-            .filter(event => event.getType() === "m.room.message")
-            ?? [];
+        const events =
+            client
+                .getRoom(roomId)
+                ?.getLiveTimeline()
+                .getEvents()
+                .filter(event => event.getType() === "m.room.message") ?? [];
         setMessages([...events]);
     }, [client, roomId]);
 
     useEffect(() => {
         client.on(RoomEvent.Timeline, refreshMessages);
-        return () => { client.off(RoomEvent.Timeline, refreshMessages); };
+        return () => {
+            client.off(RoomEvent.Timeline, refreshMessages);
+        };
     }, [client, refreshMessages]);
 
     useEffect(() => {
@@ -80,14 +86,16 @@ export const TextChat: FC<Props> = ({ roomId }) => {
     };
 
     return (
-        <div className="flex flex-col h-full overflow-hidden">
+        <div className="flex h-full flex-col overflow-hidden">
             <div
                 ref={scrollRef}
-                onScroll={handleScroll}
-                className="flex flex-1 overflow-y-auto py-2 flex-col"
+                onScroll={() => {
+                    void handleScroll();
+                }}
+                className="flex flex-1 flex-col overflow-y-auto py-2"
             >
                 {isLoadingMore && (
-                    <div className="flex justify-center py-2 text-xs text-muted-foreground">
+                    <div className="text-muted-foreground flex justify-center py-2 text-xs">
                         Chargement...
                     </div>
                 )}
@@ -97,10 +105,10 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                 ))}
                 <div ref={bottomRef} />
 
-                <div className="flex flex-1 sticky bottom-4 justify-end m-4 items-end">
+                <div className="sticky bottom-4 m-4 flex flex-1 items-end justify-end">
                     <Button
                         variant={"ghost"}
-                        className="p-3 bg-secondary hover:bg-primary hover:text-primary-foreground rounded-full shadow-lg"
+                        className="bg-secondary hover:bg-primary hover:text-primary-foreground rounded-full p-3 shadow-lg"
                         onClick={() => bottomRef.current?.scrollIntoView({ behavior: "smooth" })}
                     >
                         <ArrowDown className="size-4" />
@@ -108,13 +116,20 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                 </div>
             </div>
 
-            <form onSubmit={send} className="flex gap-2 p-4 border-t items-center">
+            <form
+                onSubmit={() => {
+                    void send();
+                }}
+                className="flex items-center gap-2 border-t p-4"
+            >
                 <Textarea
                     value={input}
-                    onChange={e => setInput(e.target.value)}
+                    onChange={e => {
+                        setInput(e.target.value);
+                    }}
                     onKeyDown={handleKeyDown}
                     placeholder={`Message #${client.getRoom(roomId)?.name ?? roomId}`}
-                    className="overflow-y-auto resize-none"
+                    className="resize-none overflow-y-auto"
                 />
                 <Button type="submit">
                     <SendHorizonal className="size-4" />

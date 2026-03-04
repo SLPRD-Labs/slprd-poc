@@ -28,8 +28,8 @@ export const Room: FC = () => {
     }
 
     return (
-    <div className="flex flex-col h-full">
-        <div className="flex p-3 border-b">
+        <div className="flex h-full flex-col">
+            <div className="flex border-b p-3">
                 <h2 className="font-semibold"># {roomQuery.data?.name}</h2>
             </div>
             <TextChat roomId={roomId} />
