@@ -4,8 +4,7 @@ import {
     SidebarContent,
     SidebarGroup,
     SidebarGroupContent,
-    SidebarHeader,
-    SidebarInput
+    SidebarHeader
 } from "@/components/ui/sidebar";
 import { useMatrixClientContext } from "@/contexts/matrix-client-context/matrix-client-context";
 import { spaceService } from "@/services/matrix/space";
@@ -20,6 +19,13 @@ interface Props {
 export const RoomSidebar: FC<Props> = ({ spaceId, activeRoomId }) => {
     const { client, ready } = useMatrixClientContext();
 
+    const spaceQuery = useQuery({
+        queryKey: ["space", spaceId],
+        queryFn: () => client.getRoom(spaceId),
+        staleTime: Infinity,
+        enabled: ready
+    });
+
     const roomsQuery = useQuery({
         queryKey: ["space", spaceId, "rooms"],
         queryFn: () => spaceService.getRoomsBySpaceId(client, spaceId),
@@ -30,7 +36,7 @@ export const RoomSidebar: FC<Props> = ({ spaceId, activeRoomId }) => {
     return (
         <Sidebar collapsible="none" className="hidden flex-1 md:flex">
             <SidebarHeader className="gap-3.5 border-b p-4">
-                <SidebarInput placeholder="Type to search..." />
+                {spaceQuery.isSuccess && spaceQuery.data?.name}
             </SidebarHeader>
             <SidebarContent>
                 <SidebarGroup className="px-0">
