@@ -1,14 +1,12 @@
+import logo from "@/assets/LogoSLPRD.png";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useAuthContext } from "@/contexts/auth-context/auth-context";
 import { Route } from "@/routes/login";
 import type { FC, SubmitEvent } from "react";
 import { useState } from "react";
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-
-import logo from "@/assets/LogoSLPRD.png";
 
 export const Login: FC = () => {
     const { redirect } = Route.useSearch();
@@ -29,7 +27,7 @@ export const Login: FC = () => {
 
         try {
             await login({ baseUrl, username, password });
-            await navigate({ to: redirect });
+            await navigate({ to: redirect ?? "/" });
         } catch (err) {
             setError(
                 typeof err === "object" &&

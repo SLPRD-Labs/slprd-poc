@@ -74,13 +74,7 @@ export const SpaceSidebar: FC<Props> = ({ activeSpaceId }) => {
                 </SidebarGroup>
             </SidebarContent>
             <SidebarFooter>
-                <NavUser
-                    user={{
-                        name: "shadcn",
-                        email: "m@example.com",
-                        avatar: "https://ui.shadcn.com/avatars/shadcn.jpg"
-                    }}
-                />
+                <NavUser />
             </SidebarFooter>
         </Sidebar>
     );
