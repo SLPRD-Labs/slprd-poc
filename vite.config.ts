@@ -4,7 +4,6 @@ import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 import { defineConfig } from "vite";
-import eslint from "vite-plugin-eslint2";
 
 export default defineConfig({
     plugins: [
@@ -18,10 +17,7 @@ export default defineConfig({
                 plugins: ["babel-plugin-react-compiler"]
             }
         }),
-        tailwindcss(),
-        eslint({
-            cache: false
-        })
+        tailwindcss()
     ],
     resolve: {
         alias: {

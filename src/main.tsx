@@ -1,4 +1,5 @@
 import { AuthContextProvider } from "@/contexts/auth-context/auth-context-provider";
+import { MatrixClientContextProvider } from "@/contexts/matrix-client-context/matrix-client-context-provider";
 import { TanStackQueryDevtoolsPlugin, TanStackQueryProvider } from "@/integrations/tanstack/query";
 import {
     TanStackRouterDevtoolsPlugin,
@@ -20,21 +21,23 @@ root.render(
     <StrictMode>
         <AuthContextProvider>
             <TanStackQueryProvider>
-                <TanStackRouterProvider />
-                <TanStackDevtools
-                    plugins={[
-                        {
-                            name: "TanStack Query",
-                            render: <TanStackQueryDevtoolsPlugin />,
-                            defaultOpen: true
-                        },
-                        {
-                            name: "TanStack Router",
-                            render: <TanStackRouterDevtoolsPlugin />,
-                            defaultOpen: true
-                        }
-                    ]}
-                />
+                <MatrixClientContextProvider>
+                    <TanStackRouterProvider />
+                    <TanStackDevtools
+                        plugins={[
+                            {
+                                name: "TanStack Query",
+                                render: <TanStackQueryDevtoolsPlugin />,
+                                defaultOpen: true
+                            },
+                            {
+                                name: "TanStack Router",
+                                render: <TanStackRouterDevtoolsPlugin />,
+                                defaultOpen: true
+                            }
+                        ]}
+                    />
+                </MatrixClientContextProvider>
             </TanStackQueryProvider>
         </AuthContextProvider>
     </StrictMode>

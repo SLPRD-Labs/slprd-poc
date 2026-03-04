@@ -12,6 +12,9 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MainLayoutRouteImport } from './routes/_mainLayout'
 import { Route as MainLayoutIndexRouteImport } from './routes/_mainLayout/index'
+import { Route as MainLayoutSpaceSpaceIdIndexRouteImport } from './routes/_mainLayout/space/$spaceId/index'
+import { Route as MainLayoutSpaceSpaceIdRoomIndexRouteImport } from './routes/_mainLayout/space/$spaceId/room/index'
+import { Route as MainLayoutSpaceSpaceIdRoomRoomIdIndexRouteImport } from './routes/_mainLayout/space/$spaceId/room/$roomId/index'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -27,27 +30,71 @@ const MainLayoutIndexRoute = MainLayoutIndexRouteImport.update({
   path: '/',
   getParentRoute: () => MainLayoutRoute,
 } as any)
+const MainLayoutSpaceSpaceIdIndexRoute =
+  MainLayoutSpaceSpaceIdIndexRouteImport.update({
+    id: '/space/$spaceId/',
+    path: '/space/$spaceId/',
+    getParentRoute: () => MainLayoutRoute,
+  } as any)
+const MainLayoutSpaceSpaceIdRoomIndexRoute =
+  MainLayoutSpaceSpaceIdRoomIndexRouteImport.update({
+    id: '/space/$spaceId/room/',
+    path: '/space/$spaceId/room/',
+    getParentRoute: () => MainLayoutRoute,
+  } as any)
+const MainLayoutSpaceSpaceIdRoomRoomIdIndexRoute =
+  MainLayoutSpaceSpaceIdRoomRoomIdIndexRouteImport.update({
+    id: '/space/$spaceId/room/$roomId/',
+    path: '/space/$spaceId/room/$roomId/',
+    getParentRoute: () => MainLayoutRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof MainLayoutIndexRoute
   '/login': typeof LoginRoute
+  '/space/$spaceId/': typeof MainLayoutSpaceSpaceIdIndexRoute
+  '/space/$spaceId/room/': typeof MainLayoutSpaceSpaceIdRoomIndexRoute
+  '/space/$spaceId/room/$roomId/': typeof MainLayoutSpaceSpaceIdRoomRoomIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/': typeof MainLayoutIndexRoute
+  '/space/$spaceId': typeof MainLayoutSpaceSpaceIdIndexRoute
+  '/space/$spaceId/room': typeof MainLayoutSpaceSpaceIdRoomIndexRoute
+  '/space/$spaceId/room/$roomId': typeof MainLayoutSpaceSpaceIdRoomRoomIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_mainLayout': typeof MainLayoutRouteWithChildren
   '/login': typeof LoginRoute
   '/_mainLayout/': typeof MainLayoutIndexRoute
+  '/_mainLayout/space/$spaceId/': typeof MainLayoutSpaceSpaceIdIndexRoute
+  '/_mainLayout/space/$spaceId/room/': typeof MainLayoutSpaceSpaceIdRoomIndexRoute
+  '/_mainLayout/space/$spaceId/room/$roomId/': typeof MainLayoutSpaceSpaceIdRoomRoomIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/space/$spaceId/'
+    | '/space/$spaceId/room/'
+    | '/space/$spaceId/room/$roomId/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/'
-  id: '__root__' | '/_mainLayout' | '/login' | '/_mainLayout/'
+  to:
+    | '/login'
+    | '/'
+    | '/space/$spaceId'
+    | '/space/$spaceId/room'
+    | '/space/$spaceId/room/$roomId'
+  id:
+    | '__root__'
+    | '/_mainLayout'
+    | '/login'
+    | '/_mainLayout/'
+    | '/_mainLayout/space/$spaceId/'
+    | '/_mainLayout/space/$spaceId/room/'
+    | '/_mainLayout/space/$spaceId/room/$roomId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -78,15 +125,43 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MainLayoutIndexRouteImport
       parentRoute: typeof MainLayoutRoute
     }
+    '/_mainLayout/space/$spaceId/': {
+      id: '/_mainLayout/space/$spaceId/'
+      path: '/space/$spaceId'
+      fullPath: '/space/$spaceId/'
+      preLoaderRoute: typeof MainLayoutSpaceSpaceIdIndexRouteImport
+      parentRoute: typeof MainLayoutRoute
+    }
+    '/_mainLayout/space/$spaceId/room/': {
+      id: '/_mainLayout/space/$spaceId/room/'
+      path: '/space/$spaceId/room'
+      fullPath: '/space/$spaceId/room/'
+      preLoaderRoute: typeof MainLayoutSpaceSpaceIdRoomIndexRouteImport
+      parentRoute: typeof MainLayoutRoute
+    }
+    '/_mainLayout/space/$spaceId/room/$roomId/': {
+      id: '/_mainLayout/space/$spaceId/room/$roomId/'
+      path: '/space/$spaceId/room/$roomId'
+      fullPath: '/space/$spaceId/room/$roomId/'
+      preLoaderRoute: typeof MainLayoutSpaceSpaceIdRoomRoomIdIndexRouteImport
+      parentRoute: typeof MainLayoutRoute
+    }
   }
 }
 
 interface MainLayoutRouteChildren {
   MainLayoutIndexRoute: typeof MainLayoutIndexRoute
+  MainLayoutSpaceSpaceIdIndexRoute: typeof MainLayoutSpaceSpaceIdIndexRoute
+  MainLayoutSpaceSpaceIdRoomIndexRoute: typeof MainLayoutSpaceSpaceIdRoomIndexRoute
+  MainLayoutSpaceSpaceIdRoomRoomIdIndexRoute: typeof MainLayoutSpaceSpaceIdRoomRoomIdIndexRoute
 }
 
 const MainLayoutRouteChildren: MainLayoutRouteChildren = {
   MainLayoutIndexRoute: MainLayoutIndexRoute,
+  MainLayoutSpaceSpaceIdIndexRoute: MainLayoutSpaceSpaceIdIndexRoute,
+  MainLayoutSpaceSpaceIdRoomIndexRoute: MainLayoutSpaceSpaceIdRoomIndexRoute,
+  MainLayoutSpaceSpaceIdRoomRoomIdIndexRoute:
+    MainLayoutSpaceSpaceIdRoomRoomIdIndexRoute,
 }
 
 const MainLayoutRouteWithChildren = MainLayoutRoute._addFileChildren(
