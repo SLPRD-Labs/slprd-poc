@@ -130,7 +130,7 @@ export const Login: FC = () => {
                             </div>
                         )}
 
-                        <Button className="mt-2 py-6 text-base" disabled={loading}>
+                        <Button type="submit" className="mt-2 py-6 text-base" disabled={loading}>
                             {loading ? "Connexion..." : "Se connecter"}
                         </Button>
                     </form>
