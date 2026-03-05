@@ -17,7 +17,11 @@ export const MatrixClientContextProvider: FC<PropsWithChildren> = ({ children })
             setReady(true);
         });
 
-    const stop = async (): Promise<void> => stopClient();
+    const stop = async (): Promise<void> => {
+        setReady(false);
+        await stopClient();
+        initialized.current = false;
+    };
 
     const initialized = useRef(false);
 

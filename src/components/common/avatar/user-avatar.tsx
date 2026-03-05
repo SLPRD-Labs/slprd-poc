@@ -14,7 +14,7 @@ export const UserAvatar: FC<Props> = ({ user }) => {
         <Avatar className="h-8 w-8 rounded-md after:rounded-md">
             <AvatarImage
                 src={avatarUrl ?? undefined}
-                alt={user.displayName}
+                alt={user.displayName ?? user.userId}
                 className="rounded-md"
             />
             {avatarUrl !== undefined && (

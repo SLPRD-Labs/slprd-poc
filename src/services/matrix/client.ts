@@ -13,15 +13,16 @@ class ClientService {
         queryClient: QueryClient,
         onReady: () => void
     ): Promise<void> {
-        await client.startClient({
-            clientWellKnownPollPeriod: 60 * 10
-        });
-
         client.once(ClientEvent.Sync, state => {
             if (state === SyncState.Prepared) {
                 onReady();
             }
         });
+
+        await client.startClient({
+            clientWellKnownPollPeriod: 60 * 10
+        });
+
         client.on(ClientEvent.Room, this.onClientRoom(client, queryClient));
         client.on(ClientEvent.AccountData, this.onClientAccountData(client, queryClient));
 
