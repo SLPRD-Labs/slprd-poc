@@ -48,9 +48,12 @@ export const NavUser: FC = () => {
                         render={
                             <SidebarMenuButton
                                 size="lg"
-                                className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground h-8 p-0"
+                                className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground size-full rounded-xl p-0"
                             >
-                                <NavUserAvatar currentUser={currentUserQuery.data} />
+                                <NavUserAvatar
+                                    currentUser={currentUserQuery.data}
+                                    className="size-full"
+                                />
                                 <ChevronsUpDown className="ml-auto size-4" />
                             </SidebarMenuButton>
                         }

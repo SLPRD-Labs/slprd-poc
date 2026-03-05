@@ -4,12 +4,13 @@ import type { FC } from "react";
 
 interface Props {
     currentUser: User;
+    className?: string;
 }
 
-export const NavUserAvatar: FC<Props> = ({ currentUser }) => {
+export const NavUserAvatar: FC<Props> = ({ currentUser, className }) => {
     return (
         <>
-            <UserAvatar user={currentUser} />
+            <UserAvatar user={currentUser} className={className} />
             <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">
                     {currentUser.displayName ?? currentUser.userId}

@@ -11,14 +11,14 @@ export const RoomAvatar: FC<Props> = ({ room }) => {
     const avatarUrl = useAvatarUrl(room.getMxcAvatarUrl());
 
     return (
-        <Avatar className="rounded-md after:rounded-md">
+        <Avatar className="size-full rounded-xl after:rounded-xl">
             <AvatarImage
                 src={avatarUrl ?? undefined}
                 alt={room.name}
-                className="rounded-md grayscale"
+                className="rounded-xl grayscale"
             />
-            {avatarUrl !== undefined && (
-                <AvatarFallback className="rounded-md">
+            {avatarUrl === null && (
+                <AvatarFallback className="rounded-xl text-lg">
                     {room.name.charAt(0).toUpperCase()}
                 </AvatarFallback>
             )}
