@@ -1,5 +1,5 @@
 import { TextChat } from "@/components/textual-room/text-chat";
-import { useMatrixClientContext } from "@/contexts/matrix-client-context/matrix-client-context";
+import { useMatrixClient } from "@/hooks/use-matrix-client";
 import { Route } from "@/routes/_mainLayout/space/$spaceId/room/$roomId";
 import { useQuery } from "@tanstack/react-query";
 import type { FC } from "react";
@@ -7,7 +7,7 @@ import type { FC } from "react";
 export const Room: FC = () => {
     const { spaceId, roomId } = Route.useParams();
 
-    const { client, ready } = useMatrixClientContext();
+    const { client, ready } = useMatrixClient();
 
     const spaceQuery = useQuery({
         queryKey: ["spaces", spaceId],

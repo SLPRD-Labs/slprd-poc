@@ -1,7 +1,7 @@
 import type { MatrixSession } from "@/contexts/auth-context/auth-context";
 import { AuthContext } from "@/contexts/auth-context/auth-context";
+import { useMatrixClientContext } from "@/contexts/matrix-client-context/matrix-client-context";
 import { useLocalStorage } from "@/hooks/use-local-storage";
-import { createClient } from "matrix-js-sdk";
 import type { FC, PropsWithChildren } from "react";
 
 export interface LoginOpts {
@@ -11,32 +11,19 @@ export interface LoginOpts {
 }
 
 export const AuthContextProvider: FC<PropsWithChildren> = ({ children }) => {
+    const { start, stop } = useMatrixClientContext();
+
     const [session, setSession] = useLocalStorage<MatrixSession | null>("session", null);
 
     const login = async (opts: LoginOpts): Promise<void> => {
-        const authClient = createClient({ baseUrl: opts.baseUrl });
-
-        const loginResponse = await authClient.loginRequest({
-            type: "m.login.password",
-            identifier: {
-                type: "m.id.user",
-                user: opts.username
-            },
-            password: opts.password
-        });
-
-        const matrixSession: MatrixSession = {
-            baseUrl: opts.baseUrl,
-            userId: loginResponse.user_id,
-            deviceId: loginResponse.device_id,
-            accessToken: loginResponse.access_token,
-            refreshToken: loginResponse.refresh_token
-        };
+        const matrixSession = await start(opts);
 
         setSession(matrixSession);
     };
 
-    const logout = (): void => {
+    const logout = async (): Promise<void> => {
+        await stop();
+
         setSession(null);
     };
 

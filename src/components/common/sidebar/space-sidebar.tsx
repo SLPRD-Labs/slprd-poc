@@ -11,7 +11,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem
 } from "@/components/ui/sidebar";
-import { useMatrixClientContext } from "@/contexts/matrix-client-context/matrix-client-context";
+import { useMatrixClient } from "@/hooks/use-matrix-client";
 import { spaceService } from "@/services/matrix/space";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
@@ -23,7 +23,7 @@ interface Props {
 }
 
 export const SpaceSidebar: FC<Props> = ({ activeSpaceId }) => {
-    const { client, ready } = useMatrixClientContext();
+    const { client, ready } = useMatrixClient();
 
     const spacesQuery = useQuery({
         queryKey: ["spaces", "root", "invited"],

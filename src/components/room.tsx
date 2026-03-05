@@ -1,5 +1,5 @@
 import { MatrixLiveKitCall } from "@/components/matrix-livekit-call";
-import { useMatrixClientContext } from "@/contexts/matrix-client-context/matrix-client-context";
+import { useMatrixClient } from "@/hooks/use-matrix-client";
 import type { Room as LiveKitRoom } from "livekit-client";
 import type { FC } from "react";
 
@@ -8,7 +8,7 @@ interface Props {
 }
 
 export const Room: FC<Props> = props => {
-    const { client } = useMatrixClientContext();
+    const { client } = useMatrixClient();
 
     return (
         <div>

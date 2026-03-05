@@ -6,7 +6,7 @@ import {
     SidebarGroupContent,
     SidebarHeader
 } from "@/components/ui/sidebar";
-import { useMatrixClientContext } from "@/contexts/matrix-client-context/matrix-client-context";
+import { useMatrixClient } from "@/hooks/use-matrix-client";
 import { spaceService } from "@/services/matrix/space";
 import { useQuery } from "@tanstack/react-query";
 import type { FC } from "react";
@@ -17,7 +17,7 @@ interface Props {
 }
 
 export const RoomSidebar: FC<Props> = ({ spaceId, activeRoomId }) => {
-    const { client, ready } = useMatrixClientContext();
+    const { client, ready } = useMatrixClient();
 
     const spaceQuery = useQuery({
         queryKey: ["space", spaceId],
