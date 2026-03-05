@@ -29,7 +29,7 @@ export const MainLayout: FC = () => {
 
     const style = {
         "--sidebar-width":
-            spaceRoomMatchRoute !== false ? "350px" : "calc(var(--sidebar-width-icon)+1px)"
+            spaceRoomMatchRoute !== false ? "350px" : "calc(var(--sidebar-width-icon) + 1px)"
     } as CSSProperties;
 
     return (

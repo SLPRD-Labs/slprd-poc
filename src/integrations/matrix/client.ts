@@ -66,8 +66,11 @@ export const startClient = async (
 
 export const stopClient = async (): Promise<void> => {
     const matrixClient = client;
-    client = null;
-    if (matrixClient !== null) {
-        await clientService.stop(matrixClient);
+    if (matrixClient === null) {
+        return;
+    }
+    await clientService.stop(matrixClient);
+    if (client === matrixClient) {
+        client = null;
     }
 };
