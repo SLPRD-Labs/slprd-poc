@@ -35,7 +35,7 @@ export const RoomSidebar: FC<Props> = ({ spaceId, activeRoomId }) => {
     });
 
     return (
-        <Sidebar variant="inset" collapsible="none" className="flex-1">
+        <Sidebar collapsible="none" className="flex-1">
             <SidebarHeader className="border-b p-4 whitespace-nowrap">
                 {spaceQuery.isSuccess && spaceQuery.data?.name}
             </SidebarHeader>
