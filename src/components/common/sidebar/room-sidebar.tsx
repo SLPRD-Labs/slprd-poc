@@ -34,13 +34,13 @@ export const RoomSidebar: FC<Props> = ({ spaceId, activeRoomId }) => {
     });
 
     return (
-        <Sidebar collapsible="none" className="hidden flex-1 md:flex">
-            <SidebarHeader className="gap-3.5 border-b p-4 whitespace-nowrap">
+        <Sidebar variant="inset" collapsible="none" className="flex-1">
+            <SidebarHeader className="border-b p-4 whitespace-nowrap">
                 {spaceQuery.isSuccess && spaceQuery.data?.name}
             </SidebarHeader>
             <SidebarContent>
-                <SidebarGroup className="px-0">
-                    <SidebarGroupContent>
+                <SidebarGroup>
+                    <SidebarGroupContent className="flex flex-col gap-1">
                         {roomsQuery.isSuccess &&
                             roomsQuery.data.map(r => (
                                 <NavRoom

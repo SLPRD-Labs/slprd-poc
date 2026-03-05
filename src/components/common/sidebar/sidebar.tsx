@@ -10,11 +10,7 @@ interface Props extends ComponentProps<typeof Sidebar> {
 
 export const AppSidebar: FC<Props> = ({ activeSpaceId, activeRoomId, ...props }) => {
     return (
-        <Sidebar
-            collapsible="icon"
-            className="overflow-hidden *:data-[sidebar=sidebar]:flex-row"
-            {...props}
-        >
+        <Sidebar collapsible="none" className="h-auto flex-row" {...props}>
             <SpaceSidebar activeSpaceId={activeSpaceId} />
             {activeSpaceId !== undefined && (
                 <RoomSidebar spaceId={activeSpaceId} activeRoomId={activeRoomId} />
