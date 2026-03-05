@@ -16,7 +16,15 @@ export const useAvatarUrl = (mxcAvatarUrl?: string | null): string | null | unde
 
             let avatarUrl: string | null;
             if (mxcAvatarUrl !== undefined && mxcAvatarUrl !== null) {
-                avatarUrl = client.mxcUrlToHttp(mxcAvatarUrl, 32, 32, "crop", true, true, true);
+                avatarUrl = client.mxcUrlToHttp(
+                    mxcAvatarUrl,
+                    undefined,
+                    undefined,
+                    undefined,
+                    true,
+                    true,
+                    true
+                );
             } else {
                 avatarUrl = null;
             }
