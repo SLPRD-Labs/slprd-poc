@@ -4,7 +4,8 @@ import {
     SidebarContent,
     SidebarGroup,
     SidebarGroupContent,
-    SidebarHeader
+    SidebarHeader,
+    SidebarMenu
 } from "@/components/ui/sidebar";
 import { useMatrixClient } from "@/hooks/use-matrix-client";
 import { spaceService } from "@/services/matrix/space";
@@ -40,16 +41,18 @@ export const RoomSidebar: FC<Props> = ({ spaceId, activeRoomId }) => {
             </SidebarHeader>
             <SidebarContent>
                 <SidebarGroup>
-                    <SidebarGroupContent className="flex flex-col gap-1">
-                        {roomsQuery.isSuccess &&
-                            roomsQuery.data.map(r => (
-                                <NavRoom
-                                    key={r.roomId}
-                                    spaceId={spaceId}
-                                    room={r}
-                                    isActive={activeRoomId === r.roomId}
-                                />
-                            ))}
+                    <SidebarGroupContent>
+                        <SidebarMenu className="gap-1">
+                            {roomsQuery.isSuccess &&
+                                roomsQuery.data.map(r => (
+                                    <NavRoom
+                                        key={r.roomId}
+                                        spaceId={spaceId}
+                                        room={r}
+                                        isActive={activeRoomId === r.roomId}
+                                    />
+                                ))}
+                        </SidebarMenu>
                     </SidebarGroupContent>
                 </SidebarGroup>
             </SidebarContent>

@@ -17,12 +17,11 @@ export const NavSpace: FC<Props> = ({ space, isActive }) => {
                 render={
                     <SidebarMenuItem>
                         <SidebarMenuButton
-                            className="p-0"
+                            className="aspect-square size-full rounded-xl p-0"
                             isActive={isActive}
                             render={
                                 <Link to="/space/$spaceId" params={{ spaceId: space.roomId }}>
                                     <RoomAvatar room={space} />
-                                    <span>{space.name}</span>
                                 </Link>
                             }
                         />
