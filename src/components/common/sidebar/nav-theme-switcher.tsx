@@ -1,7 +1,8 @@
 import {
     DropdownMenuGroup,
-    DropdownMenuItem,
     DropdownMenuPortal,
+    DropdownMenuRadioGroup,
+    DropdownMenuRadioItem,
     DropdownMenuSub,
     DropdownMenuSubContent,
     DropdownMenuSubTrigger
@@ -12,7 +13,7 @@ import { Laptop, Moon, Sun } from "lucide-react";
 import type { FC } from "react";
 
 export const NavThemeSwitcher: FC = () => {
-    const { theme, systemTheme, setLightTheme, setDarkTheme, setSystemTheme } = useThemeContext();
+    const { theme, systemTheme, setTheme } = useThemeContext();
 
     const currentTheme = theme === "system" ? systemTheme : theme;
 
@@ -32,18 +33,20 @@ export const NavThemeSwitcher: FC = () => {
                     align="center"
                 >
                     <DropdownMenuGroup>
-                        <DropdownMenuItem onClick={setLightTheme}>
-                            <Sun />
-                            <span>Light</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={setDarkTheme}>
-                            <Moon />
-                            <span>Dark</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={setSystemTheme}>
-                            <Laptop />
-                            <span>System</span>
-                        </DropdownMenuItem>
+                        <DropdownMenuRadioGroup value={theme} onValueChange={setTheme}>
+                            <DropdownMenuRadioItem value="light">
+                                <Sun />
+                                <span>Light</span>
+                            </DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="dark">
+                                <Moon />
+                                <span>Dark</span>
+                            </DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="system">
+                                <Laptop />
+                                <span>System</span>
+                            </DropdownMenuRadioItem>
+                        </DropdownMenuRadioGroup>
                     </DropdownMenuGroup>
                 </DropdownMenuSubContent>
             </DropdownMenuPortal>

@@ -17,7 +17,7 @@ export const NavSpace: FC<Props> = ({ space, isActive }) => {
                 render={
                     <SidebarMenuItem>
                         <SidebarMenuButton
-                            className="p-0 group-data-[collapsible=icon]:p-0!"
+                            className="p-0"
                             isActive={isActive}
                             render={
                                 <Link to="/space/$spaceId" params={{ spaceId: space.roomId }}>

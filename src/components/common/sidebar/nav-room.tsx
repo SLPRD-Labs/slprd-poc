@@ -13,7 +13,7 @@ export const NavRoom: FC<Props> = ({ spaceId, room, isActive }) => {
     return (
         <SidebarMenuItem>
             <SidebarMenuButton
-                className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex flex-col items-start gap-2 border-b text-sm leading-tight whitespace-nowrap last:border-b-0"
+                className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex flex-col items-start gap-2 text-sm leading-tight whitespace-nowrap"
                 isActive={isActive}
                 render={
                     <Link

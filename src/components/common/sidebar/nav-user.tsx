@@ -48,7 +48,7 @@ export const NavUser: FC = () => {
                         render={
                             <SidebarMenuButton
                                 size="lg"
-                                className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground md:h-8 md:p-0"
+                                className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground h-8 p-0"
                             >
                                 <NavUserAvatar currentUser={currentUserQuery.data} />
                                 <ChevronsUpDown className="ml-auto size-4" />
@@ -62,7 +62,7 @@ export const NavUser: FC = () => {
                         sideOffset={4}
                     >
                         <DropdownMenuGroup>
-                            <DropdownMenuLabel className="p-0 font-normal">
+                            <DropdownMenuLabel className="p-0 font-normal text-inherit">
                                 <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                                     <NavUserAvatar currentUser={currentUserQuery.data} />
                                 </div>

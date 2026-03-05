@@ -7,9 +7,7 @@ type Theme = "light" | "dark" | "system";
 interface UseThemeOutput {
     theme: Theme;
     systemTheme: Exclude<Theme, "system">;
-    setDarkTheme: () => void;
-    setLightTheme: () => void;
-    setSystemTheme: () => void;
+    setTheme: (theme: Theme) => void;
 }
 
 const COLOR_SCHEME_MEDIA_QUERY = "(prefers-color-scheme: dark)";
@@ -32,14 +30,6 @@ export const useTheme = (): UseThemeOutput => {
     return {
         theme,
         systemTheme,
-        setLightTheme: () => {
-            setTheme("light");
-        },
-        setDarkTheme: () => {
-            setTheme("dark");
-        },
-        setSystemTheme: () => {
-            setTheme("system");
-        }
+        setTheme
     };
 };

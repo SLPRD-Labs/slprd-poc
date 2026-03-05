@@ -39,7 +39,7 @@ export const SpaceSidebar: FC<Props> = ({ activeSpaceId }) => {
                     <SidebarMenuItem>
                         <SidebarMenuButton
                             size="lg"
-                            className="md:h-8 md:p-0"
+                            className="h-8 p-0"
                             render={
                                 <Link to="/">
                                     <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
@@ -56,7 +56,7 @@ export const SpaceSidebar: FC<Props> = ({ activeSpaceId }) => {
             </SidebarHeader>
             <SidebarContent>
                 <SidebarGroup>
-                    <SidebarGroupContent className="px-1.5 md:px-0">
+                    <SidebarGroupContent>
                         <SidebarMenu className="gap-1">
                             {spacesQuery.isSuccess &&
                                 spacesQuery.data.rootSpaces.map(s => (
