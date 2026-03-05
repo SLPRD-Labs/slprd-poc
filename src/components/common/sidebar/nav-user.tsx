@@ -17,13 +17,15 @@ import {
 } from "@/components/ui/sidebar";
 import { useAuthContext } from "@/contexts/auth-context/auth-context";
 import { useCurrentUserQuery } from "@/hooks/use-current-user-query";
-import { useNavigate } from "@tanstack/react-router";
+import { loginLinkOptions } from "@/libs/utils/router";
+import { useLocation, useNavigate } from "@tanstack/react-router";
 import { ChevronsUpDown, LogOut } from "lucide-react";
 import type { FC } from "react";
 
 export const NavUser: FC = () => {
     const { logout } = useAuthContext();
     const navigate = useNavigate();
+    const location = useLocation();
 
     const { isMobile } = useSidebar();
 
@@ -35,7 +37,7 @@ export const NavUser: FC = () => {
 
     const handleLogout = async () => {
         await logout();
-        await navigate({ to: "/login", replace: true });
+        await navigate(loginLinkOptions(location));
     };
 
     return (
