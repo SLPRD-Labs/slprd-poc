@@ -1,8 +1,8 @@
-import { useMatrixClientContext } from "@/contexts/matrix-client-context/matrix-client-context";
+import { useMatrixClient } from "@/hooks/use-matrix-client";
 import { useEffect, useState } from "react";
 
 export const useAvatarUrl = (mxcAvatarUrl?: string | null): string | null | undefined => {
-    const { client } = useMatrixClientContext();
+    const { client } = useMatrixClient();
 
     const [avatarUrl, setAvatarUrl] = useState<string | null>();
 

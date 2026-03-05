@@ -1,8 +1,8 @@
-import { useMatrixClientContext } from "@/contexts/matrix-client-context/matrix-client-context";
+import { useMatrixClient } from "@/hooks/use-matrix-client";
 import { useQuery } from "@tanstack/react-query";
 
 export const useCurrentUserQuery = () => {
-    const { client, ready } = useMatrixClientContext();
+    const { client, ready } = useMatrixClient();
 
     return useQuery({
         queryKey: ["currentUser"],

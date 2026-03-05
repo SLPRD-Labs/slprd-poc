@@ -33,9 +33,9 @@ export const NavUser: FC = () => {
         return null;
     }
 
-    const handleLogout = () => {
-        logout();
-        void navigate({ to: "/login", replace: true });
+    const handleLogout = async () => {
+        await logout();
+        await navigate({ to: "/login", replace: true });
     };
 
     return (
@@ -69,7 +69,12 @@ export const NavUser: FC = () => {
                         <DropdownMenuSeparator />
                         <NavThemeSwitcher />
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem variant="destructive" onClick={handleLogout}>
+                        <DropdownMenuItem
+                            variant="destructive"
+                            onClick={() => {
+                                void handleLogout();
+                            }}
+                        >
                             <LogOut />
                             Log out
                         </DropdownMenuItem>

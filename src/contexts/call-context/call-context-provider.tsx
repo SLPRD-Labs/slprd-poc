@@ -1,6 +1,6 @@
 import type { ActiveCallContext, ICallContext } from "@/contexts/call-context/call-context";
 import { CallContext } from "@/contexts/call-context/call-context";
-import { useMatrixClientContext } from "@/contexts/matrix-client-context/matrix-client-context";
+import { useMatrixClient } from "@/hooks/use-matrix-client";
 import { Room as LiveKitRoom } from "livekit-client";
 import type { Transport } from "matrix-js-sdk/lib/matrixrtc";
 import type { FC, PropsWithChildren } from "react";
@@ -14,7 +14,7 @@ export const CallContextProvider: FC<PropsWithChildren> = ({ children }) => {
         "room" | "rtcSession" | "liveKitRoom"
     > | null>(null);
 
-    const { client } = useMatrixClientContext();
+    const { client } = useMatrixClient();
 
     const join = async (roomId: string) => {
         setJoining(true);
@@ -50,25 +50,6 @@ export const CallContextProvider: FC<PropsWithChildren> = ({ children }) => {
             }
 
             rtcSession.joinRTCSession({ userId, deviceId, memberId }, [transport]);
-
-            // const body = {
-            //     room_id: room.roomId,
-            //     slot_id: "m.call#ROOM",
-            //     openid_token: await client.getOpenIdToken(),
-            //     member: {
-            //         id: memberId,
-            //         claimed_user_id: userId,
-            //         claimed_device_id: deviceId
-            //     },
-            // };
-            //
-            // const livekitTokenResponse = await fetch(client.getLivekitServiceURL() + "/get_token", {
-            //     method: "POST",
-            //     headers: {
-            //         "Content-Type": "application/json",
-            //     },
-            //     body: JSON.stringify(body),
-            // });
 
             const body = {
                 device_id: deviceId,
