@@ -1,6 +1,4 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAvatarUrl } from "@/hooks/use-avatar-url";
-import { cn } from "@/libs/utils/style";
+import { MatrixAvatar } from "@/components/common/avatar/matrix-avatar";
 import type { User } from "matrix-js-sdk";
 import type { FC } from "react";
 
@@ -10,20 +8,17 @@ interface Props {
 }
 
 export const UserAvatar: FC<Props> = ({ user, className }) => {
-    const avatarUrl = useAvatarUrl(user.avatarUrl);
+    let fallbackText = user.displayName?.charAt(0).toUpperCase();
+    if (fallbackText === undefined || fallbackText === "") {
+        fallbackText = "U";
+    }
 
     return (
-        <Avatar className={cn("rounded-xl after:rounded-xl", className)}>
-            <AvatarImage
-                src={avatarUrl ?? undefined}
-                alt={user.displayName ?? user.userId}
-                className="rounded-xl"
-            />
-            {avatarUrl === null && (
-                <AvatarFallback className="rounded-xl">
-                    {user.displayName?.charAt(0).toUpperCase() ?? "U"}
-                </AvatarFallback>
-            )}
-        </Avatar>
+        <MatrixAvatar
+            avatarUrl={user.avatarUrl}
+            alt={user.displayName ?? user.userId}
+            fallbackText={fallbackText}
+            className={className}
+        />
     );
 };
