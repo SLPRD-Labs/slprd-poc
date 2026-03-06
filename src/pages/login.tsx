@@ -27,7 +27,7 @@ export const Login: FC = () => {
 
         try {
             await login({ baseUrl, username, password });
-            await navigate({ to: redirect ?? "/" });
+            await navigate({ to: redirect !== undefined && redirect !== "" ? redirect : "/" });
         } catch (err) {
             setError(
                 typeof err === "object" &&
