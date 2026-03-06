@@ -1,5 +1,4 @@
 import { useAuthContext } from "@/contexts/auth-context/auth-context";
-import { useMatrixClientContext } from "@/contexts/matrix-client-context/matrix-client-context";
 import { routeTree } from "@/routeTree.gen";
 import { useQueryClient } from "@tanstack/react-query";
 import { createRouter, RouterProvider } from "@tanstack/react-router";
@@ -12,9 +11,7 @@ const router = createRouter({
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         queryClient: undefined!,
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        authContext: undefined!,
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        matrixClientContext: undefined!
+        authContext: undefined!
     }
 });
 
@@ -29,14 +26,7 @@ export const TanStackRouterProvider: FC = () => {
 
     const authContext = useAuthContext();
 
-    const matrixClientContext = useMatrixClientContext();
-
-    return (
-        <RouterProvider
-            router={router}
-            context={{ queryClient, authContext, matrixClientContext }}
-        />
-    );
+    return <RouterProvider router={router} context={{ queryClient, authContext }} />;
 };
 
 export const TanStackRouterDevtoolsPlugin: FC = () => {
