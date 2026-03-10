@@ -7,6 +7,7 @@ import {
     ClientEvent,
     createClient,
     EventTimeline,
+    EventType,
     RoomEvent,
     RoomStateEvent,
     SyncState
@@ -79,11 +80,15 @@ export const MatrixClientContextProvider: FC<PropsWithChildren> = ({ children })
             }
         };
 
-        const onRoomStateEvents: ClientEventHandlerMap[RoomStateEvent.Events] = (_, state) => {
+        const onRoomStateEvents: ClientEventHandlerMap[RoomStateEvent.Events] = (event, state) => {
             const room = client.getRoom(state.roomId);
 
             if (room?.isSpaceRoom()) {
                 void queryClient.invalidateQueries({ queryKey: ["spaces"] });
+
+                if (event.getType() === (EventType.SpaceChild as string)) {
+                    void queryClient.invalidateQueries({ queryKey: ["space", state.roomId, "rooms"] });
+                }
             }
         };
 
