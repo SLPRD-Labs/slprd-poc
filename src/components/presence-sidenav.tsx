@@ -29,7 +29,7 @@ export const PresenceSidenav: FC = () => {
     return (
         <div className="flex h-full w-80 flex-col gap-4 overflow-y-auto border-l p-3">
             <div className="flex flex-col gap-2">
-                <h3 className="px-2 text-sm font-semibold text-gray-500">En ligne</h3>
+                <h3 className="px-2 text-sm font-semibold text-muted">En ligne</h3>
                 {online.map(([userId, data]) => (
                     <div key={userId}>
                         <ProfileCard
@@ -45,7 +45,7 @@ export const PresenceSidenav: FC = () => {
                 <>
                     <hr className="border-gray-500" />
                     <div className="flex flex-col gap-2">
-                        <h3 className="px-2 text-sm font-semibold text-gray-500">Hors ligne</h3>
+                        <h3 className="px-2 text-sm font-semibold text-muted">Hors ligne</h3>
                         {offline.map(([userId, data]) => (
                             <div key={userId} className="opacity-60">
                                 <ProfileCard

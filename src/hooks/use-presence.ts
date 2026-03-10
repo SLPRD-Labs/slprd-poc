@@ -32,12 +32,12 @@ const computePresenceMap = (client: MatrixClient | null): PresenceMap => {
     return map;
 };
 
-export const usePresence = (matrixClient: MatrixClient | null): PresenceMap => {
+export const usePresence = (matrixClient: MatrixClient): PresenceMap => {
     const [presenceMap, setPresenceMap] = useState<PresenceMap>(() =>
         computePresenceMap(matrixClient)
     );
 
-    const [prevClient, setPrevClient] = useState<MatrixClient | null>(matrixClient);
+    const [prevClient, setPrevClient] = useState<MatrixClient>(matrixClient);
 
     if (matrixClient !== prevClient) {
         setPrevClient(matrixClient);
@@ -45,8 +45,6 @@ export const usePresence = (matrixClient: MatrixClient | null): PresenceMap => {
     }
 
     useEffect(() => {
-        if (!matrixClient) return;
-
         const handlePresenceChange = (_event: MatrixEvent | undefined, user: User): void => {
             setPresenceMap(prev => ({
                 ...prev,
