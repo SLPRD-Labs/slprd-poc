@@ -87,7 +87,9 @@ export const MatrixClientContextProvider: FC<PropsWithChildren> = ({ children })
                 void queryClient.invalidateQueries({ queryKey: ["spaces"] });
 
                 if (event.getType() === (EventType.SpaceChild as string)) {
-                    void queryClient.invalidateQueries({ queryKey: ["space", state.roomId, "rooms"] });
+                    void queryClient.invalidateQueries({
+                        queryKey: ["space", state.roomId, "rooms"]
+                    });
                 }
             }
         };
