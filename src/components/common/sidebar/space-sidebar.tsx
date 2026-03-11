@@ -17,6 +17,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Command } from "lucide-react";
 import type { FC } from "react";
+import { CreateServerButton } from "@/components/common/sidebar/create-server-button";
 
 interface Props {
     activeSpaceId?: string;
@@ -66,6 +67,8 @@ export const SpaceSidebar: FC<Props> = ({ activeSpaceId }) => {
                                         isActive={activeSpaceId === s.roomId}
                                     />
                                 ))}
+
+                            <CreateServerButton />
                         </SidebarMenu>
                     </SidebarGroupContent>
                 </SidebarGroup>
