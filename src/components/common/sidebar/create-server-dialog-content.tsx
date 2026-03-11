@@ -2,18 +2,25 @@ import { useMatrixClientContext } from "@/contexts/matrix-client-context/matrix-
 import { useQueryClient } from "@tanstack/react-query";
 import { EventType, HistoryVisibility, Preset, RoomType } from "matrix-js-sdk";
 import type { FC, SyntheticEvent } from "react";
-import { useState } from "react";
-import { SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useState, useEffect } from "react";
+import {
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription
+} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "@tanstack/react-router";
+import { Plus } from "lucide-react";
 
 interface Props {
+    open: boolean;
     onSuccess: () => void;
 }
 
-export const CreateServerSheetContent: FC<Props> = ({ onSuccess }) => {
+export const CreateServerDialogContent: FC<Props> = ({ open, onSuccess }) => {
     const { client } = useMatrixClientContext();
     const queryClient = useQueryClient();
     const navigate = useNavigate();
@@ -23,6 +30,16 @@ export const CreateServerSheetContent: FC<Props> = ({ onSuccess }) => {
     const [isPublic, setIsPublic] = useState(false);
     const [alias, setAlias] = useState("");
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if (open) {
+            setName("");
+            setTopic("");
+            setIsPublic(false);
+            setAlias("");
+            setLoading(false);
+        }
+    }, [open]);
 
     const handleSubmit = async (e: SyntheticEvent) => {
         e.preventDefault();
@@ -104,17 +121,32 @@ export const CreateServerSheetContent: FC<Props> = ({ onSuccess }) => {
     };
 
     return (
-        <SheetContent side="left" className="sm:max-w-md">
-            <SheetHeader>
-                <SheetTitle>Create a Server</SheetTitle>
-            </SheetHeader>
+        <DialogContent>
+            <DialogHeader>
+                <div className="flex flex-row items-center gap-4">
+                    <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-indigo-500 text-white">
+                        <Plus className="size-6" />
+                    </div>
+                    <div className="flex flex-col text-left">
+                        <DialogTitle>Créer un serveur</DialogTitle>
+                        <DialogDescription>
+                            Configurez votre nouvel espace de discussion
+                        </DialogDescription>
+                    </div>
+                </div>
+            </DialogHeader>
 
-            <form onSubmit={e => void handleSubmit(e)} className="mt-6 flex flex-col gap-6">
-                <div className="grid gap-2">
-                    <Label htmlFor="space-name">Name</Label>
+            <form
+                onSubmit={e => {
+                    void handleSubmit(e);
+                }}
+                className="flex flex-col gap-4 py-2"
+            >
+                <div className="grid gap-1.5">
+                    <Label htmlFor="space-name">Nom</Label>
                     <Input
                         id="space-name"
-                        placeholder="e.g. My Server"
+                        placeholder="Ex: Mon Super Serveur"
                         value={name}
                         onChange={e => {
                             setName(e.target.value);
@@ -123,11 +155,11 @@ export const CreateServerSheetContent: FC<Props> = ({ onSuccess }) => {
                     />
                 </div>
 
-                <div className="grid gap-2">
-                    <Label htmlFor="space-topic">Description (optional)</Label>
+                <div className="grid gap-1.5">
+                    <Label htmlFor="space-topic">Description (optionnel)</Label>
                     <Input
                         id="space-topic"
-                        placeholder="What is this server for?"
+                        placeholder="À quoi sert ce serveur ?"
                         value={topic}
                         onChange={e => {
                             setTopic(e.target.value);
@@ -135,7 +167,7 @@ export const CreateServerSheetContent: FC<Props> = ({ onSuccess }) => {
                     />
                 </div>
 
-                <div className="border-border flex items-center gap-3 rounded-md border p-4">
+                <div className="border-border flex items-center gap-3 rounded-lg border p-4">
                     <input
                         type="checkbox"
                         id="space-public"
@@ -146,19 +178,19 @@ export const CreateServerSheetContent: FC<Props> = ({ onSuccess }) => {
                         className="size-4 rounded border-gray-300"
                     />
                     <div className="grid gap-1.5 leading-none">
-                        <Label htmlFor="space-public">Make this server public</Label>
+                        <Label htmlFor="space-public">Rendre ce serveur public</Label>
                         <p className="text-muted-foreground text-xs">
-                            Anyone will be able to find and join it.
+                            N&#39;importe qui pourra le trouver et le rejoindre.
                         </p>
                     </div>
                 </div>
 
                 {isPublic && (
-                    <div className="grid gap-2">
-                        <Label htmlFor="space-alias">Server Address (optional)</Label>
+                    <div className="grid gap-1.5">
+                        <Label htmlFor="space-alias">Adresse du serveur (optionnel)</Label>
                         <Input
                             id="space-alias"
-                            placeholder="e.g. my-server"
+                            placeholder="ex: mon-serveur"
                             value={alias}
                             onChange={e => {
                                 setAlias(e.target.value);
@@ -167,10 +199,10 @@ export const CreateServerSheetContent: FC<Props> = ({ onSuccess }) => {
                     </div>
                 )}
 
-                <Button type="submit" disabled={loading} className="mt-4">
-                    {loading ? "Creating..." : "Create Server"}
+                <Button type="submit" disabled={loading} className="mt-2">
+                    {loading ? "Création en cours..." : "Créer le serveur"}
                 </Button>
             </form>
-        </SheetContent>
+        </DialogContent>
     );
 };
