@@ -14,7 +14,9 @@ export const Route = createFileRoute("/login")({
     beforeLoad: ({ context, search }) => {
         if (context.authContext.session !== null) {
             // eslint-disable-next-line @typescript-eslint/only-throw-error
-            throw redirect({ to: search.redirect });
+            throw redirect({
+                to: search.redirect !== undefined && search.redirect !== "" ? search.redirect : "/"
+            });
         }
     },
     component: Login

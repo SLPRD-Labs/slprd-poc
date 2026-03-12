@@ -9,9 +9,10 @@ import {
     SidebarHeader,
     SidebarMenu,
     SidebarMenuButton,
-    SidebarMenuItem
+    SidebarMenuItem,
+    SidebarSeparator
 } from "@/components/ui/sidebar";
-import { useMatrixClientContext } from "@/contexts/matrix-client-context/matrix-client-context";
+import { useMatrixClient } from "@/hooks/use-matrix-client";
 import { spaceService } from "@/services/matrix/space";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
@@ -23,7 +24,7 @@ interface Props {
 }
 
 export const SpaceSidebar: FC<Props> = ({ activeSpaceId }) => {
-    const { client, ready } = useMatrixClientContext();
+    const { client, ready } = useMatrixClient();
 
     const spacesQuery = useQuery({
         queryKey: ["spaces", "root", "invited"],
@@ -33,20 +34,20 @@ export const SpaceSidebar: FC<Props> = ({ activeSpaceId }) => {
     });
 
     return (
-        <Sidebar collapsible="none" className="w-[calc(var(--sidebar-width-icon)+1px)]! border-r">
-            <SidebarHeader>
+        <Sidebar
+            collapsible="none"
+            className="w-[calc(var(--sidebar-width-icon)+1px)]! border-r p-1.5"
+        >
+            <SidebarHeader className="m-1 p-1">
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton
                             size="lg"
-                            className="md:h-8 md:p-0"
+                            className="aspect-square size-full rounded-xl p-0"
                             render={
                                 <Link to="/">
-                                    <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+                                    <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-full items-center justify-center rounded-xl">
                                         <Command className="size-4" />
-                                    </div>
-                                    <div className="grid flex-1 text-left text-sm leading-tight">
-                                        <span className="truncate font-medium">SLPRD POC</span>
                                     </div>
                                 </Link>
                             }
@@ -54,10 +55,11 @@ export const SpaceSidebar: FC<Props> = ({ activeSpaceId }) => {
                     </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarHeader>
+            <SidebarSeparator className="mx-3.5 data-horizontal:w-auto" />
             <SidebarContent>
                 <SidebarGroup>
-                    <SidebarGroupContent className="px-1.5 md:px-0">
-                        <SidebarMenu className="gap-1">
+                    <SidebarGroupContent>
+                        <SidebarMenu className="gap-2">
                             {spacesQuery.isSuccess &&
                                 spacesQuery.data.rootSpaces.map(s => (
                                     <NavSpace
@@ -71,13 +73,7 @@ export const SpaceSidebar: FC<Props> = ({ activeSpaceId }) => {
                 </SidebarGroup>
             </SidebarContent>
             <SidebarFooter>
-                <NavUser
-                    user={{
-                        name: "shadcn",
-                        email: "m@example.com",
-                        avatar: "https://ui.shadcn.com/avatars/shadcn.jpg"
-                    }}
-                />
+                <NavUser />
             </SidebarFooter>
         </Sidebar>
     );

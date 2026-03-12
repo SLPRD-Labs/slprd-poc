@@ -129,12 +129,12 @@
 }
 
 @layer reset {
+    html {
+        min-width: 350px;
+    }
+
     a,
     button {
         -webkit-tap-highlight-color: transparent;
-    }
-
-    html {
-        min-width: 350px;
     }
 }

@@ -1,19 +1,19 @@
-import { useMatrixClientContext } from "@/contexts/matrix-client-context/matrix-client-context";
+import { useMatrixClient } from "@/hooks/use-matrix-client";
+import { ArrowDown, SendHorizonal } from "lucide-react";
 import type { MatrixEvent } from "matrix-js-sdk";
 import { RoomEvent } from "matrix-js-sdk";
-import { useCallback, useEffect, useRef, useState } from "react";
 import type { FC } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../ui/button";
-import { ArrowDown, SendHorizonal } from "lucide-react";
-import MessageItem from "./message-item";
 import { Textarea } from "../ui/textarea";
+import MessageItem from "./message-item";
 
 interface Props {
     roomId: string;
 }
 
 export const TextChat: FC<Props> = ({ roomId }) => {
-    const { client } = useMatrixClientContext();
+    const { client } = useMatrixClient();
     const [messages, setMessages] = useState<MatrixEvent[]>(
         () =>
             client

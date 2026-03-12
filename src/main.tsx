@@ -19,9 +19,9 @@ const root = createRoot(rootElement);
 
 root.render(
     <StrictMode>
-        <AuthContextProvider>
-            <TanStackQueryProvider>
-                <MatrixClientContextProvider>
+        <TanStackQueryProvider>
+            <MatrixClientContextProvider>
+                <AuthContextProvider>
                     <TanStackRouterProvider />
                     <TanStackDevtools
                         plugins={[
@@ -37,8 +37,8 @@ root.render(
                             }
                         ]}
                     />
-                </MatrixClientContextProvider>
-            </TanStackQueryProvider>
-        </AuthContextProvider>
+                </AuthContextProvider>
+            </MatrixClientContextProvider>
+        </TanStackQueryProvider>
     </StrictMode>
 );
