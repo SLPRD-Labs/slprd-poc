@@ -10,7 +10,6 @@ const MessageItem: FC<{ event: MatrixEvent }> = ({ event }) => {
     const [hovered, setHovered] = useState(false);
 
     const toggleReaction = async (emoji: string) => {
-
         const roomId = event.getRoomId();
         const eventId = event.getId();
         if (!roomId || !eventId) {
@@ -24,16 +23,17 @@ const MessageItem: FC<{ event: MatrixEvent }> = ({ event }) => {
         const relationsContainer = (room as any)?.relations;
 
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-        const relations = relationsContainer?.getChildEventsForEvent(eventId, "m.annotation", "m.reaction");
+        const relations = relationsContainer?.getChildEventsForEvent(
+            eventId,
+            "m.annotation",
+            "m.reaction"
+        );
 
         const userId = client.getUserId();
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
         const myReactionEvent = (relations?.getRelations() as MatrixEvent[] | undefined)?.find(
-            (r) =>
-                r.getSender() === userId &&
-                r.getContent()["m.relates_to"]?.key === emoji
+            r => r.getSender() === userId && r.getContent()["m.relates_to"]?.key === emoji
         );
-
 
         try {
             if (myReactionEvent) {
@@ -66,7 +66,11 @@ const MessageItem: FC<{ event: MatrixEvent }> = ({ event }) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
         const relationsContainer = (room as any)?.relations;
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-        const relations = relationsContainer?.getChildEventsForEvent(eventId, "m.annotation", "m.reaction");
+        const relations = relationsContainer?.getChildEventsForEvent(
+            eventId,
+            "m.annotation",
+            "m.reaction"
+        );
 
         if (!relations) {
             console.log("Render: Pas de relations");
@@ -74,8 +78,9 @@ const MessageItem: FC<{ event: MatrixEvent }> = ({ event }) => {
         }
 
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-        const annotations = relations.getSortedAnnotationsByKey() as [string, Set<MatrixEvent>][] | undefined;
-
+        const annotations = relations.getSortedAnnotationsByKey() as
+            | [string, Set<MatrixEvent>][]
+            | undefined;
 
         if (!annotations) return null;
 
@@ -86,7 +91,7 @@ const MessageItem: FC<{ event: MatrixEvent }> = ({ event }) => {
                     if (count === 0) return null;
 
                     const hasMyReaction = Array.from(eventsSet).some(
-                        (ev) => ev.getSender() === client.getUserId()
+                        ev => ev.getSender() === client.getUserId()
                     );
 
                     return (
@@ -100,7 +105,7 @@ const MessageItem: FC<{ event: MatrixEvent }> = ({ event }) => {
                             }`}
                         >
                             <span>{emoji}</span>
-                            <span className="font-bold text-muted">{count}</span>
+                            <span className="text-muted font-bold">{count}</span>
                         </button>
                     );
                 })}
@@ -111,8 +116,12 @@ const MessageItem: FC<{ event: MatrixEvent }> = ({ event }) => {
     return (
         <div
             className="group relative flex flex-col rounded px-4 py-1 hover:bg-gray-50"
-            onMouseEnter={() => { setHovered(true); }}
-            onMouseLeave={() => { setHovered(false); }}
+            onMouseEnter={() => {
+                setHovered(true);
+            }}
+            onMouseLeave={() => {
+                setHovered(false);
+            }}
         >
             {hovered && (
                 <div className="absolute -top-3 right-4 z-10 flex items-center gap-1 rounded-md border bg-white px-1 py-0.5 shadow-sm">
@@ -123,16 +132,10 @@ const MessageItem: FC<{ event: MatrixEvent }> = ({ event }) => {
                         <Pen size={16} />
                     </Button>
                     <span className="text-gray-300">|</span>
-                    <Button
-                        variant="ghost"
-                        onClick={() => void toggleReaction("❤️")}
-                    >
+                    <Button variant="ghost" onClick={() => void toggleReaction("❤️")}>
                         <span className="text-xs">❤️</span>
                     </Button>
-                    <Button
-                        variant="ghost"
-                        onClick={() => void toggleReaction("👍")}
-                    >
+                    <Button variant="ghost" onClick={() => void toggleReaction("👍")}>
                         <span className="text-xs">👍</span>
                     </Button>
                 </div>
