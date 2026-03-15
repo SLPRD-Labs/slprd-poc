@@ -49,11 +49,8 @@ const MessageItem: FC<{ event: MatrixEvent }> = ({ event }) => {
                         key: emoji
                     }
                 };
-                console.time("⏱️ Temps requête envoi");
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 await client.sendEvent(roomId, "m.reaction" as any, content);
-                console.timeEnd("⏱️ Temps requête envoi");
-                console.log("4. ✅ Envoi confirmé par le serveur");
             }
         } catch (error) {
             console.error("❌ Erreur pendant l'appel Matrix :", error);
