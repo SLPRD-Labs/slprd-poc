@@ -291,10 +291,6 @@ const MessageItem: FC<{ event: MatrixEvent, roomId: string }> = ({ event, roomId
                             }}
                             onKeyDown={handleKeyDown}
                         />
-                        <Button onClick={handleSave}>Save</Button>
-                        <Button variant="outline" onClick={handleCancel}>
-                            Cancel
-                        </Button>
                     </div>
                 
                     <div className="text-xs ml-2 mt-1 text-muted-foreground">
