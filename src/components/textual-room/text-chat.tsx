@@ -118,14 +118,53 @@ export const TextChat: FC<Props> = ({ roomId }) => {
         void client.sendTyping(roomId, true, 4000);
     };
 
+    const formatDate = (timestamp: number) => {
+        const date = new Date(timestamp);
+        const now = new Date();
+        const yesterday = new Date();
+        yesterday.setDate(now.getDate() - 1);
+
+        if (date.toDateString() === now.toDateString()) {
+            return "Aujourd'hui";
+        }
+        if (date.toDateString() === yesterday.toDateString()) {
+            return "Hier";
+        }
+
+        return date.toLocaleDateString ("fr-FR", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+        });
+    }
+
     return (
         <div className="flex h-full w-full flex-col overflow-hidden">
             <div ref={scrollRef} className="flex min-h-0 flex-1 flex-col overflow-y-auto py-2">
-                {messages.map(event => {
+                {messages.map((event, index) => {
                     if (event.getType() === "m.room.message") {
-                        return <MessageItem key={event.getId()} event={event} roomId={roomId} />;
-                    }
 
+                        const currentDate = new Date(event.getTs()).toDateString();
+                        const prevDate = index > 0
+                            ? new Date(messages[index - 1].getTs()).toDateString()
+                            : null;
+                        
+                        return (
+                            <div key={event.getId()}>
+                                {currentDate !== prevDate && (
+                                    <div className="flex items-center gap-2 my-2 px-4">
+                                        <div className="flex-1 h-px bg-border" />
+                                        <span className="text-xs text-muted-foreground">
+                                            {formatDate(event.getTs())}
+                                        </span>
+                                        <div className="flex-1 h-px bg-border" />
+                                    </div>
+                                )}
+                                <MessageItem event={event} roomId={roomId} />
+                            </div>
+                        );
+                    }
+                    
                     if (event.getType() === "m.room.member") {
                         return (
                             <div
