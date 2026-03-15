@@ -213,8 +213,7 @@ const MessageItem: FC<{ event: MatrixEvent, roomId: string }> = ({ event, roomId
             e.preventDefault();
             handleCancel();
         }
-    };
-    
+    };    
     return (
         <div
             className="group hover:bg-secondary relative flex flex-col rounded px-4 py-1"
@@ -266,6 +265,7 @@ const MessageItem: FC<{ event: MatrixEvent, roomId: string }> = ({ event, roomId
                         hour: "2-digit",
                         minute: "2-digit"
                     })}
+                    {isEdited ? (" (modifié)") : ""}
                     {isEdited ? (" (modifié)") : ""}
                 </span>
             </div>
