@@ -100,7 +100,7 @@ const MessageItem: FC<{ event: MatrixEvent }> = ({ event }) => {
                             }`}
                         >
                             <span>{emoji}</span>
-                            <span className="font-bold">{count}</span>
+                            <span className="font-bold text-muted">{count}</span>
                         </button>
                     );
                 })}
