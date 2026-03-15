@@ -101,11 +101,11 @@ const MessageItem: FC<{ event: MatrixEvent }> = ({ event }) => {
                             className={`flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-xs transition-colors ${
                                 hasMyReaction
                                     ? "border-purple-300 bg-purple-100 text-purple-800"
-                                    : "border-gray-200 bg-gray-50 hover:bg-gray-100"
+                                    : "border-gray-200 bg-gray-50 hover:bg-gray-100 text-black"
                             }`}
                         >
                             <span>{emoji}</span>
-                            <span className="text-muted font-bold">{count}</span>
+                            <span className="font-bold">{count}</span>
                         </button>
                     );
                 })}
