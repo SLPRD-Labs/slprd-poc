@@ -101,7 +101,7 @@ const MessageItem: FC<{ event: MatrixEvent }> = ({ event }) => {
                             className={`flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-xs transition-colors ${
                                 hasMyReaction
                                     ? "border-purple-300 bg-purple-100 text-purple-800"
-                                    : "border-gray-200 bg-gray-50 hover:bg-gray-100 text-black"
+                                    : "border-gray-200 bg-gray-50 text-black hover:bg-gray-100"
                             }`}
                         >
                             <span>{emoji}</span>
