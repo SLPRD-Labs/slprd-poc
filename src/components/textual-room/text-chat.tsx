@@ -1,6 +1,6 @@
 import { useMatrixClient } from "@/hooks/use-matrix-client";
 import type { MatrixEvent } from "matrix-js-sdk";
-import { KnownMembership, RoomEvent, RoomMemberEvent } from "matrix-js-sdk";
+import { KnownMembership, RelationType, RoomEvent, RoomMemberEvent } from "matrix-js-sdk";
 import type { FC, KeyboardEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowDown, SendHorizonal } from "lucide-react";
@@ -25,8 +25,11 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                 .getEvents()
                 .filter(
                     event =>
-                        event.getType() === "m.room.message" || event.getType() === "m.room.member"
-                ) ?? []
+                        {
+                            if (event.getType() !== "m.room.message" || event.getType() === "m.room.member") return false;
+                    const relatesTo = event.getContent()["m.relates_to"];
+                    return relatesTo?.rel_type !== RelationType.Replace;
+                }) ?? []                   
     );
 
     const [typingUsers, setTypingUsers] = useState<string>("");
@@ -41,10 +44,11 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                 .getRoom(roomId)
                 ?.getLiveTimeline()
                 .getEvents()
-                .filter(
-                    event =>
-                        event.getType() === "m.room.message" || event.getType() === "m.room.member"
-                ) ?? [];
+                .filter(event => {
+                    if (event.getType() === "m.room.message" || event.getType() === "m.room.member") return false;
+                    const relatesTo = event.getContent()["m.relates_to"];
+                    return relatesTo?.rel_type !== RelationType.Replace;
+                }) ?? [] ;
         setMessages([...events]);
     }, [client, roomId]);
 
@@ -119,7 +123,7 @@ export const TextChat: FC<Props> = ({ roomId }) => {
             <div ref={scrollRef} className="flex min-h-0 flex-1 flex-col overflow-y-auto py-2">
                 {messages.map(event => {
                     if (event.getType() === "m.room.message") {
-                        return <MessageItem key={event.getId()} event={event} />;
+                        return <MessageItem key={event.getId()} event={event} roomId={roomId} />;
                     }
 
                     if (event.getType() === "m.room.member") {

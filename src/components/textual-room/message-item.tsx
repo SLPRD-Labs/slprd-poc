@@ -1,10 +1,10 @@
 import { useMatrixClient } from "@/hooks/use-matrix-client";
 import { Pen, Trash } from "lucide-react";
-import type { MatrixEvent } from "matrix-js-sdk";
-import { EventType, RelationType } from "matrix-js-sdk";
+import { MatrixEventEvent, MsgType, RelationType, EventType, type MatrixEvent } from "matrix-js-sdk";
 import type { FC } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
+import { Textarea } from "../ui/textarea";
 
 interface ReactionContent {
     "m.relates_to"?: {
@@ -45,8 +45,16 @@ const collectReactionsByEmoji = (events: MatrixEvent[], targetEventId: string) =
     return byEmoji;
 };
 
-const MessageItem: FC<{ event: MatrixEvent }> = ({ event }) => {
+const MessageItem: FC<{ event: MatrixEvent, roomId: string }> = ({ event, roomId }) => {
     const { client } = useMatrixClient();
+    const currentUser = client.getUserId();
+    const userSender = event.getSender();
+    const isSender = userSender === currentUser;
+    const isEdited = !!event.replacingEvent();
+    const [replacingEvent, setReplacingEvent] = useState(event.replacingEvent());
+    const [isEditing, setIsEditing] = useState(false);
+    const currentMessage = replacingEvent?.getContent()["m.new_content"]?.body ?? event.getContent().body;
+    const [editedContent, setEditedContent] = useState(currentMessage);
     const [hovered, setHovered] = useState(false);
     const [isReactionPending, setIsReactionPending] = useState(false);
 
@@ -143,6 +151,58 @@ const MessageItem: FC<{ event: MatrixEvent }> = ({ event }) => {
         );
     };
 
+    useEffect(() => {
+        const onReplaced = () => {
+            setReplacingEvent(event.replacingEvent());
+        };
+        event.on(MatrixEventEvent.Replaced, onReplaced);
+        return () => {
+            event.off(MatrixEventEvent.Replaced, onReplaced);
+        };
+    }, [event]);
+
+    
+    const handleEdit = () => {
+        setIsEditing(true);
+    }
+
+    const handleSave = async () => {
+        const messageToSend = editedContent.trim();
+        await client.sendMessage(roomId, null, {
+            msgtype: MsgType.Text,
+            body: `*${messageToSend}`,
+            "m.new_content": {
+                msgtype: MsgType.Text,
+                body: `${messageToSend}`
+            },
+            "m.relates_to": {
+                rel_type: RelationType.Replace,
+                event_id: event.getId()!,
+            },
+        });
+        setIsEditing(false);
+    };
+
+    const handleCancel = () => {
+        setEditedContent(currentMessage);
+        setIsEditing(false);
+    };
+
+    const handleRemove = () => {
+    };
+
+    const handleKeyDown = async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            await handleSave();
+        }
+
+        if (e.key === "Escape") {
+            e.preventDefault();
+            handleCancel();
+        }
+    };
+    
     return (
         <div
             className="group hover:bg-secondary relative flex flex-col rounded px-4 py-1"
@@ -153,14 +213,18 @@ const MessageItem: FC<{ event: MatrixEvent }> = ({ event }) => {
                 setHovered(false);
             }}
         >
-            {hovered && (
+            {hovered && !isEditing && (
                 <div className="bg-background absolute -top-3 right-4 z-10 flex items-center gap-1 rounded-md border px-1 py-0.5 shadow-sm">
-                    <Button variant="ghost" disabled title="Remove">
-                        <Trash size={16} />
-                    </Button>
-                    <Button variant="ghost" disabled title="Edit">
-                        <Pen size={16} />
-                    </Button>
+                    {isSender && (
+                        <>
+                            <Button variant="ghost" className="cursor-pointer" title="Remove" onClick={handleRemove}>
+                                <Trash size={16} />
+                            </Button>
+                            <Button variant="ghost" className="cursor-pointer" title="Edit" onClick={handleEdit}>
+                                <Pen size={16} />
+                            </Button>
+                        </>
+                    )}
                     <span className="text-gray-300">|</span>
                     <Button
                         variant="ghost"
@@ -190,11 +254,36 @@ const MessageItem: FC<{ event: MatrixEvent }> = ({ event }) => {
                         hour: "2-digit",
                         minute: "2-digit"
                     })}
+                    {isEdited ? (" (modifié)") : ""}
                 </span>
             </div>
             <span className="text-sm wrap-break-word whitespace-pre-wrap">
-                {event.getContent().body as string}
+                {currentMessage as string}
             </span>
+
+            {isEditing ? (  
+                <>
+                    <div className="flex w-full items-center gap-2">
+                        <Textarea
+                            value={editedContent}
+                            onChange={e => setEditedContent(e.target.value)}
+                            autoFocus={true}
+                        
+                            onKeyDown={handleKeyDown}
+                        />
+                        <Button onClick={handleSave}>Save</Button>
+                        <Button variant="outline" onClick={handleCancel}>
+                            Cancel
+                        </Button>
+                    </div>
+                
+                    <div className="text-xs ml-2 mt-1 text-muted-foreground">
+                        <p>Entrer pour <a className="text-blue-500 hover:underline" href="#" onClick={handleSave}>sauvegarder</a>, 
+                            Echap pour <a className="text-blue-500 hover:underline" href="#" onClick={handleCancel}>annuler</a>
+                        </p>
+                    </div>
+                </>
+            ) : null}
             {renderReactions()}
         </div>
     );
