@@ -53,6 +53,8 @@ const MessageItem: FC<{ event: MatrixEvent, roomId: string }> = ({ event, roomId
     const isEdited = !!event.replacingEvent();
     const [replacingEvent, setReplacingEvent] = useState(event.replacingEvent());
     const [isEditing, setIsEditing] = useState(false);
+    const [isRedacted, setIsRedacted] = useState(event.isRedacted());
+    const isRemoved = isRedacted || replacingEvent?.isRedacted();
     const currentMessage = replacingEvent?.getContent()["m.new_content"]?.body ?? event.getContent().body;
     const [editedContent, setEditedContent] = useState(currentMessage);
     const [hovered, setHovered] = useState(false);
@@ -161,7 +163,16 @@ const MessageItem: FC<{ event: MatrixEvent, roomId: string }> = ({ event, roomId
         };
     }, [event]);
 
-    
+    useEffect(() => {
+        const onRedacted = (_event: MatrixEvent, _redactionEvent: MatrixEvent) => {
+            setIsRedacted(true);
+        };
+        event.on(MatrixEventEvent.BeforeRedaction, onRedacted);
+        return () => {
+            event.off(MatrixEventEvent.BeforeRedaction, onRedacted);
+        };
+    }, [event]);
+
     const handleEdit = () => {
         setIsEditing(true);
     }
@@ -188,7 +199,8 @@ const MessageItem: FC<{ event: MatrixEvent, roomId: string }> = ({ event, roomId
         setIsEditing(false);
     };
 
-    const handleRemove = () => {
+    const handleRemove = async () => {
+        await client.redactEvent(roomId, event.getId()!);
     };
 
     const handleKeyDown = async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -215,7 +227,7 @@ const MessageItem: FC<{ event: MatrixEvent, roomId: string }> = ({ event, roomId
         >
             {hovered && !isEditing && (
                 <div className="bg-background absolute -top-3 right-4 z-10 flex items-center gap-1 rounded-md border px-1 py-0.5 shadow-sm">
-                    {isSender && (
+                    {isSender && !isRemoved && (
                         <>
                             <Button variant="ghost" className="cursor-pointer" title="Remove" onClick={handleRemove}>
                                 <Trash size={16} />
@@ -258,7 +270,12 @@ const MessageItem: FC<{ event: MatrixEvent, roomId: string }> = ({ event, roomId
                 </span>
             </div>
             <span className="text-sm wrap-break-word whitespace-pre-wrap">
-                {currentMessage as string}
+                <span className="text-sm wrap-break-word whitespace-pre-wrap">
+                    {isRemoved 
+                        ? <span className="text-muted-foreground italic text-xs">Message supprimé</span>
+                        : currentMessage
+                    }
+                </span>
             </span>
 
             {isEditing ? (  
@@ -268,7 +285,10 @@ const MessageItem: FC<{ event: MatrixEvent, roomId: string }> = ({ event, roomId
                             value={editedContent}
                             onChange={e => setEditedContent(e.target.value)}
                             autoFocus={true}
-                        
+                            onFocus={e => {
+                                const len = e.target.value.length;
+                                e.target.setSelectionRange(len, len);
+                            }}
                             onKeyDown={handleKeyDown}
                         />
                         <Button onClick={handleSave}>Save</Button>
