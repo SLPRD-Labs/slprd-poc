@@ -30,6 +30,7 @@ export const CreateServerDialogContent: FC<Props> = ({ open, onSuccess }) => {
     const [isPublic, setIsPublic] = useState(false);
     const [alias, setAlias] = useState("");
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         if (open) {
@@ -38,21 +39,36 @@ export const CreateServerDialogContent: FC<Props> = ({ open, onSuccess }) => {
             setIsPublic(false);
             setAlias("");
             setLoading(false);
+            setError(null);
         }
     }, [open]);
 
     const handleSubmit = async (e: SyntheticEvent) => {
         e.preventDefault();
-        if (!name.trim()) return;
+
+        const trimmedName = name.trim();
+        if (!trimmedName) return;
+
+        const trimmedAlias = alias.trim();
+        if (isPublic && trimmedAlias) {
+            const aliasLocalpartRegex = /^[0-9a-zA-Z._=-]+$/;
+            if (!aliasLocalpartRegex.test(trimmedAlias)) {
+                setError(
+                    "L'adresse du serveur ne peut contenir que des lettres, chiffres, points, tirets et underscores."
+                );
+                return;
+            }
+        }
 
         setLoading(true);
+        setError(null);
 
         try {
             const spaceResponse = await client.createRoom({
-                name,
+                name: trimmedName,
                 topic,
                 preset: isPublic ? Preset.PublicChat : Preset.PrivateChat,
-                room_alias_name: isPublic && alias ? alias : undefined,
+                room_alias_name: isPublic && trimmedAlias ? trimmedAlias : undefined,
                 creation_content: { type: RoomType.Space },
                 power_level_content_override: {
                     events_default: 100,
@@ -72,7 +88,7 @@ export const CreateServerDialogContent: FC<Props> = ({ open, onSuccess }) => {
             });
 
             const spaceId = spaceResponse.room_id;
-            const homeserver = client.getDomain() ?? client.getHomeserverUrl();
+            const homeserver = client.getDomain() ?? new URL(client.getHomeserverUrl()).host;
 
             const generalResponse = await client.createRoom({
                 name: "general",
@@ -113,8 +129,17 @@ export const CreateServerDialogContent: FC<Props> = ({ open, onSuccess }) => {
                 to: "/space/$spaceId/room/$roomId",
                 params: { spaceId, roomId: generalRoomId }
             });
-        } catch (error) {
-            console.error("Failed to create space:", error);
+        } catch (err) {
+            console.error("Failed to create space:", err);
+
+            setError(
+                typeof err === "object" &&
+                    err !== null &&
+                    "message" in err &&
+                    typeof err.message === "string"
+                    ? err.message
+                    : "Échec de la création du serveur"
+            );
         } finally {
             setLoading(false);
         }
@@ -196,6 +221,12 @@ export const CreateServerDialogContent: FC<Props> = ({ open, onSuccess }) => {
                                 setAlias(e.target.value);
                             }}
                         />
+                    </div>
+                )}
+
+                {error && (
+                    <div className="b-red-50 rounded-md border border-red-200 p-3 text-xs text-red-600">
+                        ⚠️ {error}
                     </div>
                 )}
 
