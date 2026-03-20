@@ -54,7 +54,7 @@ export const CreateServerDialogContent: FC<Props> = ({ open, onSuccess }) => {
             const aliasLocalpartRegex = /^[0-9a-zA-Z._=-]+$/;
             if (!aliasLocalpartRegex.test(trimmedAlias)) {
                 setError(
-                    "L'adresse du serveur ne peut contenir que des lettres, chiffres, points, tirets et underscores."
+                    "L'adresse du serveur ne peut contenir que des lettres, chiffres, points, tirets, underscores et le signe égal (=)."
                 );
                 return;
             }
@@ -225,7 +225,7 @@ export const CreateServerDialogContent: FC<Props> = ({ open, onSuccess }) => {
                 )}
 
                 {error && (
-                    <div className="b-red-50 rounded-md border border-red-200 p-3 text-xs text-red-600">
+                    <div className="rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-600">
                         ⚠️ {error}
                     </div>
                 )}
