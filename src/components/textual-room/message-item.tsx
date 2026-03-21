@@ -132,10 +132,18 @@ const MessageItem: FC<{ event: MatrixEvent }> = ({ event }) => {
                         <Pen size={16} />
                     </Button>
                     <span className="text-gray-300">|</span>
-                    <Button variant="ghost" onClick={() => void toggleReaction("❤️")}>
+                    <Button
+                        variant="ghost"
+                        aria-label="React with ❤️"
+                        onClick={() => void toggleReaction("❤️")}
+                    >
                         <span className="text-xs">❤️</span>
                     </Button>
-                    <Button variant="ghost" onClick={() => void toggleReaction("👍")}>
+                    <Button
+                        variant="ghost"
+                        aria-label="React with 👍"
+                        onClick={() => void toggleReaction("👍")}
+                    >
                         <span className="text-xs">👍</span>
                     </Button>
                 </div>
