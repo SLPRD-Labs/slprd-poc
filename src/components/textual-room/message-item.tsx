@@ -23,8 +23,7 @@ const collectReactionsByEmoji = (events: MatrixEvent[], targetEventId: string) =
             continue;
         }
 
-        const relatesTo =
-            timelineEvent.getContent<ReactionContent>()["m.relates_to"];
+        const relatesTo = timelineEvent.getContent<ReactionContent>()["m.relates_to"];
 
         if (!relatesTo) {
             continue;
