@@ -6,7 +6,6 @@ import { Button } from "../ui/button";
 import { Pen, Trash } from "lucide-react";
 import { useMatrixClientContext } from "@/contexts/matrix-client-context/matrix-client-context";
 
-// Relation payload used by m.reaction events.
 interface ReactionContent {
     "m.relates_to"?: {
         rel_type?: string;
