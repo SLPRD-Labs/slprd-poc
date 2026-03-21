@@ -1,10 +1,10 @@
-import type { FC } from "react";
-import { useState } from "react";
-import { Plus } from "lucide-react";
+import { CreateServerDialogContent } from "@/components/common/sidebar/create-server-dialog-content";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
 import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { CreateServerDialogContent } from "@/components/common/sidebar/create-server-dialog-content";
+import { Plus } from "lucide-react";
+import type { FC } from "react";
+import { useState } from "react";
 
 export const CreateServerButton: FC = () => {
     const [open, setOpen] = useState(false);
@@ -19,11 +19,11 @@ export const CreateServerButton: FC = () => {
                                 render={
                                     <SidebarMenuButton
                                         aria-label="Créer un serveur"
-                                        className="p-0 group-data-[collapsible=icon]:p-0!"
+                                        className="aspect-square size-full rounded-xl p-0"
                                     />
                                 }
                             >
-                                <div className="border-sidebar-border bg-sidebar-accent/30 text-sidebar-foreground hover:bg-sidebar-accent flex size-8 items-center justify-center rounded-md border border-dashed transition-colors">
+                                <div className="border-sidebar-border bg-sidebar-accent/30 text-sidebar-foreground hover:bg-sidebar-accent flex size-full items-center justify-center rounded-xl border border-dashed transition-colors">
                                     <Plus className="size-4" />
                                 </div>
                             </DialogTrigger>

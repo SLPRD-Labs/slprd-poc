@@ -1,6 +1,14 @@
+import { getEventType } from "@/libs/utils/matrix/room";
 import type { QueryClient } from "@tanstack/react-query";
 import type { ClientEventHandlerMap, MatrixClient } from "matrix-js-sdk";
-import { ClientEvent, EventTimeline, RoomEvent, RoomStateEvent, SyncState } from "matrix-js-sdk";
+import {
+    ClientEvent,
+    EventTimeline,
+    EventType,
+    RoomEvent,
+    RoomStateEvent,
+    SyncState
+} from "matrix-js-sdk";
 
 type EventHandler<E extends keyof ClientEventHandlerMap> = (
     client: MatrixClient,
@@ -76,11 +84,17 @@ class ClientService {
     };
 
     onRoomStateEvents: EventHandler<RoomStateEvent.Events> =
-        (client, queryClient) => (_, state) => {
+        (client, queryClient) => (event, state) => {
             const room = client.getRoom(state.roomId);
 
             if (room?.isSpaceRoom()) {
                 void queryClient.invalidateQueries({ queryKey: ["spaces"] });
+
+                if (getEventType(event) === EventType.SpaceChild) {
+                    void queryClient.invalidateQueries({
+                        queryKey: ["space", state.roomId, "rooms"]
+                    });
+                }
             }
         };
 

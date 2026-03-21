@@ -1,19 +1,19 @@
-import { useMatrixClientContext } from "@/contexts/matrix-client-context/matrix-client-context";
-import { useQueryClient } from "@tanstack/react-query";
-import { EventType, HistoryVisibility, Preset, RoomType } from "matrix-js-sdk";
-import type { FC, SyntheticEvent } from "react";
-import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import {
     DialogContent,
+    DialogDescription,
     DialogHeader,
-    DialogTitle,
-    DialogDescription
+    DialogTitle
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { useMatrixClient } from "@/hooks/use-matrix-client";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
+import { EventType, HistoryVisibility, Preset, RoomType } from "matrix-js-sdk";
+import type { FC, SyntheticEvent } from "react";
+import { useEffect, useState } from "react";
 
 interface Props {
     open: boolean;
@@ -21,7 +21,7 @@ interface Props {
 }
 
 export const CreateServerDialogContent: FC<Props> = ({ open, onSuccess }) => {
-    const { client } = useMatrixClientContext();
+    const { client } = useMatrixClient();
     const queryClient = useQueryClient();
     const navigate = useNavigate();
 
