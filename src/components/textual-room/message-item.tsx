@@ -101,6 +101,7 @@ const MessageItem: FC<{ event: MatrixEvent }> = ({ event }) => {
                                     ? "border-purple-300 bg-purple-100 text-purple-800"
                                     : "border-gray-200 bg-gray-50 text-black hover:bg-gray-100"
                             }`}
+                            aria-label={`${emoji}, ${count} reaction${count === 1 ? "" : "s"}`}
                         >
                             <span>{emoji}</span>
                             <span className="font-bold">{count}</span>
