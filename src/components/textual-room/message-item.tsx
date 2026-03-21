@@ -14,7 +14,6 @@ const MessageItem: FC<{ event: MatrixEvent }> = ({ event }) => {
         const eventId = event.getId();
         if (!roomId || !eventId) {
             console.error("❌ RoomId ou EventId manquant");
-            console.groupEnd();
             return;
         }
 
@@ -55,7 +54,6 @@ const MessageItem: FC<{ event: MatrixEvent }> = ({ event }) => {
         } catch (error) {
             console.error("❌ Erreur pendant l'appel Matrix :", error);
         }
-        console.groupEnd();
     };
 
     const renderReactions = () => {
