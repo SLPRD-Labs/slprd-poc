@@ -1,11 +1,11 @@
+import { ProfileCard } from "@/components/profile-card";
+import { useMatrixClient } from "@/hooks/use-matrix-client";
+import { usePresence } from "@/hooks/use-presence";
 import type { FC } from "react";
 import { useMemo } from "react";
-import { usePresence } from "@/hooks/use-presence";
-import { useMatrixClientContext } from "@/contexts/matrix-client-context/matrix-client-context";
-import { ProfileCard } from "@/components/profile-card";
 
 export const PresenceSidenav: FC = () => {
-    const { client } = useMatrixClientContext();
+    const { client } = useMatrixClient();
     const presence = usePresence(client);
 
     const { online, offline } = useMemo(() => {

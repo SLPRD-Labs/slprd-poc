@@ -1,10 +1,10 @@
+import { useMatrixClient } from "@/hooks/use-matrix-client";
+import { Pen, Trash } from "lucide-react";
 import type { MatrixEvent } from "matrix-js-sdk";
 import { EventType, RelationType } from "matrix-js-sdk";
-import { useState } from "react";
 import type { FC } from "react";
+import { useState } from "react";
 import { Button } from "../ui/button";
-import { Pen, Trash } from "lucide-react";
-import { useMatrixClientContext } from "@/contexts/matrix-client-context/matrix-client-context";
 
 interface ReactionContent {
     "m.relates_to"?: {
@@ -46,7 +46,7 @@ const collectReactionsByEmoji = (events: MatrixEvent[], targetEventId: string) =
 };
 
 const MessageItem: FC<{ event: MatrixEvent }> = ({ event }) => {
-    const { client } = useMatrixClientContext();
+    const { client } = useMatrixClient();
     const [hovered, setHovered] = useState(false);
     const [isReactionPending, setIsReactionPending] = useState(false);
 

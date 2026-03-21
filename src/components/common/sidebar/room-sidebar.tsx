@@ -5,9 +5,9 @@ import {
     SidebarGroup,
     SidebarGroupContent,
     SidebarHeader,
-    SidebarInput
+    SidebarMenu
 } from "@/components/ui/sidebar";
-import { useMatrixClientContext } from "@/contexts/matrix-client-context/matrix-client-context";
+import { useMatrixClient } from "@/hooks/use-matrix-client";
 import { spaceService } from "@/services/matrix/space";
 import { useQuery } from "@tanstack/react-query";
 import type { FC } from "react";
@@ -18,7 +18,14 @@ interface Props {
 }
 
 export const RoomSidebar: FC<Props> = ({ spaceId, activeRoomId }) => {
-    const { client, ready } = useMatrixClientContext();
+    const { client, ready } = useMatrixClient();
+
+    const spaceQuery = useQuery({
+        queryKey: ["space", spaceId],
+        queryFn: () => client.getRoom(spaceId),
+        staleTime: Infinity,
+        enabled: ready
+    });
 
     const roomsQuery = useQuery({
         queryKey: ["space", spaceId, "rooms"],
@@ -28,22 +35,24 @@ export const RoomSidebar: FC<Props> = ({ spaceId, activeRoomId }) => {
     });
 
     return (
-        <Sidebar collapsible="none" className="hidden flex-1 md:flex">
-            <SidebarHeader className="gap-3.5 border-b p-4">
-                <SidebarInput placeholder="Type to search..." />
+        <Sidebar collapsible="none" className="flex-1">
+            <SidebarHeader className="border-b p-4 whitespace-nowrap">
+                {spaceQuery.isSuccess && spaceQuery.data?.name}
             </SidebarHeader>
             <SidebarContent>
-                <SidebarGroup className="px-0">
+                <SidebarGroup>
                     <SidebarGroupContent>
-                        {roomsQuery.isSuccess &&
-                            roomsQuery.data.map(r => (
-                                <NavRoom
-                                    key={r.roomId}
-                                    spaceId={spaceId}
-                                    room={r}
-                                    isActive={activeRoomId === r.roomId}
-                                />
-                            ))}
+                        <SidebarMenu className="gap-1">
+                            {roomsQuery.isSuccess &&
+                                roomsQuery.data.map(r => (
+                                    <NavRoom
+                                        key={r.roomId}
+                                        spaceId={spaceId}
+                                        room={r}
+                                        isActive={activeRoomId === r.roomId}
+                                    />
+                                ))}
+                        </SidebarMenu>
                     </SidebarGroupContent>
                 </SidebarGroup>
             </SidebarContent>

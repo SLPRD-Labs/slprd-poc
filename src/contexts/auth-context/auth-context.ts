@@ -12,7 +12,7 @@ export interface MatrixSession {
 export interface IAuthContext {
     session: MatrixSession | null;
     login: (opts: LoginOpts) => Promise<void>;
-    logout: () => void;
+    logout: () => Promise<void>;
 }
 
 export const AuthContext = createContext<IAuthContext | null>(null);
