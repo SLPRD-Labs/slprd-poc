@@ -19,7 +19,6 @@ export const Home: FC = () => {
 
     return (
         <div className="flex flex-col gap-4 p-4">
-            {/* Barre de recherche (optionnelle si tu veux juste une liste fixe) */}
             <input
                 type="text"
                 value={query}
@@ -34,7 +33,6 @@ export const Home: FC = () => {
 
             <div className="flex flex-col gap-4">
                 {onlineUsers.length > 0 ? (
-                    // Le conteneur ne s'affiche QUE s'il y a des utilisateurs
                     <div className="flex flex-col divide-y overflow-hidden rounded-md border bg-white shadow-sm">
                         {onlineUsers.map(user => (
                             <UserDirectoryItem
