@@ -239,7 +239,7 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                 onSubmit={e => {
                     void sendMain(e);
                 }}
-                className="flex items-center gap-2 border-t p-4"
+                className="bg-background flex items-end gap-2 border-t p-4"
             >
                 <input
                     type="file"
@@ -250,30 +250,46 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                     }}
                 />
 
-                <Button
-                    type="button"
-                    variant="ghost"
-                    disabled={isUploading}
-                    onClick={() => fileInputRef.current?.click()}
-                >
-                    {isUploading ? (
-                        <Loader2 className="size-4 animate-spin" />
-                    ) : (
-                        <Paperclip className="size-4" />
-                    )}
-                </Button>
+                <div className="border-input focus-within:border-ring flex max-h-[40vh] flex-1 items-end gap-1 overflow-hidden rounded-2xl border bg-transparent px-1 transition-all">
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="text-muted-foreground hover:text-foreground mb-1 h-10 w-10 shrink-0 rounded-full"
+                        disabled={isUploading}
+                        onClick={() => fileInputRef.current?.click()}
+                    >
+                        {isUploading ? (
+                            <Loader2 className="size-5 animate-spin" />
+                        ) : (
+                            <Paperclip className="size-5" />
+                        )}
+                    </Button>
 
-                <Textarea
-                    value={input}
-                    onChange={e => {
-                        setInput(e.target.value);
-                    }}
-                    onKeyDown={handleKeyDown}
-                    placeholder={`Message #${client.getRoom(roomId)?.name ?? roomId}`}
-                    className="resize-none overflow-y-auto"
-                />
-                <Button type="submit">
-                    <SendHorizonal className="size-4" />
+                    <Textarea
+                        value={input}
+                        onChange={e => {
+                            setInput(e.target.value);
+                        }}
+                        onInput={e => {
+                            const target = e.target as HTMLTextAreaElement;
+                            target.style.height = "auto";
+                            target.style.height = `${target.scrollHeight.toString()}px`;
+                        }}
+                        onKeyDown={handleKeyDown}
+                        placeholder={`Message #${client.getRoom(roomId)?.name ?? roomId}`}
+                        rows={1}
+                        className="max-h-[40vh] min-h-12 w-full flex-1 resize-none overflow-y-auto border-0 px-2 py-3 text-base leading-relaxed shadow-none focus-visible:ring-0 md:text-base"
+                    />
+                </div>
+
+                <Button
+                    type="submit"
+                    size="icon"
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 h-12 w-12 shrink-0 rounded-full md:hidden"
+                    disabled={isUploading || !input.trim()}
+                >
+                    <SendHorizonal className="size-5" />
                 </Button>
             </form>
         </div>
