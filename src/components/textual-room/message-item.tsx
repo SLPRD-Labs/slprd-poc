@@ -6,6 +6,12 @@ import type { FC } from "react";
 import type React from "react";
 import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
+import {
+    Dialog,
+    DialogContent,
+    DialogTitle,
+    DialogTrigger
+} from "../ui/dialog";
 import { Textarea } from "../ui/textarea";
 
 interface ReactionContent {
@@ -130,9 +136,25 @@ const AuthenticatedMedia: FC<{ mxcUrl: string; msgtype: string; body: string }> 
 
     if (msgtype === "m.image") {
         return (
-            <div className="mt-2 max-w-sm overflow-hidden rounded-md border bg-gray-50/50">
-                <img src={objectUrl} alt={body} className="max-h-96 object-contain" />
-            </div>
+            <Dialog>
+                <DialogTrigger
+                    render={
+                        <button className="focus-visible:ring-ring mt-2 max-w-sm cursor-pointer overflow-hidden rounded-md border bg-gray-50/50 transition-opacity outline-none hover:opacity-90 focus-visible:ring-2 focus-visible:ring-offset-2" />
+                    }
+                >
+                    <img src={objectUrl} alt={body} className="max-h-96 w-full object-contain" />
+                </DialogTrigger>
+
+                <DialogContent className="flex max-h-[95vh] w-auto max-w-[95vw] items-center justify-center border-none bg-transparent p-0 shadow-none ring-0">
+                    <DialogTitle className="sr-only">Aperçu de l&#39;image : {body}</DialogTitle>
+
+                    <img
+                        src={objectUrl}
+                        alt={body}
+                        className="max-h-[90vh] max-w-[90vw] rounded-md object-contain"
+                    />
+                </DialogContent>
+            </Dialog>
         );
     }
 

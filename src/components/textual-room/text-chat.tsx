@@ -14,6 +14,11 @@ interface Props {
     roomId: string;
 }
 
+interface PendingFile {
+    file: File;
+    previewUrl?: string;
+}
+
 export const TextChat: FC<Props> = ({ roomId }) => {
     const { client } = useMatrixClient();
 
@@ -32,10 +37,13 @@ export const TextChat: FC<Props> = ({ roomId }) => {
     const [input, setInput] = useState("");
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
 
     const scrollRef = useRef<HTMLDivElement>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     const refreshMessages = useCallback(() => {
         const events =
@@ -53,6 +61,29 @@ export const TextChat: FC<Props> = ({ roomId }) => {
     useEffect(() => {
         bottomRef.current?.scrollIntoView();
     }, [roomId]);
+
+    useEffect(() => {
+        return () => {
+            pendingFiles.forEach(pf => {
+                if (pf.previewUrl) URL.revokeObjectURL(pf.previewUrl);
+            });
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+
+    useEffect(() => {
+        if (!error) return;
+
+        const timer = setTimeout(() => {
+            setError(null);
+        }, 10000);
+
+        return () => {
+            clearTimeout(timer);
+        };
+    }, [error]);
+
 
     useEffect(() => {
         const room = client.getRoom(roomId);
@@ -86,62 +117,142 @@ export const TextChat: FC<Props> = ({ roomId }) => {
         };
     }, [client, roomId]);
 
+
+    const handleScroll = useCallback(async () => {
+        const el = scrollRef.current;
+        if (!el || isLoadingMore) return;
+
+        if (el.scrollTop === 0) {
+            setIsLoadingMore(true);
+            const room = client.getRoom(roomId);
+            if (!room) return;
+
+            const prevScrollHeight = el.scrollHeight;
+
+            await client.scrollback(room, 10);
+            refreshMessages();
+
+            requestAnimationFrame(() => {
+                el.scrollTop = el.scrollHeight - prevScrollHeight;
+            });
+
+            setIsLoadingMore(false);
+        }
+    }, [client, roomId, isLoadingMore, refreshMessages]);
+
+
     const sendMain = async (e?: React.SyntheticEvent<HTMLFormElement>) => {
         e?.preventDefault();
 
-        const body = input.trim();
-        if (!body) return;
+        if (!input.trim() && pendingFiles.length === 0) return;
 
-        await client.sendTyping(roomId, false, 4000);
-        await client.sendTextMessage(roomId, body);
+        setIsUploading(true);
+        setError(null);
 
-        setInput("");
-        bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+
+        await client.sendTyping(roomId, false, 4000).catch(console.error);
+
+        try {
+
+            for (const pending of pendingFiles) {
+                const { file } = pending;
+                const uploadResponse = await client.uploadContent(file);
+                const mxcUrl = uploadResponse.content_uri;
+
+                let msgtype: MsgType = MsgType.File;
+                if (file.type.startsWith("image/")) msgtype = MsgType.Image;
+                else if (file.type.startsWith("video/")) msgtype = MsgType.Video;
+                else if (file.type.startsWith("audio/")) msgtype = MsgType.Audio;
+
+                await client.sendMessage(roomId, {
+                    msgtype,
+                    body: file.name,
+                    url: mxcUrl,
+                    info: {
+                        size: file.size,
+                        mimetype: file.type
+                    }
+                } as never);
+            }
+
+
+            if (input.trim()) {
+                await client.sendTextMessage(roomId, input.trim());
+            }
+
+
+            setInput("");
+            setPendingFiles([]);
+            if (textareaRef.current) textareaRef.current.style.height = "auto";
+
+            bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+        } catch (err) {
+            console.error("Failed to send message/files:", err);
+            setError("Échec de l'envoi du message ou du fichier.");
+        } finally {
+            setIsUploading(false);
+        }
     };
 
-    const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             void sendMain();
             return;
         }
 
+
         void client.sendTyping(roomId, true, 4000);
     };
 
-    const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
 
-        setIsUploading(true);
-        try {
-            const uploadResponse = await client.uploadContent(file);
-            const mxcUrl = uploadResponse.content_uri;
+    const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
 
-            let msgtype: MsgType = MsgType.File;
-            if (file.type.startsWith("image/")) msgtype = MsgType.Image;
-            else if (file.type.startsWith("video/")) msgtype = MsgType.Video;
-            else if (file.type.startsWith("audio/")) msgtype = MsgType.Audio;
+        const MAX_FILE_SIZE_MB = 50;
+        const validFiles: PendingFile[] = [];
+        let hasError = false;
 
-            await client.sendMessage(roomId, {
-                msgtype,
-                body: file.name,
-                url: mxcUrl,
-                info: {
-                    size: file.size,
-                    mimetype: file.type
-                }
-            } as never);
-
-            bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-        } catch (error) {
-            console.error("Failed to upload file:", error);
-        } finally {
-            setIsUploading(false);
-            if (fileInputRef.current) {
-                fileInputRef.current.value = "";
+        for (const file of Array.from(files)) {
+            if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+                hasError = true;
+            } else {
+                validFiles.push({
+                    file,
+                    previewUrl: file.type.startsWith("image/")
+                        ? URL.createObjectURL(file)
+                        : undefined
+                });
             }
         }
+
+        if (hasError) {
+            setError(
+                `Un ou plusieurs fichiers dépassent la taille maximale de ${MAX_FILE_SIZE_MB.toString()} Mo et ont été ignorés.`
+            );
+        } else {
+            setError(null);
+        }
+
+        setPendingFiles(prev => [...prev, ...validFiles]);
+
+        if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+        }
+    };
+
+
+    const removePendingFile = (index: number) => {
+        setPendingFiles(prev => {
+            const newFiles = [...prev];
+            const removed = newFiles.splice(index, 1)[0];
+            if (removed.previewUrl) {
+                URL.revokeObjectURL(removed.previewUrl);
+            }
+            return newFiles;
+        });
     };
 
     const formatDate = (timestamp: number) => {
@@ -226,6 +337,12 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                 </Button>
             </div>
 
+            {error && (
+                <div className="mx-4 mt-2 rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-600">
+                    ⚠️ {error}
+                </div>
+            )}
+
             <div className="text-muted-foreground flex flex-row items-center gap-2 px-4 text-sm">
                 {typingUsers !== "" && (
                     <>
@@ -243,51 +360,88 @@ export const TextChat: FC<Props> = ({ roomId }) => {
             >
                 <input
                     type="file"
+                    multiple
                     className="hidden"
                     ref={fileInputRef}
-                    onChange={e => {
-                        void handleFileChange(e);
-                    }}
+                    onChange={handleFileChange}
                 />
 
-                <div className="border-input focus-within:border-ring flex max-h-[40vh] flex-1 items-end gap-1 overflow-hidden rounded-2xl border bg-transparent px-1 transition-all">
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="text-muted-foreground hover:text-foreground mb-1 h-10 w-10 shrink-0 rounded-full"
-                        disabled={isUploading}
-                        onClick={() => fileInputRef.current?.click()}
-                    >
-                        {isUploading ? (
-                            <Loader2 className="size-5 animate-spin" />
-                        ) : (
-                            <Paperclip className="size-5" />
-                        )}
-                    </Button>
+                <div className="border-input focus-within:border-ring flex max-h-[40vh] flex-1 flex-col overflow-hidden rounded-2xl border bg-transparent transition-all">
+                    {pendingFiles.length > 0 && (
+                        <div className="border-border/40 bg-muted/20 flex gap-3 overflow-x-auto border-b p-3">
+                            {pendingFiles.map((pf, index) => (
+                                <div
+                                    key={index}
+                                    className="bg-background relative flex h-16 w-16 shrink-0 items-center justify-center rounded-lg border shadow-sm"
+                                >
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            removePendingFile(index);
+                                        }}
+                                        className="bg-white text-destructive-foreground absolute -top-2 -right-2 flex size-6 items-center justify-center rounded-md shadow-sm transition-all hover:scale-110"
+                                    >
+                                        <Trash className="size-3.5" />
+                                    </button>
+                                    {pf.previewUrl ? (
+                                        <img
+                                            src={pf.previewUrl}
+                                            alt="preview"
+                                            className="size-full rounded-lg object-cover"
+                                        />
+                                    ) : (
+                                        <div className="text-muted-foreground flex flex-col items-center gap-1 overflow-hidden p-1">
+                                            <FileIcon className="size-6 shrink-0" />
+                                            <span className="w-full truncate text-center text-[9px] leading-tight font-medium">
+                                                {pf.file.name}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
 
-                    <Textarea
-                        value={input}
-                        onChange={e => {
-                            setInput(e.target.value);
-                        }}
-                        onInput={e => {
-                            const target = e.target as HTMLTextAreaElement;
-                            target.style.height = "auto";
-                            target.style.height = `${target.scrollHeight.toString()}px`;
-                        }}
-                        onKeyDown={handleKeyDown}
-                        placeholder={`Message #${client.getRoom(roomId)?.name ?? roomId}`}
-                        rows={1}
-                        className="max-h-[40vh] min-h-12 w-full flex-1 resize-none overflow-y-auto border-0 px-2 py-3 text-base leading-relaxed shadow-none focus-visible:ring-0 md:text-base"
-                    />
+                    <div className="flex items-end gap-1 px-1">
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="text-muted-foreground hover:text-foreground mb-1 h-10 w-10 shrink-0 rounded-full"
+                            disabled={isUploading}
+                            onClick={() => fileInputRef.current?.click()}
+                        >
+                            {isUploading ? (
+                                <Loader2 className="size-5 animate-spin" />
+                            ) : (
+                                <Paperclip className="size-5" />
+                            )}
+                        </Button>
+
+                        <Textarea
+                            ref={textareaRef}
+                            value={input}
+                            onChange={e => {
+                                setInput(e.target.value);
+                            }}
+                            onInput={e => {
+                                const target = e.target as HTMLTextAreaElement;
+                                target.style.height = "auto";
+                                target.style.height = `${target.scrollHeight.toString()}px`;
+                            }}
+                            onKeyDown={handleKeyDown}
+                            placeholder={`Message #${client.getRoom(roomId)?.name ?? roomId}`}
+                            rows={1}
+                            className="max-h-[40vh] min-h-12 w-full flex-1 resize-none overflow-y-auto border-0 px-2 py-3 text-base leading-relaxed shadow-none focus-visible:ring-0 md:text-base"
+                        />
+                    </div>
                 </div>
 
                 <Button
                     type="submit"
                     size="icon"
                     className="bg-primary text-primary-foreground hover:bg-primary/90 h-12 w-12 shrink-0 rounded-full md:hidden"
-                    disabled={isUploading || !input.trim()}
+                    disabled={isUploading || (!input.trim() && pendingFiles.length === 0)}
                 >
                     <SendHorizonal className="size-5" />
                 </Button>
