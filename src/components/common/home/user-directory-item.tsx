@@ -2,6 +2,7 @@ import type { FC } from "react";
 import type { MatrixPublicUser } from "@/hooks/use-user-directory";
 import { Button } from "@/components/ui/button";
 import type { UserPresenceData } from "@/hooks/use-presence";
+import { MessageSquare } from "lucide-react";
 
 interface props {
     user: MatrixPublicUser;
@@ -31,7 +32,7 @@ export const UserDirectoryItem: FC<props> = ({ user, presence }) => {
             </div>
             <div className="flex gap-2">
                 <Button size="sm" variant="outline">
-                    Message
+                    <MessageSquare className="h-4 w-4" />
                 </Button>
                 <Button size="sm" variant="outline">
                     Call
