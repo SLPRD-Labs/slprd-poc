@@ -1,5 +1,5 @@
 import { useMatrixClient } from "@/hooks/use-matrix-client";
-import { Pen, Trash } from "lucide-react";
+import { Pen, Trash, FileIcon, Loader2 } from "lucide-react";
 import { MatrixEventEvent, MsgType, RelationType, EventType } from "matrix-js-sdk";
 import type { MatrixEvent } from "matrix-js-sdk";
 import type { FC } from "react";
@@ -54,6 +54,102 @@ const collectReactionsByEmoji = (events: MatrixEvent[], targetEventId: string) =
     return byEmoji;
 };
 
+const AuthenticatedMedia: FC<{ mxcUrl: string; msgtype: string; body: string }> = ({
+    mxcUrl,
+    msgtype,
+    body
+}) => {
+    const { client } = useMatrixClient();
+    const [objectUrl, setObjectUrl] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        let url: string | null = null;
+        const controller = new AbortController();
+
+        const fetchMedia = async () => {
+            const accessToken = client.getAccessToken();
+
+            const httpUrl = client.mxcUrlToHttp(
+                mxcUrl,
+                undefined,
+                undefined,
+                undefined,
+                true,
+                true,
+                true
+            );
+
+            if (!accessToken || !httpUrl) {
+                if (!controller.signal.aborted) setLoading(false);
+                return;
+            }
+
+            try {
+                const res = await fetch(httpUrl, {
+                    signal: controller.signal,
+                    headers: { Authorization: `Bearer ${accessToken}` }
+                });
+
+                if (!res.ok) throw new Error("Failed to fetch media");
+
+                const blob = await res.blob();
+                if (!controller.signal.aborted) {
+                    url = URL.createObjectURL(blob);
+                    setObjectUrl(url);
+                }
+            } catch (error) {
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-expect-error
+                if (error.name === "AbortError") return;
+                console.error("Media fetch error:", error);
+            } finally {
+                if (!controller.signal.aborted) setLoading(false);
+            }
+        };
+
+        void fetchMedia();
+
+        return () => {
+            controller.abort();
+            if (url) URL.revokeObjectURL(url);
+        };
+    }, [client, mxcUrl]);
+
+    if (loading) {
+        return (
+            <div className="mt-2 flex w-fit items-center gap-2 rounded-md border p-3 text-sm text-slate-500">
+                <Loader2 className="size-4 animate-spin" /> Chargement...
+            </div>
+        );
+    }
+
+    if (!objectUrl) {
+        return <div className="mt-2 text-sm text-red-500">Erreur de chargement du média</div>;
+    }
+
+    if (msgtype === "m.image") {
+        return (
+            <div className="mt-2 max-w-sm overflow-hidden rounded-md border bg-gray-50/50">
+                <img src={objectUrl} alt={body} className="max-h-96 object-contain" />
+            </div>
+        );
+    }
+
+    return (
+        <a
+            href={objectUrl}
+            download={body}
+            className="mt-2 flex w-fit items-center gap-2 rounded-md border bg-gray-50 p-3 transition-colors hover:bg-gray-100"
+        >
+            <FileIcon className="size-5 text-indigo-500" />
+            <span className="text-sm font-medium text-slate-700 underline-offset-4 hover:underline">
+                {body}
+            </span>
+        </a>
+    );
+};
+
 const MessageItem: FC<{ event: MatrixEvent; roomId: string }> = ({ event, roomId }) => {
     const { client } = useMatrixClient();
     const currentUser = client.getUserId();
@@ -70,6 +166,10 @@ const MessageItem: FC<{ event: MatrixEvent; roomId: string }> = ({ event, roomId
     const [editedContent, setEditedContent] = useState(currentMessage);
     const [hovered, setHovered] = useState(false);
     const [isReactionPending, setIsReactionPending] = useState(false);
+
+    const eventContent = event.getContent();
+    const msgtype = eventContent.msgtype;
+    const body = eventContent.body as string;
 
     const getMessageReactions = () => {
         const roomId = event.getRoomId();
@@ -235,6 +335,36 @@ const MessageItem: FC<{ event: MatrixEvent; roomId: string }> = ({ event, roomId
         }
     };
 
+    const renderContent = () => {
+        if (isRemoved) {
+            return (
+                <span className="text-sm wrap-break-word whitespace-pre-wrap">
+                    <span className="text-muted-foreground text-xs italic">
+                        Message supprimé
+                    </span>
+                </span>
+            );
+        }
+
+        const mxcUrl = eventContent.url as string | undefined;
+
+        if (
+            mxcUrl &&
+            (msgtype === "m.image" ||
+                msgtype === "m.file" ||
+                msgtype === "m.video" ||
+                msgtype === "m.audio")
+        ) {
+            return <AuthenticatedMedia mxcUrl={mxcUrl} msgtype={msgtype} body={currentMessage} />;
+        }
+
+        return (
+            <span className="text-sm wrap-break-word whitespace-pre-wrap">
+                {currentMessage}
+            </span>
+        );
+    };
+
     return (
         <div
             className="group hover:bg-secondary relative flex flex-col rounded px-4 py-1"
@@ -305,17 +435,6 @@ const MessageItem: FC<{ event: MatrixEvent; roomId: string }> = ({ event, roomId
                     {isEdited ? " (modifié)" : ""}
                 </span>
             </div>
-            <span className="text-sm wrap-break-word whitespace-pre-wrap">
-                <span className="text-sm wrap-break-word whitespace-pre-wrap">
-                    {isRemoved ? (
-                        <span className="text-muted-foreground text-xs italic">
-                            Message supprimé
-                        </span>
-                    ) : (
-                        currentMessage
-                    )}
-                </span>
-            </span>
 
             {isEditing ? (
                 <>
@@ -358,7 +477,10 @@ const MessageItem: FC<{ event: MatrixEvent; roomId: string }> = ({ event, roomId
                         </p>
                     </div>
                 </>
-            ) : null}
+            ) : (
+                renderContent()
+            )}
+
             {renderReactions()}
         </div>
     );

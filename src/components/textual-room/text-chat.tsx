@@ -1,9 +1,9 @@
 import { useMatrixClient } from "@/hooks/use-matrix-client";
 import type { MatrixEvent } from "matrix-js-sdk";
-import { KnownMembership, RelationType, RoomEvent, RoomMemberEvent } from "matrix-js-sdk";
-import type { FC, KeyboardEvent } from "react";
+import { KnownMembership, RelationType, RoomEvent, RoomMemberEvent, MsgType } from "matrix-js-sdk";
+import type { ChangeEvent, FC, KeyboardEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowDown, SendHorizonal } from "lucide-react";
+import { ArrowDown, SendHorizonal, Paperclip, Loader2 } from "lucide-react";
 
 import MessageItem from "./message-item";
 import { WrittingAnimation } from "./writting-animation";
@@ -30,9 +30,12 @@ export const TextChat: FC<Props> = ({ roomId }) => {
 
     const [typingUsers, setTypingUsers] = useState<string>("");
     const [input, setInput] = useState("");
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
 
     const scrollRef = useRef<HTMLDivElement>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const refreshMessages = useCallback(() => {
         const events =
@@ -104,6 +107,41 @@ export const TextChat: FC<Props> = ({ roomId }) => {
         }
 
         void client.sendTyping(roomId, true, 4000);
+    };
+
+    const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        try {
+            const uploadResponse = await client.uploadContent(file);
+            const mxcUrl = uploadResponse.content_uri;
+
+            let msgtype: MsgType = MsgType.File;
+            if (file.type.startsWith("image/")) msgtype = MsgType.Image;
+            else if (file.type.startsWith("video/")) msgtype = MsgType.Video;
+            else if (file.type.startsWith("audio/")) msgtype = MsgType.Audio;
+
+            await client.sendMessage(roomId, {
+                msgtype,
+                body: file.name,
+                url: mxcUrl,
+                info: {
+                    size: file.size,
+                    mimetype: file.type
+                }
+            } as never);
+
+            bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+        } catch (error) {
+            console.error("Failed to upload file:", error);
+        } finally {
+            setIsUploading(false);
+            if (fileInputRef.current) {
+                fileInputRef.current.value = "";
+            }
+        }
     };
 
     const formatDate = (timestamp: number) => {
@@ -203,6 +241,28 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                 }}
                 className="flex items-center gap-2 border-t p-4"
             >
+                <input
+                    type="file"
+                    className="hidden"
+                    ref={fileInputRef}
+                    onChange={e => {
+                        void handleFileChange(e);
+                    }}
+                />
+
+                <Button
+                    type="button"
+                    variant="ghost"
+                    disabled={isUploading}
+                    onClick={() => fileInputRef.current?.click()}
+                >
+                    {isUploading ? (
+                        <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                        <Paperclip className="size-4" />
+                    )}
+                </Button>
+
                 <Textarea
                     value={input}
                     onChange={e => {
