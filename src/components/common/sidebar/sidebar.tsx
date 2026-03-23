@@ -15,8 +15,8 @@ export const AppSidebar: FC<Props> = ({ activeSpaceId, activeRoomId, ...props })
             <SpaceSidebar activeSpaceId={activeSpaceId} />
             {activeSpaceId !== undefined ? (
                 <RoomSidebar spaceId={activeSpaceId} activeRoomId={activeRoomId} />
-            ):(
-                <FriendSidebar/>
+            ) : (
+                <FriendSidebar />
             )}
         </Sidebar>
     );

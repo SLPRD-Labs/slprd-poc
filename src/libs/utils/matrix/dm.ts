@@ -7,7 +7,7 @@ type AccountDataType = Parameters<MatrixClient["getAccountData"]>[0];
 const M_DIRECT_EVENT = "m.direct" as AccountDataType;
 
 const isStringArray = (value: unknown): value is string[] =>
-    Array.isArray(value) && value.every((item) => typeof item === "string");
+    Array.isArray(value) && value.every(item => typeof item === "string");
 
 const toMDirectContent = (value: unknown): MDirectContent => {
     if (!value || typeof value !== "object") {
@@ -24,7 +24,6 @@ const toMDirectContent = (value: unknown): MDirectContent => {
         {}
     );
 };
-
 
 export const getOrCreateDM = async (
     client: MatrixClient,

@@ -27,7 +27,6 @@ export const FriendSidebar = () => {
         });
     };
 
-
     const rooms = useDirectMessages(client);
 
     const sortedRooms = [...rooms].sort((a, b) => {
@@ -53,7 +52,9 @@ export const FriendSidebar = () => {
                                             key={room.roomId}
                                             room={room}
                                             isActive={room.roomId === activeRoomId}
-                                            onClick={() => {void navigateToDm(room.roomId);}}
+                                            onClick={() => {
+                                                void navigateToDm(room.roomId);
+                                            }}
                                         />
                                     ))
                                 ) : (

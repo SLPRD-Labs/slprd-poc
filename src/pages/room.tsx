@@ -9,7 +9,6 @@ interface RoomProps {
 }
 
 export const Room: FC<RoomProps> = ({ roomId }) => {
-
     const { client, ready } = useMatrixClient();
 
     const roomQuery = useQuery({
