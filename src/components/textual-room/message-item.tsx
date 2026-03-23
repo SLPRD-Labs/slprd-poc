@@ -235,25 +235,25 @@ const MessageItem: FC<{ event: MatrixEvent, roomId: string }> = ({ event, roomId
                             <Button variant="ghost" className="cursor-pointer" title="Edit" onClick={handleEdit}>
                                 <Pen size={16} />
                             </Button>
+                            <span className="text-gray-300">|</span>
+                            <Button
+                                variant="ghost"
+                                aria-label="React with ❤️"
+                                disabled={isReactionPending}
+                                onClick={() => void toggleReaction("❤️")}
+                            >
+                                <span className="text-xs">❤️</span>
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                aria-label="React with 👍"
+                                disabled={isReactionPending}
+                                onClick={() => void toggleReaction("👍")}
+                            >
+                                <span className="text-xs">👍</span>
+                            </Button>
                         </>
                     )}
-                    <span className="text-gray-300">|</span>
-                    <Button
-                        variant="ghost"
-                        aria-label="React with ❤️"
-                        disabled={isReactionPending}
-                        onClick={() => void toggleReaction("❤️")}
-                    >
-                        <span className="text-xs">❤️</span>
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        aria-label="React with 👍"
-                        disabled={isReactionPending}
-                        onClick={() => void toggleReaction("👍")}
-                    >
-                        <span className="text-xs">👍</span>
-                    </Button>
                 </div>
             )}
 
