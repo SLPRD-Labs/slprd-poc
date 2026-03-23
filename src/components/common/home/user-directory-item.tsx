@@ -4,12 +4,12 @@ import { Button } from "@/components/ui/button";
 import type { UserPresenceData } from "@/hooks/use-presence";
 import { MessageSquare } from "lucide-react";
 
-interface props {
+interface Props {
     user: MatrixPublicUser;
     presence: UserPresenceData;
 }
 
-export const UserDirectoryItem: FC<props> = ({ user, presence }) => {
+export const UserDirectoryItem: FC<Props> = ({ user, presence }) => {
     const userStatus = presence.status;
 
     return (

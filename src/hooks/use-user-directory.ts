@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useMatrixClient } from "@/hooks/use-matrix-client";
 
 export interface MatrixPublicUser {
@@ -37,6 +37,7 @@ export const useUserDirectory = (searchTerm: string) => {
                     });
                 });
                 setUsers(Array.from(knownUsers.values()));
+                setLoading(false);
                 return;
             }
             setLoading(true);
@@ -54,10 +55,10 @@ export const useUserDirectory = (searchTerm: string) => {
             }
         };
 
-
-
         const timer = setTimeout(fetchUsers, 300);
-        return () => {clearTimeout(timer)};
+        return () => {
+            clearTimeout(timer);
+        };
     }, [searchTerm, client]);
 
     return { users, loading };

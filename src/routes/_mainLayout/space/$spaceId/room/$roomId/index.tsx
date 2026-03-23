@@ -5,11 +5,8 @@ export const Route = createFileRoute("/_mainLayout/space/$spaceId/room/$roomId/"
     component: SpaceRoomPage
 });
 
-//TODO voir avec albert
-
 // eslint-disable-next-line react-refresh/only-export-components
 function SpaceRoomPage() {
     const { roomId } = Route.useParams();
     return <Room roomId={roomId} />;
 }
-
