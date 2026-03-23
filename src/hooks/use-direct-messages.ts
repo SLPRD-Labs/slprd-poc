@@ -1,11 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import {
-    ClientEvent,
-    EventType,
-    KnownMembership,
-    RoomEvent
-} from "matrix-js-sdk";
-import type {MatrixClient, Room} from "matrix-js-sdk";
+import type { MatrixClient, Room } from "matrix-js-sdk";
+import { ClientEvent, EventType, KnownMembership, RoomEvent } from "matrix-js-sdk";
 import { getMyMembership } from "@/libs/utils/matrix/room";
 
 type MDirectContent = Record<string, string[]>;
@@ -51,7 +46,7 @@ export const useDirectMessages = (client: MatrixClient) => {
         return () => {
             client.removeListener(ClientEvent.AccountData, updateDMs);
             client.removeListener(ClientEvent.Room, updateDMs);
-            client.on(RoomEvent.MyMembership, updateDMs);
+            client.removeListener(RoomEvent.MyMembership, updateDMs);
         };
     }, [client, updateDMs]);
 
