@@ -1,9 +1,8 @@
 import { useMatrixClient } from "@/hooks/use-matrix-client";
-import type { MatrixEvent } from "matrix-js-sdk";
-import { KnownMembership, RelationType, RoomEvent, RoomMemberEvent, MsgType } from "matrix-js-sdk";
+import { KnownMembership, type MatrixEvent, MsgType, RelationType, RoomEvent, RoomMemberEvent } from "matrix-js-sdk";
 import type { ChangeEvent, FC, KeyboardEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowDown, SendHorizonal, Paperclip, Loader2 } from "lucide-react";
+import { ArrowDown, FileIcon, Loader2, Paperclip, SendHorizonal, Trash } from "lucide-react";
 
 import MessageItem from "./message-item";
 import { WrittingAnimation } from "./writting-animation";
@@ -195,7 +194,7 @@ export const TextChat: FC<Props> = ({ roomId }) => {
     };
 
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             void sendMain();
@@ -277,13 +276,27 @@ export const TextChat: FC<Props> = ({ roomId }) => {
 
     return (
         <div className="flex h-full w-full flex-col overflow-hidden">
-            <div ref={scrollRef} className="flex min-h-0 flex-1 flex-col overflow-y-auto py-2">
+
+            <div
+                ref={scrollRef}
+                onScroll={() => {
+                    void handleScroll();
+                }}
+                className="flex min-h-0 flex-1 flex-col overflow-y-auto py-2"
+            >
+                {isLoadingMore && (
+                    <div className="text-muted-foreground flex justify-center py-2 text-xs">
+                        Chargement...
+                    </div>
+                )}
+
                 {messages.map((event, index) => {
+
                     if (event.getType() === "m.room.member") {
                         return (
                             <div
                                 key={event.getId()}
-                                className="text-muted-foreground text-center text-xs"
+                                className="text-muted-foreground text-center text-xs my-2"
                             >
                                 {event.sender?.name &&
                                     (event.getContent().membership === KnownMembership.Join
@@ -292,6 +305,7 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                             </div>
                         );
                     }
+
 
                     if (event.getType() === "m.room.message") {
                         const currentDate = new Date(event.getTs()).toDateString();
@@ -307,6 +321,7 @@ export const TextChat: FC<Props> = ({ roomId }) => {
 
                         return (
                             <div key={event.getId()}>
+
                                 {currentDate !== prevDate && (
                                     <div className="my-2 flex items-center gap-2 px-4">
                                         <div className="bg-border h-px flex-1" />
@@ -325,17 +340,19 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                 })}
 
                 <div ref={bottomRef} />
+
+
+                <div className="sticky bottom-4 m-4 flex items-end justify-end">
+                    <Button
+                        variant="ghost"
+                        className="bg-secondary hover:bg-primary hover:text-primary-foreground rounded-full p-3 shadow-lg"
+                        onClick={() => bottomRef.current?.scrollIntoView({ behavior: "smooth" })}
+                    >
+                        <ArrowDown className="size-4" />
+                    </Button>
+                </div>
             </div>
 
-            <div className="sticky bottom-4 m-4 flex items-end justify-end">
-                <Button
-                    variant="ghost"
-                    className="bg-secondary hover:bg-primary hover:text-primary-foreground rounded-full p-3 shadow-lg"
-                    onClick={() => bottomRef.current?.scrollIntoView({ behavior: "smooth" })}
-                >
-                    <ArrowDown className="size-4" />
-                </Button>
-            </div>
 
             {error && (
                 <div className="mx-4 mt-2 rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-600">
@@ -352,9 +369,10 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                 )}
             </div>
 
+
             <form
                 onSubmit={e => {
-                    void sendMain(e);
+                    void sendMain(e); // ⚠️ Assurez-vous que cette fonction s'appelle bien "sendMain" ou "send" selon votre code
                 }}
                 className="bg-background flex items-end gap-2 border-t p-4"
             >
@@ -367,6 +385,7 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                 />
 
                 <div className="border-input focus-within:border-ring flex max-h-[40vh] flex-1 flex-col overflow-hidden rounded-2xl border bg-transparent transition-all">
+
                     {pendingFiles.length > 0 && (
                         <div className="border-border/40 bg-muted/20 flex gap-3 overflow-x-auto border-b p-3">
                             {pendingFiles.map((pf, index) => (
@@ -379,7 +398,8 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                                         onClick={() => {
                                             removePendingFile(index);
                                         }}
-                                        className="bg-white text-destructive-foreground absolute -top-2 -right-2 flex size-6 items-center justify-center rounded-md shadow-sm transition-all hover:scale-110"
+                                        className="text-destructive-foreground absolute -top-2 -right-2 flex size-6 items-center justify-center rounded-md bg-white shadow-sm transition-all hover:scale-110"
+                                        aria-label="Supprimer le fichier"
                                     >
                                         <Trash className="size-3.5" />
                                     </button>
@@ -410,6 +430,7 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                             className="text-muted-foreground hover:text-foreground mb-1 h-10 w-10 shrink-0 rounded-full"
                             disabled={isUploading}
                             onClick={() => fileInputRef.current?.click()}
+                            aria-label="Joindre un fichier"
                         >
                             {isUploading ? (
                                 <Loader2 className="size-5 animate-spin" />
@@ -442,6 +463,7 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                     size="icon"
                     className="bg-primary text-primary-foreground hover:bg-primary/90 h-12 w-12 shrink-0 rounded-full md:hidden"
                     disabled={isUploading || (!input.trim() && pendingFiles.length === 0)}
+                    aria-label="Envoyer"
                 >
                     <SendHorizonal className="size-5" />
                 </Button>
