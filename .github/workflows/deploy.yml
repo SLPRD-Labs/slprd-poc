@@ -32,8 +32,6 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.ORGANIZATION }}/${{ env.IMAGE_NAME }}
-          flavor: |
-            latest=false
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
