@@ -1,62 +1,39 @@
 import type { MatrixSession } from "@/contexts/auth-context/auth-context";
+import type { LoginOpts } from "@/contexts/auth-context/auth-context-provider";
 import { MatrixClientContext } from "@/contexts/matrix-client-context/matrix-client-context";
-import type { MatrixClient } from "matrix-js-sdk";
-import { ClientEvent, createClient, SyncState } from "matrix-js-sdk";
+import { getClient, startClient, stopClient } from "@/integrations/matrix/client";
+import { clientService } from "@/services/matrix/client";
+import { useQueryClient } from "@tanstack/react-query";
 import type { FC, PropsWithChildren } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-interface Props extends PropsWithChildren {
-    session: MatrixSession;
-}
-
-export const MatrixClientContextProvider: FC<Props> = props => {
-    const client = useMemo<MatrixClient>(
-        () =>
-            createClient({
-                baseUrl: props.session.baseUrl,
-                accessToken: props.session.accessToken,
-                deviceId: props.session.deviceId,
-                userId: props.session.userId,
-                refreshToken: props.session.refreshToken,
-                useLivekitForGroupCalls: true
-            }),
-        [props.session]
-    );
+export const MatrixClientContextProvider: FC<PropsWithChildren> = ({ children }) => {
+    const queryClient = useQueryClient();
 
     const [ready, setReady] = useState(false);
 
+    const start = async (opts: LoginOpts): Promise<MatrixSession> =>
+        startClient(opts, queryClient, () => {
+            setReady(true);
+        });
+
+    const stop = async (): Promise<void> => {
+        setReady(false);
+        await stopClient();
+        initialized.current = false;
+    };
+
+    const initialized = useRef(false);
+
     useEffect(() => {
-        const listener = (state: SyncState) => {
-            if (state === SyncState.Prepared) {
+        const client = getClient();
+        if (client !== null && !initialized.current) {
+            initialized.current = true;
+            void clientService.start(client, queryClient, () => {
                 setReady(true);
-            }
-        };
-
-        client.once(ClientEvent.Sync, listener);
-
-        void (async () => {
-            console.log("Starting Matrix client...");
-            await client.startClient({
-                clientWellKnownPollPeriod: 60 * 10
             });
+        }
+    }, [queryClient]);
 
-            const clientWellKnown = await client.waitForClientWellKnown();
-
-            /* eslint-disable */
-            const rtcFoci = clientWellKnown?.["org.matrix.msc4143.rtc_foci"];
-            if (rtcFoci && Array.isArray(rtcFoci)) {
-                client.setLivekitServiceURL(
-                    rtcFoci.find(t => t.type === "livekit" && "livekit_service_url" in t)
-                        ?.livekit_service_url
-                );
-            }
-            /* eslint-enable */
-        })();
-
-        return () => {
-            client.removeListener(ClientEvent.Sync, listener);
-        };
-    }, [client]);
-
-    return <MatrixClientContext value={{ client, ready }}>{props.children}</MatrixClientContext>;
+    return <MatrixClientContext value={{ ready, start, stop }}>{children}</MatrixClientContext>;
 };

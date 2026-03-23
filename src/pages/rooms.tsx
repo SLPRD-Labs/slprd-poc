@@ -1,0 +1,23 @@
+import { useMatrixClient } from "@/hooks/use-matrix-client";
+import { Route } from "@/routes/_mainLayout/space/$spaceId/room";
+import { useQuery } from "@tanstack/react-query";
+import type { FC } from "react";
+
+export const Rooms: FC = () => {
+    const { spaceId } = Route.useParams();
+
+    const { client, ready } = useMatrixClient();
+
+    const spaceQuery = useQuery({
+        queryKey: ["spaces", spaceId],
+        queryFn: () => client.getRoom(spaceId),
+        staleTime: Infinity,
+        enabled: ready
+    });
+
+    if (!spaceQuery.isSuccess) {
+        return null;
+    }
+
+    return <span>Rooms of Space {spaceQuery.data?.name}</span>;
+};

@@ -1,0 +1,41 @@
+name: Pull Request
+
+on:
+  pull_request:
+
+jobs:
+  prettier:
+    name: Prettier
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node 24
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: NPM clean install
+        run: npm ci
+
+      - name: Run Prettier
+        run: npx prettier --check .
+
+  eslint:
+    name: ESLint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node 24
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: NPM clean install
+        run: npm ci
+
+      - name: Run ESLint
+        run: npx eslint .

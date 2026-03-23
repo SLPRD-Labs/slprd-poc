@@ -1,3 +1,8 @@
+import logo from "@/assets/LogoSLPRD.png";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useAuthContext } from "@/contexts/auth-context/auth-context";
 import { Route } from "@/routes/login";
 import type { FC, SubmitEvent } from "react";
@@ -22,7 +27,7 @@ export const Login: FC = () => {
 
         try {
             await login({ baseUrl, username, password });
-            await navigate({ to: redirect });
+            await navigate({ to: redirect !== undefined && redirect !== "" ? redirect : "/" });
         } catch (err) {
             setError(
                 typeof err === "object" &&
@@ -38,41 +43,77 @@ export const Login: FC = () => {
     };
 
     return (
-        <form
-            onSubmit={e => {
-                void handleSubmit(e);
-            }}
-        >
-            <h2>Matrix Login</h2>
+        <div className="flex h-dvh items-center justify-center p-4">
+            <Card className="w-full max-w-100">
+                <CardHeader className="flex flex-col items-center gap-4 pt-10 pb-2">
+                    <img className="block h-12 w-auto" src={logo} alt="logo" />
+                    <div className="text-center">
+                        <h2 className="text-2xl font-bold text-slate-900">Bon retour parmi nous</h2>
+                        <p className="mt-1 text-sm text-slate-500">
+                            Accédez à votre espace S.L.P.R.D
+                        </p>
+                    </div>
+                </CardHeader>
 
-            <input
-                placeholder="Homeserver URL"
-                value={baseUrl}
-                onChange={e => {
-                    setBaseUrl(e.target.value);
-                }}
-            />
+                <CardContent className="p-10 pt-4">
+                    <form
+                        onSubmit={e => {
+                            void handleSubmit(e);
+                        }}
+                        className="flex flex-col gap-4"
+                    >
+                        <div className="grid gap-1.5">
+                            <Label htmlFor="homeserver">URL du serveur</Label>
+                            <Input
+                                id="homeserver"
+                                placeholder="https://matrix.org"
+                                value={baseUrl}
+                                onChange={e => {
+                                    setBaseUrl(e.target.value);
+                                }}
+                            />
+                        </div>
 
-            <input
-                placeholder="Username"
-                value={username}
-                onChange={e => {
-                    setUsername(e.target.value);
-                }}
-            />
+                        <div className="grid gap-1.5">
+                            <Label htmlFor="username">Nom d&#39;utilisateur</Label>
+                            <Input
+                                id="username"
+                                placeholder="@user:matrix.org"
+                                value={username}
+                                onChange={e => {
+                                    setUsername(e.target.value);
+                                }}
+                            />
+                        </div>
 
-            <input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={e => {
-                    setPassword(e.target.value);
-                }}
-            />
+                        <div className="grid gap-1.5">
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="password">Mot de passe</Label>
+                                <Button variant="ghost">Mot de passe oublié ?</Button>
+                            </div>
+                            <Input
+                                id="password"
+                                type="password"
+                                placeholder="••••••••"
+                                value={password}
+                                onChange={e => {
+                                    setPassword(e.target.value);
+                                }}
+                            />
+                        </div>
 
-            {error && <div style={{ color: "red" }}>{error}</div>}
+                        {error && (
+                            <div className="rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-600">
+                                ⚠️ {error}
+                            </div>
+                        )}
 
-            <button disabled={loading}>{loading ? "Logging in..." : "Login"}</button>
-        </form>
+                        <Button type="submit" className="mt-2 py-6" disabled={loading}>
+                            {loading ? "Connexion..." : "Se connecter"}
+                        </Button>
+                    </form>
+                </CardContent>
+            </Card>
+        </div>
     );
 };

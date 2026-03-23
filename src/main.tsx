@@ -1,4 +1,5 @@
 import { AuthContextProvider } from "@/contexts/auth-context/auth-context-provider";
+import { MatrixClientContextProvider } from "@/contexts/matrix-client-context/matrix-client-context-provider";
 import { TanStackQueryDevtoolsPlugin, TanStackQueryProvider } from "@/integrations/tanstack/query";
 import {
     TanStackRouterDevtoolsPlugin,
@@ -18,24 +19,26 @@ const root = createRoot(rootElement);
 
 root.render(
     <StrictMode>
-        <AuthContextProvider>
-            <TanStackQueryProvider>
-                <TanStackRouterProvider />
-                <TanStackDevtools
-                    plugins={[
-                        {
-                            name: "TanStack Query",
-                            render: <TanStackQueryDevtoolsPlugin />,
-                            defaultOpen: true
-                        },
-                        {
-                            name: "TanStack Router",
-                            render: <TanStackRouterDevtoolsPlugin />,
-                            defaultOpen: true
-                        }
-                    ]}
-                />
-            </TanStackQueryProvider>
-        </AuthContextProvider>
+        <TanStackQueryProvider>
+            <MatrixClientContextProvider>
+                <AuthContextProvider>
+                    <TanStackRouterProvider />
+                    <TanStackDevtools
+                        plugins={[
+                            {
+                                name: "TanStack Query",
+                                render: <TanStackQueryDevtoolsPlugin />,
+                                defaultOpen: true
+                            },
+                            {
+                                name: "TanStack Router",
+                                render: <TanStackRouterDevtoolsPlugin />,
+                                defaultOpen: true
+                            }
+                        ]}
+                    />
+                </AuthContextProvider>
+            </MatrixClientContextProvider>
+        </TanStackQueryProvider>
     </StrictMode>
 );

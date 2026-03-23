@@ -1,9 +1,11 @@
-import type { MatrixClient } from "matrix-js-sdk";
+import type { MatrixSession } from "@/contexts/auth-context/auth-context";
+import type { LoginOpts } from "@/contexts/auth-context/auth-context-provider";
 import { createContext, use } from "react";
 
 export interface IMatrixClientContext {
-    client: MatrixClient;
     ready: boolean;
+    start: (opts: LoginOpts) => Promise<MatrixSession>;
+    stop: () => Promise<void>;
 }
 
 export const MatrixClientContext = createContext<IMatrixClientContext | null>(null);

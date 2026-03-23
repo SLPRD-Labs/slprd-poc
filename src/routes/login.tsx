@@ -2,13 +2,21 @@ import { Login } from "@/pages/login";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/login")({
-    validateSearch: search => ({
-        redirect: (search.redirect as string) || "/"
-    }),
+    validateSearch: (search): { redirect?: string } => {
+        const redirect = search.redirect;
+        if (typeof redirect !== "string" || redirect === "") {
+            return {};
+        }
+        return {
+            redirect
+        };
+    },
     beforeLoad: ({ context, search }) => {
-        if (context.auth.session !== null) {
+        if (context.authContext.session !== null) {
             // eslint-disable-next-line @typescript-eslint/only-throw-error
-            throw redirect({ to: search.redirect });
+            throw redirect({
+                to: search.redirect !== undefined && search.redirect !== "" ? search.redirect : "/"
+            });
         }
     },
     component: Login

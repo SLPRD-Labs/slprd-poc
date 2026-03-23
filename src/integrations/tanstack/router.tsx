@@ -1,5 +1,6 @@
 import { useAuthContext } from "@/contexts/auth-context/auth-context";
 import { routeTree } from "@/routeTree.gen";
+import { useQueryClient } from "@tanstack/react-query";
 import { createRouter, RouterProvider } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import type { FC } from "react";
@@ -8,7 +9,9 @@ const router = createRouter({
     routeTree,
     context: {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        auth: undefined!
+        queryClient: undefined!,
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        authContext: undefined!
     }
 });
 
@@ -19,9 +22,11 @@ declare module "@tanstack/react-router" {
 }
 
 export const TanStackRouterProvider: FC = () => {
-    const auth = useAuthContext();
+    const queryClient = useQueryClient();
 
-    return <RouterProvider router={router} context={{ auth }} />;
+    const authContext = useAuthContext();
+
+    return <RouterProvider router={router} context={{ queryClient, authContext }} />;
 };
 
 export const TanStackRouterDevtoolsPlugin: FC = () => {
