@@ -1,5 +1,4 @@
 import { useMatrixClient } from "@/hooks/use-matrix-client";
-import { Pen, Trash } from "lucide-react";
 import { MatrixEventEvent, MsgType, RelationType, EventType } from "matrix-js-sdk";
 import type { MatrixEvent } from "matrix-js-sdk";
 import type { FC } from "react";
@@ -8,6 +7,14 @@ import { useEffect, useState } from "react";
 import { AuthenticatedMedia } from "@/components/textual-room/authenticated-media";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
+import { MessageSquare, Pen, Trash } from "lucide-react";
+import { ActionDropdown } from "./action-dropdown";
+
+interface Props {
+    event: MatrixEvent;
+    threadCount?: number;
+    onOpenThread?: (rootEventId: string) => void;
+}
 
 interface ReactionContent {
     "m.relates_to"?: {
@@ -55,7 +62,7 @@ const collectReactionsByEmoji = (events: MatrixEvent[], targetEventId: string) =
     return byEmoji;
 };
 
-const MessageItem: FC<{ event: MatrixEvent; roomId: string }> = ({ event, roomId }) => {
+const MessageItem: FC<Props> = ({ event, threadCount = 0, onOpenThread  }) => {
     const { client } = useMatrixClient();
     const currentUser = client.getUserId();
     const userSender = event.getSender();
@@ -170,6 +177,10 @@ const MessageItem: FC<{ event: MatrixEvent; roomId: string }> = ({ event, roomId
             </div>
         );
     };
+    const [underline, setUnderline] = useState(false);
+
+    const eventId = event.getId();
+    const isThreadRoot = threadCount > 0;
 
     useEffect(() => {
         const onReplaced = () => {
@@ -281,7 +292,7 @@ const MessageItem: FC<{ event: MatrixEvent; roomId: string }> = ({ event, roomId
 
     return (
         <div
-            className="group hover:bg-secondary relative flex flex-col rounded px-4 py-1"
+            className={`group relative flex flex-col rounded px-4 py-1 transition-colors ${hovered ? "bg-secondary" : ""} `}
             onMouseEnter={() => {
                 setHovered(true);
             }}
@@ -396,6 +407,22 @@ const MessageItem: FC<{ event: MatrixEvent; roomId: string }> = ({ event, roomId
             )}
 
             {renderReactions()}
+
+            {isThreadRoot && eventId && (
+                <button
+                    type="button"
+                    onClick={() => onOpenThread?.(eventId)}
+                    onMouseEnter={() => setUnderline(true)}
+                    onMouseLeave={() => setUnderline(false)}
+                    className="text-muted-foreground mt-1 inline-flex w-fit items-center gap-1 rounded-md border bg-white px-2 py-1 text-xs hover:cursor-pointer hover:bg-slate-50"
+                >
+                    <MessageSquare size={14} />
+                    Ouvrir le thread •
+                    <span className={`font-semibold text-blue-700 ${underline ? "underline" : ""}`}>
+                        {threadCount} message{threadCount > 1 ? "s" : ""}
+                    </span>
+                </button>
+            )}
         </div>
     );
 };

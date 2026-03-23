@@ -23,14 +23,17 @@ export const Room: FC<RoomProps> = ({ roomId }) => {
     }
 
     return (
-        <div className="flex h-full w-full">
-            <div className="flex h-full w-full flex-col">
-                <div className="flex border-b p-3">
-                    <h2 className="font-semibold"># {roomQuery.data?.name}</h2>
-                </div>
-                <TextChat roomId={roomId} />
+         <div className="flex h-full w-full overflow-hidden">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+            <div className="flex shrink-0 border-b p-3">
+                <h2 className="font-semibold"># {roomQuery.data?.name}</h2>
             </div>
+            <TextChat roomId={roomId} />
+        </div>
+
+        <div className="h-full w-80 shrink-0 border-l">
             <PresenceSidenav />
         </div>
+    </div>
     );
 };
