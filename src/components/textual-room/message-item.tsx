@@ -145,7 +145,7 @@ const MessageItem: FC<{ event: MatrixEvent }> = ({ event }) => {
 
     return (
         <div
-            className="group relative flex flex-col rounded px-4 py-1 hover:bg-gray-50"
+            className="group relative flex flex-col rounded px-4 py-1 hover:bg-secondary"
             onMouseEnter={() => {
                 setHovered(true);
             }}
@@ -154,7 +154,7 @@ const MessageItem: FC<{ event: MatrixEvent }> = ({ event }) => {
             }}
         >
             {hovered && (
-                <div className="absolute -top-3 right-4 z-10 flex items-center gap-1 rounded-md border bg-white px-1 py-0.5 shadow-sm">
+                <div className="absolute -top-3 right-4 z-10 flex items-center gap-1 rounded-md border bg-background px-1 py-0.5 shadow-sm">
                     <Button variant="ghost" disabled title="Remove">
                         <Trash size={16} />
                     </Button>
