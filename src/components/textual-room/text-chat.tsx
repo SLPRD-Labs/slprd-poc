@@ -1,12 +1,15 @@
 import { useMatrixClient } from "@/hooks/use-matrix-client";
-import { KnownMembership, MsgType, RelationType, RoomEvent, RoomMemberEvent } from "matrix-js-sdk";
 import type { MatrixEvent } from "matrix-js-sdk";
-import { KnownMembership, RoomEvent, RoomMemberEvent } from "matrix-js-sdk";
+import {
+    EventType,
+    KnownMembership,
+    MsgType,
+    RelationType,
+    RoomEvent,
+    RoomMemberEvent
+} from "matrix-js-sdk";
 import type { FC, KeyboardEvent } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowDown, SendHorizonal } from "lucide-react";
-
-import MessageItem from "./message-item";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { WrittingAnimation } from "./writting-animation";
 import { Button } from "../ui/button";
 import { ArrowDown, SendHorizonal, X } from "lucide-react";
@@ -36,16 +39,98 @@ export const TextChat: FC<Props> = ({ roomId }) => {
     const [messages, setMessages] = useState<MatrixEvent[]>(
         () => client.getRoom(roomId)?.getLiveTimeline().getEvents().filter(filterEvents) ?? []
     );
-    const [typingUsers, setTypingUsers] = useState("");
+    const [typingUsers, setTypingUsers] = useState<string>("");
     const [input, setInput] = useState("");
 
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const [hasMoreHistory, setHasMoreHistory] = useState(true);
+
+    const scrollRef = useRef<HTMLDivElement>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
+
+    const getThreadRootId = (event: MatrixEvent): string | null => {
+        const relatesTo = event.getContent()?.["m.relates_to"];
+        if (relatesTo?.rel_type === "m.thread" && typeof relatesTo?.event_id === "string") {
+            return relatesTo.event_id;
+        }
+        return null;
+    };
+
+    const { threadRepliesCount } = useMemo(() => {
+        const countByRoot: Record<string, number> = {};
+                const main: MatrixEvent[] = [];
+
+        for (const ev of messages) {
+            if (ev.getType() !== "m.room.message") continue;
+            const rootId = getThreadRootId(ev);
+            if (rootId) {
+                countByRoot[rootId] = (countByRoot[rootId] ?? 0) + 1;
+            } else {
+                main.push(ev);
+            }        
+        }
+
+        return { threadRepliesCount: countByRoot };
+    }, [messages]);
+
+    const activeThreadMessages = useMemo(() => {
+        if (!activeThreadRootId) return [];
+        return messages.filter(
+            ev => ev.getType() === "m.room.message" && getThreadRootId(ev) === activeThreadRootId
+        );
+    }, [messages, activeThreadRootId]);
 
     const refreshMessages = useCallback(() => {
         const events =
             client.getRoom(roomId)?.getLiveTimeline().getEvents().filter(filterEvents) ?? [];
         setMessages([...events]);
     }, [client, roomId]);
+
+    const loadOlder = useCallback(
+        async (limit = 20) => {
+            const room = client.getRoom(roomId);
+            if (!room) return false;
+
+            const before = room.getLiveTimeline().getEvents().length;
+            await client.scrollback(room, limit);
+            const after = room.getLiveTimeline().getEvents().length;
+
+            refreshMessages();
+            return after > before;
+        },
+        [client, roomId, refreshMessages]
+    );
+
+    // Loading more history on mount until we fill the scroll container or we reach the end of history
+    useEffect(() => {
+        let cancelled = false;
+
+        const bootstrapHistory = async () => {
+            const el = scrollRef.current;
+            if (!el) return;
+
+            for (let i = 0; i < 5; i++) {
+                if (cancelled) return;
+
+                if (el.scrollHeight > el.clientHeight) return;
+
+                const loaded = await loadOlder(10);
+
+                if (!loaded) {
+                    setHasMoreHistory(false);
+                    return;
+                }
+
+                bottomRef.current?.scrollIntoView();
+            }
+        };
+
+        void bootstrapHistory();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [roomId, loadOlder]);
 
     useEffect(() => {
         client.on(RoomEvent.Timeline, refreshMessages);
@@ -57,6 +142,28 @@ export const TextChat: FC<Props> = ({ roomId }) => {
     useEffect(() => {
         bottomRef.current?.scrollIntoView();
     }, [roomId]);
+
+    const handleScroll = useCallback(async () => {
+        const el = scrollRef.current;
+        if (!el || isLoadingMore) return;
+
+        if (el.scrollTop <= 24) {
+            setIsLoadingMore(true);
+            try {
+                const prevScrollHeight = el.scrollHeight;
+
+                const loaded = await loadOlder(10);
+                if (!loaded) {
+                    setHasMoreHistory(false);
+                    return;
+                }
+
+                el.scrollTop = Math.max(0, el.scrollHeight - prevScrollHeight);
+            } finally {
+                setIsLoadingMore(false);
+            }
+        }
+    }, [isLoadingMore, hasMoreHistory, loadOlder]);
 
     useEffect(() => {
         if (!error) return;
@@ -80,16 +187,20 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                 .filter(member => member.typing && member.userId !== client.getUserId())
                 .map(member => member.name);
 
-            if (typing.length === 0) setTypingUsers("");
-            else if (typing.length === 1) setTypingUsers(`${typing[0]} est en train d'écrire...`);
-            else if (typing.length === 2) {
+            if (typing.length === 0) {
+                setTypingUsers("");
+            } else if (typing.length === 1) {
+                setTypingUsers(`${typing[0]} est en train d'écrire...`);
+            } else if (typing.length === 2) {
                 setTypingUsers(
                     `${new Intl.ListFormat("fr", {
                         style: "long",
                         type: "conjunction"
                     }).format(typing)} sont en train d'écrire...`
                 );
-            } else setTypingUsers("Plusieurs personnes sont en train d'écrire...");
+            } else {
+                setTypingUsers("Plusieurs personnes sont en train d'écrire...");
+            }
         };
 
         client.on(RoomMemberEvent.Typing, handler);
@@ -126,7 +237,7 @@ export const TextChat: FC<Props> = ({ roomId }) => {
         }
     }, [client, roomId, isLoadingMore, refreshMessages]);
 
-    const sendMain = async (e?: FormEvent<HTMLFormElement>) => {
+    const sendMain = async (e?: React.SyntheticEvent<HTMLFormElement>) => {
         e?.preventDefault();
 
         const body = input.trim();
@@ -156,7 +267,7 @@ export const TextChat: FC<Props> = ({ roomId }) => {
         }
     };
 
-    const sendThread = async (e?: FormEvent<HTMLFormElement>) => {
+    const sendThread = async (e?: React.SyntheticEvent<HTMLFormElement>) => {
         e?.preventDefault();
         const body = threadInput.trim();
         if (!body || !activeThreadRootId) return;
@@ -180,10 +291,11 @@ export const TextChat: FC<Props> = ({ roomId }) => {
             void sendMain();
             return;
         }
+
         void client.sendTyping(roomId, true, 4000);
     };
 
-    const handleThreadKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    const handleThreadKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             void sendThread();
@@ -267,9 +379,11 @@ export const TextChat: FC<Props> = ({ roomId }) => {
         <div className="flex h-full w-full flex-row overflow-hidden">
             <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
                 <div className="min-h-0 flex-1 overflow-y-auto py-2">
-                                    {messages.map(event => {
+                    {messages.map(event => {
                         if (event.getType() === "m.room.message") {
+                            // Not showing threaded messages in the main timeline, they are visible in the thread view
                             if (getThreadRootId(event) !== null) return null;
+
                             return (
                                 <MessageItem
                                     key={event.getId()}
@@ -295,28 +409,27 @@ export const TextChat: FC<Props> = ({ roomId }) => {
 
                     <div ref={bottomRef} />
 
-                <div className="sticky bottom-4 m-4 flex items-end justify-end">
-                    <Button
-                        variant="ghost"
-                        className="bg-secondary hover:bg-primary hover:text-primary-foreground rounded-full p-3 shadow-lg"
-                        onClick={() => bottomRef.current?.scrollIntoView({ behavior: "smooth" })}
-                    >
-                        <ArrowDown className="size-4" />
-                    </Button>
+                    <div className="sticky bottom-4 m-4 flex-1 items-end flex justify-end">
+                        <Button
+                            variant="ghost"
+                            className="bg-secondary hover:bg-primary hover:text-primary-foreground rounded-full p-3 shadow-lg"
+                            onClick={() => bottomRef.current?.scrollIntoView({ behavior: "smooth" })}
+                        >
+                            <ArrowDown className="size-4" />
+                        </Button>
+                    </div>
                 </div>
-            </div>
 
-            {error && (
+                            {error && (
                 <div className="mx-4 mt-2 rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-600">
                     ⚠️ {error}
                 </div>
             )}
 
-                <div className="text-muted-foreground flex items-center gap-2 px-4 text-sm">
+                <div className="text-muted-foreground flex flex-row items-center gap-2 px-4 text-sm">
                     {typingUsers !== "" && (
                         <>
-                            <WrittingAnimation />
-                            {typingUsers}
+                            <WrittingAnimation /> {typingUsers}
                         </>
                     )}
                 </div>
@@ -429,7 +542,6 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                             <X size={16} />
                         </Button>
                     </div>
-
                     <div className="flex-1 overflow-y-auto p-2">
                         {activeThreadMessages.map(event => (
                             <MessageItem key={event.getId()} event={event} />
