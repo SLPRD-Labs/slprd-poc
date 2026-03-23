@@ -1,5 +1,5 @@
-import {  useState } from "react";
-import type {FC} from "react";
+import type { FC } from "react";
+import { useState } from "react";
 import { useUserDirectory } from "@/hooks/use-user-directory";
 import { usePresence } from "@/hooks/use-presence";
 import { UserDirectoryItem } from "@/components/common/home/user-directory-item";
@@ -33,15 +33,13 @@ export const Home: FC = () => {
 
             <div className="flex flex-col gap-4">
                 {onlineUsers.length > 0 ? (
-                    <div className="flex flex-col divide-y overflow-hidden rounded-md border bg-white shadow-sm">
-                        {onlineUsers.map(user => (
-                            <UserDirectoryItem
-                                key={user.user_id}
-                                user={user}
-                                presence={presenceMap[user.user_id]}
-                            />
-                        ))}
-                    </div>
+                    onlineUsers.map(user => (
+                        <UserDirectoryItem
+                            key={user.user_id}
+                            user={user}
+                            presence={presenceMap[user.user_id]}
+                        />
+                    ))
                 ) : (
                     <div className="py-8 text-center">
                         <p className="text-sm font-medium text-gray-500">

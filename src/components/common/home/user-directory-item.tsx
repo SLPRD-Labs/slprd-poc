@@ -13,7 +13,7 @@ export const UserDirectoryItem: FC<props> = ({ user, presence }) => {
     const userStatus = presence.status;
 
     return (
-        <div className="flex items-center justify-between p-3 hover:bg-slate-50">
+        <div className="hover:bg-accent flex items-center justify-between rounded-md p-3 transition-colors">
             <div className="flex items-center gap-3">
                 <div className="relative">
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-200 font-bold">
