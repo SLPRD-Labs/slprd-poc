@@ -70,7 +70,6 @@ export const TextChat: FC<Props> = ({ roomId }) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-
     useEffect(() => {
         if (!error) return;
 
@@ -82,7 +81,6 @@ export const TextChat: FC<Props> = ({ roomId }) => {
             clearTimeout(timer);
         };
     }, [error]);
-
 
     useEffect(() => {
         const room = client.getRoom(roomId);
@@ -116,7 +114,6 @@ export const TextChat: FC<Props> = ({ roomId }) => {
         };
     }, [client, roomId]);
 
-
     const handleScroll = useCallback(async () => {
         const el = scrollRef.current;
         if (!el || isLoadingMore) return;
@@ -139,7 +136,6 @@ export const TextChat: FC<Props> = ({ roomId }) => {
         }
     }, [client, roomId, isLoadingMore, refreshMessages]);
 
-
     const sendMain = async (e?: React.SyntheticEvent<HTMLFormElement>) => {
         e?.preventDefault();
 
@@ -148,11 +144,9 @@ export const TextChat: FC<Props> = ({ roomId }) => {
         setIsUploading(true);
         setError(null);
 
-
         await client.sendTyping(roomId, false, 4000).catch(console.error);
 
         try {
-
             for (const pending of pendingFiles) {
                 const { file } = pending;
                 const uploadResponse = await client.uploadContent(file);
@@ -174,11 +168,9 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                 } as never);
             }
 
-
             if (input.trim()) {
                 await client.sendTextMessage(roomId, input.trim());
             }
-
 
             setInput("");
             setPendingFiles([]);
@@ -193,7 +185,6 @@ export const TextChat: FC<Props> = ({ roomId }) => {
         }
     };
 
-
     const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
@@ -201,10 +192,8 @@ export const TextChat: FC<Props> = ({ roomId }) => {
             return;
         }
 
-
         void client.sendTyping(roomId, true, 4000);
     };
-
 
     const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
@@ -241,7 +230,6 @@ export const TextChat: FC<Props> = ({ roomId }) => {
             fileInputRef.current.value = "";
         }
     };
-
 
     const removePendingFile = (index: number) => {
         setPendingFiles(prev => {
