@@ -14,22 +14,26 @@ import { useMatrixClient } from "@/hooks/use-matrix-client";
 import { useUserDirectory } from "@/hooks/use-user-directory";
 import { usePresence } from "@/hooks/use-presence";
 import { getOrCreateDM } from "@/libs/utils/matrix/dm";
+import { useNavigate } from "@tanstack/react-router";
 
 export function CreateDMModal() {
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState("");
     const { client } = useMatrixClient();
+    const navigate = useNavigate();
 
     const { users, loading } = useUserDirectory(query);
     const presenceMap = usePresence(client);
 
     const handleStartChat = async (userId: string) => {
         const roomId = await getOrCreateDM(client, userId);
-        console.log("userId ", userId)
-        console.log("roomId ", roomId);
-        setOpen(false);
-        //router.push(`/chat/${roomId}`)
-        console.log(`Démarrer une conversation avec ${userId} dans la salle ${String(roomId)}`);
+        if (roomId) {
+            await navigate({
+                to: "/dm/$roomId",
+                params: { roomId: roomId }
+            });
+            setOpen(false);
+        }
     };
 
     return (
