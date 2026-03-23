@@ -60,11 +60,12 @@ const collectReactionsByEmoji = (events: MatrixEvent[], targetEventId: string) =
     return byEmoji;
 };
 
-const AuthenticatedMedia: FC<{ mxcUrl: string; msgtype: string; body: string }> = ({
-    mxcUrl,
-    msgtype,
-    body
-}) => {
+    const AuthenticatedMedia: FC<{
+    mxcUrl: string;
+    msgtype: string;
+    body: string;
+    onDialogOpenChange?: (open: boolean) => void;
+}> = ({ mxcUrl, msgtype, body, onDialogOpenChange }) => {
     const { client } = useMatrixClient();
     const [objectUrl, setObjectUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
@@ -97,7 +98,11 @@ const AuthenticatedMedia: FC<{ mxcUrl: string; msgtype: string; body: string }> 
                     headers: { Authorization: `Bearer ${accessToken}` }
                 });
 
-                if (!res.ok) throw new Error("Failed to fetch media");
+                if (!res.ok) {
+                    console.error(`Media fetch error: ${res.status.toString()} ${res.statusText}`);
+                    if (!controller.signal.aborted) setLoading(false);
+                    return;
+                }
 
                 const blob = await res.blob();
                 if (!controller.signal.aborted) {
@@ -105,9 +110,7 @@ const AuthenticatedMedia: FC<{ mxcUrl: string; msgtype: string; body: string }> 
                     setObjectUrl(url);
                 }
             } catch (error) {
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                // @ts-expect-error
-                if (error.name === "AbortError") return;
+                if (error instanceof Error && error.name === "AbortError") return;
                 console.error("Media fetch error:", error);
             } finally {
                 if (!controller.signal.aborted) setLoading(false);
@@ -136,7 +139,7 @@ const AuthenticatedMedia: FC<{ mxcUrl: string; msgtype: string; body: string }> 
 
     if (msgtype === "m.image") {
         return (
-            <Dialog>
+            <Dialog onOpenChange={onDialogOpenChange}>
                 <DialogTrigger
                     render={
                         <button className="focus-visible:ring-ring mt-2 max-w-sm cursor-pointer overflow-hidden rounded-md border bg-gray-50/50 transition-opacity outline-none hover:opacity-90 focus-visible:ring-2 focus-visible:ring-offset-2" />
@@ -188,6 +191,7 @@ const MessageItem: FC<{ event: MatrixEvent; roomId: string }> = ({ event, roomId
     const [editedContent, setEditedContent] = useState(currentMessage);
     const [hovered, setHovered] = useState(false);
     const [isReactionPending, setIsReactionPending] = useState(false);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     const eventContent = event.getContent();
     const msgtype = eventContent.msgtype;
@@ -377,7 +381,10 @@ const MessageItem: FC<{ event: MatrixEvent; roomId: string }> = ({ event, roomId
                 msgtype === "m.video" ||
                 msgtype === "m.audio")
         ) {
-            return <AuthenticatedMedia mxcUrl={mxcUrl} msgtype={msgtype} body={currentMessage} />;
+            return <AuthenticatedMedia mxcUrl={mxcUrl} msgtype={msgtype} body={body} onDialogOpenChange={(open) => {
+                setIsDialogOpen(open);
+                if (open) setHovered(false);
+            }}/>;
         }
 
         return (
@@ -397,7 +404,7 @@ const MessageItem: FC<{ event: MatrixEvent; roomId: string }> = ({ event, roomId
                 setHovered(false);
             }}
         >
-            {hovered && !isEditing && (
+            {hovered && !isEditing && !isDialogOpen && (
                 <div className="bg-background absolute -top-3 right-4 z-10 flex items-center gap-1 rounded-md border px-1 py-0.5 shadow-sm">
                     {isSender && !isRemoved && (
                         <>
