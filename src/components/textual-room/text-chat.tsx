@@ -17,19 +17,19 @@ interface Props {
 export const TextChat: FC<Props> = ({ roomId }) => {
     const { client } = useMatrixClient();
 
+    const filterEvents = (event: MatrixEvent) => {
+    if (event.getType() !== "m.room.message" && event.getType() !== "m.room.member") return false;
+    const relatesTo = event.getContent()["m.relates_to"];
+    return relatesTo?.rel_type !== RelationType.Replace;
+    };
+
     const [messages, setMessages] = useState<MatrixEvent[]>(
         () =>
             client
                 .getRoom(roomId)
                 ?.getLiveTimeline()
                 .getEvents()
-                .filter(
-                    event =>
-                        {
-                            if (event.getType() !== "m.room.message" || event.getType() === "m.room.member") return false;
-                    const relatesTo = event.getContent()["m.relates_to"];
-                    return relatesTo?.rel_type !== RelationType.Replace;
-                }) ?? []                   
+                .filter(filterEvents) ?? []                   
     );
 
     const [typingUsers, setTypingUsers] = useState<string>("");
@@ -44,11 +44,7 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                 .getRoom(roomId)
                 ?.getLiveTimeline()
                 .getEvents()
-                .filter(event => {
-                    if (event.getType() === "m.room.message" || event.getType() === "m.room.member") return false;
-                    const relatesTo = event.getContent()["m.relates_to"];
-                    return relatesTo?.rel_type !== RelationType.Replace;
-                }) ?? [] ;
+                .filter(filterEvents) ?? [];
         setMessages([...events]);
     }, [client, roomId]);
 
@@ -136,7 +132,7 @@ export const TextChat: FC<Props> = ({ roomId }) => {
             month: "long",
             year: "numeric",
         });
-    }
+    };
 
     return (
         <div className="flex h-full w-full flex-col overflow-hidden">
