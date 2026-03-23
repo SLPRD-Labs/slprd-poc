@@ -34,11 +34,13 @@ export function CreateDMModal() {
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger>
-                <Button variant="outline" size="icon" title="Nouveau message">
-                   +
-                </Button>
-            </DialogTrigger>
+            <DialogTrigger
+                render={
+                    <Button variant="outline" size="icon" title="Nouveau message">
+                        +
+                    </Button>
+                }
+            ></DialogTrigger>
 
             <DialogContent className="gap-0 p-0 sm:max-w-106.25">
                 <DialogHeader className="border-b p-4">
@@ -52,7 +54,9 @@ export function CreateDMModal() {
                             placeholder="Rechercher un utilisateur..."
                             className="bg-white pl-8"
                             value={query}
-                            onChange={e => {setQuery(e.target.value)}}
+                            onChange={e => {
+                                setQuery(e.target.value);
+                            }}
                         />
                     </div>
                 </div>
@@ -69,7 +73,9 @@ export function CreateDMModal() {
                                 return (
                                     <button
                                         key={user.user_id}
-                                        onClick={() => {void handleStartChat(user.user_id)}}
+                                        onClick={() => {
+                                            void handleStartChat(user.user_id);
+                                        }}
                                         className="group flex w-full items-center gap-3 rounded-md p-2 transition-all hover:bg-slate-100"
                                     >
                                         <div className="relative">
