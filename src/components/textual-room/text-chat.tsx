@@ -15,6 +15,7 @@ import { Button } from "../ui/button";
 import { ArrowDown, SendHorizonal, X } from "lucide-react";
 import MessageItem from "./message-item";
 import { Textarea } from "../ui/textarea";
+import { PresenceSidenav } from "../presence-sidenav";
 
 interface Props {
     roomId: string;
@@ -394,15 +395,19 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                             );
                         }
 
-                    if (event.getType() === "m.room.member") {
-                        return (
-                            <div key={event.getId()} className="text-muted-foreground text-center text-xs">
-                                {event.getContent().membership === "join"
-                                    ? `${event.sender?.name} a rejoint le salon`
-                                    : `${event.sender?.name} a quitté le salon`}
-                            </div>
-                        );
-                    }
+                        if (event.getType() === "m.room.member") {
+                            return (
+                                <div
+                                    key={event.getId()}
+                                    className="text-muted-foreground text-center text-xs"
+                                >
+                                    {event.sender?.name &&
+                                        (event.getContent().membership === "join"
+                                            ? `${event.sender.name} a rejoint le salon`
+                                            : `${event.sender.name} a quitté le salon`)}
+                                </div>
+                            );
+                        }
 
                         return null;
                     })}
@@ -534,7 +539,7 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                         </div>
 
 
-             {activeThreadRootId && (
+             {activeThreadRootId ? (
                 <aside className="hidden w-90 shrink-0 border-l md:flex md:flex-col">
                     <div className="flex items-center justify-between border-b p-3">
                         <span className="text-sm font-semibold">Thread</span>
@@ -566,6 +571,10 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                         </Button>
                     </form>
                 </aside>
+            ) : (
+                <div className="h-full w-80 shrink-0 border-l">
+                    <PresenceSidenav />
+                </div>
             )}
         </div>
     );
