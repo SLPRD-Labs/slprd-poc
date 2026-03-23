@@ -1,4 +1,5 @@
 import { NavRoom } from "@/components/common/sidebar/nav-room";
+import { Button } from "@/components/ui/button";
 import {
     Sidebar,
     SidebarContent,
@@ -20,6 +21,7 @@ interface Props {
 
 export const RoomSidebar: FC<Props> = ({ spaceId, activeRoomId }) => {
     const { client, ready } = useMatrixClient();
+    const [openCreateRoom, setOpenCreateRoom] = useState(false);
 
     const spaceQuery = useQuery({
         queryKey: ["space", spaceId],
