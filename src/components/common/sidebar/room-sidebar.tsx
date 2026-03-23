@@ -1,4 +1,5 @@
 import { NavRoom } from "@/components/common/sidebar/nav-room";
+import { Button } from "@/components/ui/button";
 import {
     Sidebar,
     SidebarContent,
@@ -10,7 +11,10 @@ import {
 import { useMatrixClient } from "@/hooks/use-matrix-client";
 import { spaceService } from "@/services/matrix/space";
 import { useQuery } from "@tanstack/react-query";
-import type { FC } from "react";
+import { Plus } from "lucide-react";
+import { useState  } from "react";
+import type {FC} from "react";
+import { CreateRoomDialog } from "../dialogs/create-room-dialog";
 
 interface Props {
     spaceId: string;
@@ -19,6 +23,7 @@ interface Props {
 
 export const RoomSidebar: FC<Props> = ({ spaceId, activeRoomId }) => {
     const { client, ready } = useMatrixClient();
+    const [openCreateRoom, setOpenCreateRoom] = useState(false);
 
     const spaceQuery = useQuery({
         queryKey: ["space", spaceId],
@@ -40,20 +45,34 @@ export const RoomSidebar: FC<Props> = ({ spaceId, activeRoomId }) => {
                 {spaceQuery.isSuccess && spaceQuery.data?.name}
             </SidebarHeader>
             <SidebarContent>
-                <SidebarGroup>
+                <SidebarGroup className="px-0">
+                    
                     <SidebarGroupContent>
-                        <SidebarMenu className="gap-1">
-                            {roomsQuery.isSuccess &&
-                                roomsQuery.data.map(r => (
-                                    <NavRoom
-                                        key={r.roomId}
-                                        spaceId={spaceId}
-                                        room={r}
-                                        isActive={activeRoomId === r.roomId}
-                                    />
-                                ))}
-                        </SidebarMenu>
+                        {roomsQuery.isSuccess &&
+                            roomsQuery.data.map(r => (
+                                <NavRoom
+                                    key={r.roomId}
+                                    spaceId={spaceId}
+                                    room={r}
+                                    isActive={activeRoomId === r.roomId}
+                                />
+                            ))}
                     </SidebarGroupContent>
+                    <SidebarMenu className="gap-1">
+                        {roomsQuery.isSuccess &&
+                            roomsQuery.data.map(r => (
+                                <NavRoom
+                                    key={r.roomId}
+                                    spaceId={spaceId}
+                                    room={r}
+                                    isActive={activeRoomId === r.roomId}
+                                />
+                            ))}
+                    </SidebarMenu>
+                    <Button size="sm" className="w-full border-t cursor-pointer border-none rounded-none bg-[#171717] my-2" onClick={() => { setOpenCreateRoom(true); }}>
+                        <Plus />
+                    </Button>
+                    <CreateRoomDialog openCreateRoom={openCreateRoom} setOpenCreateRoom={setOpenCreateRoom} />
                 </SidebarGroup>
             </SidebarContent>
         </Sidebar>

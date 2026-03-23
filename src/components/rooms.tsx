@@ -1,13 +1,13 @@
 import { Room } from "@/components/room";
 import { useCallContext } from "@/contexts/call-context/call-context";
-import { useMatrixClientContext } from "@/contexts/matrix-client-context/matrix-client-context";
+import { useMatrixClient } from "@/hooks/use-matrix-client";
 import { Visibility, Preset } from "matrix-js-sdk";
 import { useState } from "react";
 import type { FC, SyntheticEvent } from "react";
 
 export const Rooms: FC = () => {
     const call = useCallContext();
-    const { client } = useMatrixClientContext();
+    const { client } = useMatrixClient();
     const [creating, setCreating] = useState(false);
     const [createdRoomId, setCreatedRoomId] = useState<string | null>(null);
 
