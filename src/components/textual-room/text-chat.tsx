@@ -1,6 +1,6 @@
 import { useMatrixClient } from "@/hooks/use-matrix-client";
 import type { MatrixEvent } from "matrix-js-sdk";
-import { RoomEvent, RoomMemberEvent } from "matrix-js-sdk";
+import { KnownMembership, RoomEvent, RoomMemberEvent } from "matrix-js-sdk";
 import type { FC, KeyboardEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowDown, SendHorizonal } from "lucide-react";
@@ -65,7 +65,7 @@ export const TextChat: FC<Props> = ({ roomId }) => {
 
         const handler = () => {
             const typing = room
-                .getMembersWithMembership("join")
+                .getMembersWithMembership(KnownMembership.Join)
                 .filter(member => member.typing && member.userId !== client.getUserId())
                 .map(member => member.name);
 
@@ -129,7 +129,7 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                                 className="text-muted-foreground text-center text-xs"
                             >
                                 {event.sender?.name &&
-                                    (event.getContent().membership === "join"
+                                    (event.getContent().membership === KnownMembership.Join
                                         ? `${event.sender.name} a rejoint le salon`
                                         : `${event.sender.name} a quitté le salon`)}
                             </div>
