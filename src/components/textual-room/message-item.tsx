@@ -1,5 +1,5 @@
 import { useMatrixClient } from "@/hooks/use-matrix-client";
-import { Pen, Trash, FileIcon, Loader2 } from "lucide-react";
+import { Pen, Trash, FileIcon, Loader2, Download, X } from "lucide-react";
 import { MatrixEventEvent, MsgType, RelationType, EventType } from "matrix-js-sdk";
 import type { MatrixEvent } from "matrix-js-sdk";
 import type { FC } from "react";
@@ -10,7 +10,8 @@ import {
     Dialog,
     DialogContent,
     DialogTitle,
-    DialogTrigger
+    DialogTrigger,
+    DialogClose
 } from "../ui/dialog";
 import { Textarea } from "../ui/textarea";
 
@@ -60,12 +61,20 @@ const collectReactionsByEmoji = (events: MatrixEvent[], targetEventId: string) =
     return byEmoji;
 };
 
-    const AuthenticatedMedia: FC<{
+const formatFileSize = (bytes?: number) => {
+    if (!bytes) return "Taille inconnue";
+    const mb = bytes / (1024 * 1024);
+    if (mb < 1) return `${(bytes / 1024).toFixed(1)} Ko`;
+    return `${mb.toFixed(2)} Mo`;
+};
+
+const AuthenticatedMedia: FC<{
     mxcUrl: string;
     msgtype: string;
     body: string;
+    fileSize?: number;
     onDialogOpenChange?: (open: boolean) => void;
-}> = ({ mxcUrl, msgtype, body, onDialogOpenChange }) => {
+}> = ({ mxcUrl, msgtype, body, fileSize, onDialogOpenChange }) => {
     const { client } = useMatrixClient();
     const [objectUrl, setObjectUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
@@ -148,16 +157,86 @@ const collectReactionsByEmoji = (events: MatrixEvent[], targetEventId: string) =
                     <img src={objectUrl} alt={body} className="max-h-96 w-full object-contain" />
                 </DialogTrigger>
 
-                <DialogContent className="flex max-h-[95vh] w-auto max-w-[95vw] items-center justify-center border-none bg-transparent p-0 shadow-none ring-0">
+                <DialogContent
+                    showCloseButton={false}
+                    className="top-0! left-0! flex h-dvh w-dvw max-w-none! translate-x-0! translate-y-0! items-center justify-center border-none bg-transparent p-0! shadow-none ring-0"
+                >
                     <DialogTitle className="sr-only">Aperçu de l&#39;image : {body}</DialogTitle>
+
+                    <DialogClose
+                        className="absolute inset-0 z-0 h-full w-full cursor-default outline-none"
+                        aria-hidden="true"
+                        tabIndex={-1}
+                    />
 
                     <img
                         src={objectUrl}
                         alt={body}
-                        className="max-h-[90vh] max-w-[90vw] rounded-md object-contain"
+                        className="relative z-10 max-h-[90vh] max-w-[90vw] rounded-md object-contain"
                     />
+
+                    <DialogClose className="bg-background text-foreground hover:bg-muted focus:ring-ring absolute top-4 right-4 z-50 flex size-8 items-center justify-center rounded-md border shadow-sm transition-colors focus:ring-2 focus:outline-none">
+                        <X className="size-4" />
+                        <span className="sr-only">Fermer</span>
+                    </DialogClose>
                 </DialogContent>
             </Dialog>
+        );
+    }
+
+    if (msgtype === "m.video") {
+        return (
+            <div className="group relative mt-2 w-fit overflow-hidden rounded-md border bg-transparent shadow-sm">
+                <video
+                    src={objectUrl}
+                    controls
+                    preload="metadata"
+                    className="max-h-96 w-auto max-w-sm object-contain"
+                />
+
+                <a
+                    href={objectUrl}
+                    download={body}
+                    title="Télécharger"
+                    className="bg-background text-foreground hover:bg-muted absolute top-2 right-2 flex size-8 items-center justify-center rounded-md border opacity-0 shadow-sm transition-all duration-200 group-hover:opacity-100 hover:scale-105"
+                >
+                    <Download className="size-4" />
+                </a>
+            </div>
+        );
+    }
+
+    if (msgtype === "m.audio") {
+        return (
+            <div className="group relative mt-2 w-fit rounded-xl border bg-gray-50/50 p-2 shadow-sm">
+                <div className="text-muted-foreground mb-1.5 flex items-center justify-between px-2 text-xs">
+                    <span
+                        className="max-w-40 truncate font-medium text-slate-700 md:max-w-50"
+                        title={body}
+                    >
+                        {body}
+                    </span>
+                    <span className="shrink-0 text-[10px]">{formatFileSize(fileSize)}</span>
+                </div>
+
+                <div className="overflow-hidden rounded-full border bg-white shadow-sm">
+                    <audio
+                        src={objectUrl}
+                        controls
+                        preload="metadata"
+                        className="h-10 w-64 md:w-72"
+                    />
+                </div>
+
+                <a
+                    href={objectUrl}
+                    download={body}
+                    title="Télécharger"
+                    className="bg-background text-foreground hover:bg-muted absolute -top-2 -right-2 flex size-8 items-center justify-center rounded-md border opacity-0 shadow-sm transition-all duration-200 group-hover:opacity-100 hover:scale-105"
+                >
+                    <Download className="size-4" />
+                </a>
+            </div>
         );
     }
 
@@ -196,6 +275,7 @@ const MessageItem: FC<{ event: MatrixEvent; roomId: string }> = ({ event, roomId
     const eventContent = event.getContent();
     const msgtype = eventContent.msgtype;
     const body = eventContent.body as string;
+    const info = eventContent.info as { size?: number } | undefined;
 
     const getMessageReactions = () => {
         const roomId = event.getRoomId();
@@ -381,7 +461,7 @@ const MessageItem: FC<{ event: MatrixEvent; roomId: string }> = ({ event, roomId
                 msgtype === "m.video" ||
                 msgtype === "m.audio")
         ) {
-            return <AuthenticatedMedia mxcUrl={mxcUrl} msgtype={msgtype} body={body} onDialogOpenChange={(open) => {
+            return <AuthenticatedMedia mxcUrl={mxcUrl} msgtype={msgtype} body={body} fileSize={info?.size} onDialogOpenChange={(open) => {
                 setIsDialogOpen(open);
                 if (open) setHovered(false);
             }}/>;
