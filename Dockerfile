@@ -2,10 +2,13 @@ FROM node:24-alpine AS build
 
 WORKDIR /app
 
+COPY package*.json ./
+
+RUN npm ci
+
 COPY . .
 
-RUN npm ci && \
-    npm run build
+RUN npm run build
 
 FROM nginx:stable-alpine
 
