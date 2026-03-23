@@ -1,12 +1,14 @@
 import { useMatrixClient } from "@/hooks/use-matrix-client";
-import { ArrowDown, SendHorizonal } from "lucide-react";
 import type { MatrixEvent } from "matrix-js-sdk";
-import { RoomEvent } from "matrix-js-sdk";
-import type { FC } from "react";
+import { KnownMembership, RoomEvent, RoomMemberEvent } from "matrix-js-sdk";
+import type { FC, KeyboardEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ArrowDown, SendHorizonal } from "lucide-react";
+
+import MessageItem from "./message-item";
+import { WrittingAnimation } from "./writting-animation";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
-import MessageItem from "./message-item";
 
 interface Props {
     roomId: string;
@@ -14,16 +16,22 @@ interface Props {
 
 export const TextChat: FC<Props> = ({ roomId }) => {
     const { client } = useMatrixClient();
+
     const [messages, setMessages] = useState<MatrixEvent[]>(
         () =>
             client
                 .getRoom(roomId)
                 ?.getLiveTimeline()
                 .getEvents()
-                .filter(event => event.getType() === "m.room.message") ?? []
+                .filter(
+                    event =>
+                        event.getType() === "m.room.message" || event.getType() === "m.room.member"
+                ) ?? []
     );
+
+    const [typingUsers, setTypingUsers] = useState<string>("");
     const [input, setInput] = useState("");
-    const [isLoadingMore, setIsLoadingMore] = useState(false);
+
     const scrollRef = useRef<HTMLDivElement>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -33,7 +41,10 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                 .getRoom(roomId)
                 ?.getLiveTimeline()
                 .getEvents()
-                .filter(event => event.getType() === "m.room.message") ?? [];
+                .filter(
+                    event =>
+                        event.getType() === "m.room.message" || event.getType() === "m.room.member"
+                ) ?? [];
         setMessages([...events]);
     }, [client, roomId]);
 
@@ -48,66 +59,91 @@ export const TextChat: FC<Props> = ({ roomId }) => {
         bottomRef.current?.scrollIntoView();
     }, [roomId]);
 
-    const handleScroll = useCallback(async () => {
-        const el = scrollRef.current;
-        if (!el || isLoadingMore) return;
+    useEffect(() => {
+        const room = client.getRoom(roomId);
+        if (!room) return;
 
-        if (el.scrollTop === 0) {
-            setIsLoadingMore(true);
-            const room = client.getRoom(roomId);
-            if (!room) return;
+        const handler = () => {
+            const typing = room
+                .getMembersWithMembership(KnownMembership.Join)
+                .filter(member => member.typing && member.userId !== client.getUserId())
+                .map(member => member.name);
 
-            const prevScrollHeight = el.scrollHeight;
+            if (typing.length === 0) {
+                setTypingUsers("");
+            } else if (typing.length === 1) {
+                setTypingUsers(`${typing[0]} est en train d'écrire...`);
+            } else if (typing.length === 2) {
+                setTypingUsers(
+                    `${new Intl.ListFormat("fr", {
+                        style: "long",
+                        type: "conjunction"
+                    }).format(typing)} sont en train d'écrire...`
+                );
+            } else {
+                setTypingUsers("Plusieurs personnes sont en train d'écrire...");
+            }
+        };
 
-            await client.scrollback(room, 10);
-            refreshMessages();
+        client.on(RoomMemberEvent.Typing, handler);
+        return () => {
+            client.off(RoomMemberEvent.Typing, handler);
+        };
+    }, [client, roomId]);
 
-            requestAnimationFrame(() => {
-                el.scrollTop = el.scrollHeight - prevScrollHeight;
-            });
-
-            setIsLoadingMore(false);
-        }
-    }, [client, roomId, isLoadingMore, refreshMessages]);
-
-    const send = async (e?: React.SyntheticEvent<HTMLFormElement>) => {
+    const sendMain = async (e?: React.SyntheticEvent<HTMLFormElement>) => {
         e?.preventDefault();
-        if (!input.trim()) return;
-        await client.sendTextMessage(roomId, input.trim());
+
+        const body = input.trim();
+        if (!body) return;
+
+        await client.sendTyping(roomId, false, 4000);
+        await client.sendTextMessage(roomId, body);
+
         setInput("");
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     };
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
-            void send();
+            void sendMain();
+            return;
         }
+
+        void client.sendTyping(roomId, true, 4000);
     };
 
     return (
-        <div className="flex h-full flex-col overflow-hidden">
-            <div
-                ref={scrollRef}
-                onScroll={() => {
-                    void handleScroll();
-                }}
-                className="flex flex-1 flex-col overflow-y-auto py-2"
-            >
-                {isLoadingMore && (
-                    <div className="text-muted-foreground flex justify-center py-2 text-xs">
-                        Chargement...
-                    </div>
-                )}
+        <div className="flex h-full w-full flex-col overflow-hidden">
+            <div ref={scrollRef} className="flex min-h-0 flex-1 flex-col overflow-y-auto py-2">
+                {messages.map(event => {
+                    if (event.getType() === "m.room.message") {
+                        return <MessageItem key={event.getId()} event={event} />;
+                    }
 
-                {messages.map(event => (
-                    <MessageItem key={event.getId()} event={event} />
-                ))}
+                    if (event.getType() === "m.room.member") {
+                        return (
+                            <div
+                                key={event.getId()}
+                                className="text-muted-foreground text-center text-xs"
+                            >
+                                {event.sender?.name &&
+                                    (event.getContent().membership === KnownMembership.Join
+                                        ? `${event.sender.name} a rejoint le salon`
+                                        : `${event.sender.name} a quitté le salon`)}
+                            </div>
+                        );
+                    }
+
+                    return null;
+                })}
+
                 <div ref={bottomRef} />
 
-                <div className="sticky bottom-4 m-4 flex flex-1 items-end justify-end">
+                <div className="sticky bottom-4 m-4 flex items-end justify-end">
                     <Button
-                        variant={"ghost"}
+                        variant="ghost"
                         className="bg-secondary hover:bg-primary hover:text-primary-foreground rounded-full p-3 shadow-lg"
                         onClick={() => bottomRef.current?.scrollIntoView({ behavior: "smooth" })}
                     >
@@ -116,9 +152,18 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                 </div>
             </div>
 
+            <div className="text-muted-foreground flex flex-row items-center gap-2 px-4 text-sm">
+                {typingUsers !== "" && (
+                    <>
+                        <WrittingAnimation />
+                        {typingUsers}
+                    </>
+                )}
+            </div>
+
             <form
-                onSubmit={() => {
-                    void send();
+                onSubmit={e => {
+                    void sendMain(e);
                 }}
                 className="flex items-center gap-2 border-t p-4"
             >
