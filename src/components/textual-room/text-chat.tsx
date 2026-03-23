@@ -1,7 +1,7 @@
 import { useMatrixClient } from "@/hooks/use-matrix-client";
 import type { MatrixEvent } from "matrix-js-sdk";
 import { RoomEvent, RoomMemberEvent } from "matrix-js-sdk";
-import type { FC, FormEvent, KeyboardEvent } from "react";
+import type { FC, KeyboardEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowDown, SendHorizonal } from "lucide-react";
 
@@ -91,7 +91,7 @@ export const TextChat: FC<Props> = ({ roomId }) => {
         };
     }, [client, roomId]);
 
-    const sendMain = async (e?: FormEvent<HTMLFormElement>) => {
+    const sendMain = async (e?: React.SyntheticEvent<HTMLFormElement>) => {
         e?.preventDefault();
 
         const body = input.trim();
@@ -124,10 +124,14 @@ export const TextChat: FC<Props> = ({ roomId }) => {
 
                     if (event.getType() === "m.room.member") {
                         return (
-                            <div key={event.getId()} className="text-muted-foreground text-center text-xs">
-                                {event.getContent().membership === "join"
-                                    ? `${event.sender?.name} a rejoint le salon`
-                                    : `${event.sender?.name} a quitté le salon`}
+                            <div
+                                key={event.getId()}
+                                className="text-muted-foreground text-center text-xs"
+                            >
+                                {event.sender?.name &&
+                                    (event.getContent().membership === "join"
+                                        ? `${event.sender.name} a rejoint le salon`
+                                        : `${event.sender.name} a quitté le salon`)}
                             </div>
                         );
                     }
@@ -165,7 +169,9 @@ export const TextChat: FC<Props> = ({ roomId }) => {
             >
                 <Textarea
                     value={input}
-                    onChange={e => setInput(e.target.value)}
+                    onChange={e => {
+                        setInput(e.target.value);
+                    }}
                     onKeyDown={handleKeyDown}
                     placeholder={`Message #${client.getRoom(roomId)?.name ?? roomId}`}
                     className="resize-none overflow-y-auto"
