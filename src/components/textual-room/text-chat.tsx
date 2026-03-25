@@ -129,10 +129,31 @@ export const TextChat: FC<Props> = ({ roomId }) => {
         <div className="flex h-full w-full flex-col overflow-hidden">
             <div ref={scrollRef} className="flex min-h-0 flex-1 flex-col overflow-y-auto py-2">
                 {messages.map((event, index) => {
+                    if (event.getType() === "m.room.member") {
+                        return (
+                            <div
+                                key={event.getId()}
+                                className="text-muted-foreground text-center text-xs"
+                            >
+                                {event.sender?.name &&
+                                    (event.getContent().membership === KnownMembership.Join
+                                        ? `${event.sender.name} a rejoint le salon`
+                                        : `${event.sender.name} a quitté le salon`)}
+                            </div>
+                        );
+                    }
+
                     if (event.getType() === "m.room.message") {
                         const currentDate = new Date(event.getTs()).toDateString();
-                        const prevDate =
-                            index > 0 ? new Date(messages[index - 1].getTs()).toDateString() : null;
+
+                        const prevMessageEvent = messages
+                            .slice(0, index)
+                            .reverse()
+                            .find(e => e.getType() === "m.room.message");
+
+                        const prevDate = prevMessageEvent
+                            ? new Date(prevMessageEvent.getTs()).toDateString()
+                            : null;
 
                         return (
                             <div key={event.getId()}>
@@ -150,34 +171,20 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                         );
                     }
 
-                    if (event.getType() === "m.room.member") {
-                        return (
-                            <div
-                                key={event.getId()}
-                                className="text-muted-foreground text-center text-xs"
-                            >
-                                {event.sender?.name &&
-                                    (event.getContent().membership === KnownMembership.Join
-                                        ? `${event.sender.name} a rejoint le salon`
-                                        : `${event.sender.name} a quitté le salon`)}
-                            </div>
-                        );
-                    }
-
                     return null;
                 })}
 
                 <div ref={bottomRef} />
+            </div>
 
-                <div className="sticky bottom-4 m-4 flex items-end justify-end">
-                    <Button
-                        variant="ghost"
-                        className="bg-secondary hover:bg-primary hover:text-primary-foreground rounded-full p-3 shadow-lg"
-                        onClick={() => bottomRef.current?.scrollIntoView({ behavior: "smooth" })}
-                    >
-                        <ArrowDown className="size-4" />
-                    </Button>
-                </div>
+            <div className="sticky bottom-4 m-4 flex items-end justify-end">
+                <Button
+                    variant="ghost"
+                    className="bg-secondary hover:bg-primary hover:text-primary-foreground rounded-full p-3 shadow-lg"
+                    onClick={() => bottomRef.current?.scrollIntoView({ behavior: "smooth" })}
+                >
+                    <ArrowDown className="size-4" />
+                </Button>
             </div>
 
             <div className="text-muted-foreground flex flex-row items-center gap-2 px-4 text-sm">

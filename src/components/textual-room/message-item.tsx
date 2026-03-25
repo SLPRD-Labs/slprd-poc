@@ -3,6 +3,7 @@ import { Pen, Trash } from "lucide-react";
 import { MatrixEventEvent, MsgType, RelationType, EventType } from "matrix-js-sdk";
 import type { MatrixEvent } from "matrix-js-sdk";
 import type { FC } from "react";
+import type React from "react";
 import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
@@ -184,13 +185,17 @@ const MessageItem: FC<{ event: MatrixEvent; roomId: string }> = ({ event, roomId
     }, [event]);
 
     const handleEdit = () => {
+        setEditedContent(currentMessage);
         setIsEditing(true);
     };
 
     const handleSave = async () => {
         const messageToSend = editedContent.trim();
+        if (!messageToSend) return;
+
         const eventId = event.getId();
         if (!eventId) return;
+
         await client.sendMessage(roomId, null, {
             msgtype: MsgType.Text,
             body: `*${messageToSend}`,
@@ -203,6 +208,7 @@ const MessageItem: FC<{ event: MatrixEvent; roomId: string }> = ({ event, roomId
                 event_id: eventId
             }
         });
+
         setIsEditing(false);
     };
 
@@ -262,6 +268,10 @@ const MessageItem: FC<{ event: MatrixEvent; roomId: string }> = ({ event, roomId
                                 <Pen size={16} />
                             </Button>
                             <span className="text-gray-300">|</span>
+                        </>
+                    )}
+                    {!isRemoved && (
+                        <>
                             <Button
                                 variant="ghost"
                                 aria-label="React with ❤️"
@@ -329,23 +339,22 @@ const MessageItem: FC<{ event: MatrixEvent; roomId: string }> = ({ event, roomId
                     <div className="text-muted-foreground mt-1 ml-2 text-xs">
                         <p>
                             Entrer pour{" "}
-                            <a
-                                className="text-blue-500 hover:underline"
-                                href="#"
+                            <Button
+                                type="button"
+                                className="cursor-pointer bg-transparent p-0 text-xs text-blue-500 hover:underline"
                                 onClick={() => {
                                     handleSave().catch(console.error);
                                 }}
                             >
                                 sauvegarder
-                            </a>
+                            </Button>
                             , Echap pour{" "}
-                            <a
-                                className="text-blue-500 hover:underline"
-                                href="#"
+                            <Button
+                                className="cursor-pointer bg-transparent p-0 text-xs text-blue-500 hover:underline"
                                 onClick={handleCancel}
                             >
                                 annuler
-                            </a>
+                            </Button>
                         </p>
                     </div>
                 </>
