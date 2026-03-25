@@ -62,13 +62,16 @@ export const TextChat: FC<Props> = ({ roomId }) => {
     }, [roomId]);
 
     useEffect(() => {
+        const urlsToRevoke = pendingFiles
+            .map(pf => pf.previewUrl)
+            .filter((url) : url is string => Boolean(url))
+
         return () => {
-            pendingFiles.forEach(pf => {
-                if (pf.previewUrl) URL.revokeObjectURL(pf.previewUrl);
-            });
+            urlsToRevoke.forEach(url => {
+                URL.revokeObjectURL(url);
+            })
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [pendingFiles]);
 
     useEffect(() => {
         if (!error) return;
@@ -121,18 +124,24 @@ export const TextChat: FC<Props> = ({ roomId }) => {
         if (el.scrollTop === 0) {
             setIsLoadingMore(true);
             const room = client.getRoom(roomId);
-            if (!room) return;
+
+            if (!room) {
+                setIsLoadingMore(false);
+                return;
+            }
 
             const prevScrollHeight = el.scrollHeight;
 
-            await client.scrollback(room, 10);
-            refreshMessages();
+            try {
+                await client.scrollback(room, 10);
+                refreshMessages();
 
-            requestAnimationFrame(() => {
-                el.scrollTop = el.scrollHeight - prevScrollHeight;
-            });
-
-            setIsLoadingMore(false);
+                requestAnimationFrame(() => {
+                    el.scrollTop = el.scrollHeight - prevScrollHeight;
+                });
+            } finally {
+                setIsLoadingMore(false);
+            }
         }
     }, [client, roomId, isLoadingMore, refreshMessages]);
 
@@ -152,20 +161,24 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                 const uploadResponse = await client.uploadContent(file);
                 const mxcUrl = uploadResponse.content_uri;
 
-                let msgtype: MsgType = MsgType.File;
-                if (file.type.startsWith("image/")) msgtype = MsgType.Image;
-                else if (file.type.startsWith("video/")) msgtype = MsgType.Video;
-                else if (file.type.startsWith("audio/")) msgtype = MsgType.Audio;
-
-                await client.sendMessage(roomId, {
-                    msgtype,
-                    body: file.name,
+                const baseContent = {
+                    body:file.name,
                     url: mxcUrl,
                     info: {
-                        size: file.size,
+                        size:file.size,
                         mimetype: file.type
                     }
-                } as never);
+                };
+
+                if (file.type.startsWith("image/")) {
+                    await client.sendMessage(roomId, { ...baseContent, msgtype: MsgType.Image });
+                } else if (file.type.startsWith("video/")) {
+                    await client.sendMessage(roomId, { ...baseContent, msgtype: MsgType.Video });
+                } else if (file.type.startsWith("audio/")) {
+                    await client.sendMessage(roomId, { ...baseContent, msgtype: MsgType.Audio });
+                } else {
+                    await client.sendMessage(roomId, { ...baseContent, msgtype: MsgType.File });
+                }
             }
 
             if (input.trim()) {
@@ -173,7 +186,15 @@ export const TextChat: FC<Props> = ({ roomId }) => {
             }
 
             setInput("");
-            setPendingFiles([]);
+            setPendingFiles((prevPendingFiles) => {
+                prevPendingFiles.forEach((pending) => {
+                    if (pending.previewUrl) {
+                        URL.revokeObjectURL(pending.previewUrl);
+                    }
+                });
+
+                return [];
+            })
             if (textareaRef.current) textareaRef.current.style.height = "auto";
 
             bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -360,7 +381,7 @@ export const TextChat: FC<Props> = ({ roomId }) => {
 
             <form
                 onSubmit={e => {
-                    void sendMain(e); // ⚠️ Assurez-vous que cette fonction s'appelle bien "sendMain" ou "send" selon votre code
+                    void sendMain(e);
                 }}
                 className="bg-background flex items-end gap-2 border-t p-4"
             >
@@ -387,7 +408,7 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                                             removePendingFile(index);
                                         }}
                                         className="text-destructive-foreground absolute -top-2 -right-2 flex size-6 items-center justify-center rounded-md bg-white shadow-sm transition-all hover:scale-110"
-                                        aria-label="Supprimer le fichier"
+                                        aria-label={`Supprimer ${pf.file.name}`}
                                     >
                                         <Trash className="size-3.5" />
                                     </button>
@@ -451,7 +472,7 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                     size="icon"
                     className="bg-primary text-primary-foreground hover:bg-primary/90 h-12 w-12 shrink-0 rounded-full md:hidden"
                     disabled={isUploading || (!input.trim() && pendingFiles.length === 0)}
-                    aria-label="Envoyer"
+                    aria-label="Envoyer le message"
                 >
                     <SendHorizonal className="size-5" />
                 </Button>

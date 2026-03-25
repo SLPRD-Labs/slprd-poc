@@ -62,7 +62,7 @@ const collectReactionsByEmoji = (events: MatrixEvent[], targetEventId: string) =
 };
 
 const formatFileSize = (bytes?: number) => {
-    if (!bytes) return "Taille inconnue";
+    if (bytes == null) return "Taille inconnue";
     const mb = bytes / (1024 * 1024);
     if (mb < 1) return `${(bytes / 1024).toFixed(1)} Ko`;
     return `${mb.toFixed(2)} Mo`;
@@ -80,6 +80,9 @@ const AuthenticatedMedia: FC<{
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        setLoading(true);
+        setObjectUrl(null);
+
         let url: string | null = null;
         const controller = new AbortController();
 
