@@ -1,11 +1,12 @@
-import { KnownMembership } from "matrix-js-sdk";
 import type { Room } from "matrix-js-sdk";
+import { KnownMembership } from "matrix-js-sdk";
 import { useMatrixClient } from "@/hooks/use-matrix-client";
 import { usePresence } from "@/hooks/use-presence";
 import { Button } from "@/components/ui/button";
 import { Check, X } from "lucide-react";
 import type { MouseEvent } from "react";
 import { RoomAvatar } from "@/components/common/avatar/room-avatar";
+import { getMyMembership } from "@/libs/utils/matrix/room";
 
 interface ConversationCardProps {
     room: Room;
@@ -17,7 +18,7 @@ export function ConversationCard({ room, isActive, onClick }: ConversationCardPr
     const { client } = useMatrixClient();
     const presenceMap = usePresence(client);
 
-    const membership = room.getMyMembership();
+    const membership = getMyMembership(room);
     const isInvite = membership === KnownMembership.Invite;
 
     const otherMember = room.getMembers().find(m => m.userId !== client.getUserId());
