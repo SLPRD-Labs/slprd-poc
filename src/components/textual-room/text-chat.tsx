@@ -18,18 +18,14 @@ export const TextChat: FC<Props> = ({ roomId }) => {
     const { client } = useMatrixClient();
 
     const filterEvents = (event: MatrixEvent) => {
-    if (event.getType() !== "m.room.message" && event.getType() !== "m.room.member") return false;
-    const relatesTo = event.getContent()["m.relates_to"];
-    return relatesTo?.rel_type !== RelationType.Replace;
+        if (event.getType() !== "m.room.message" && event.getType() !== "m.room.member")
+            return false;
+        const relatesTo = event.getContent()["m.relates_to"];
+        return relatesTo?.rel_type !== RelationType.Replace;
     };
 
     const [messages, setMessages] = useState<MatrixEvent[]>(
-        () =>
-            client
-                .getRoom(roomId)
-                ?.getLiveTimeline()
-                .getEvents()
-                .filter(filterEvents) ?? []                   
+        () => client.getRoom(roomId)?.getLiveTimeline().getEvents().filter(filterEvents) ?? []
     );
 
     const [typingUsers, setTypingUsers] = useState<string>("");
@@ -40,11 +36,7 @@ export const TextChat: FC<Props> = ({ roomId }) => {
 
     const refreshMessages = useCallback(() => {
         const events =
-            client
-                .getRoom(roomId)
-                ?.getLiveTimeline()
-                .getEvents()
-                .filter(filterEvents) ?? [];
+            client.getRoom(roomId)?.getLiveTimeline().getEvents().filter(filterEvents) ?? [];
         setMessages([...events]);
     }, [client, roomId]);
 
@@ -126,10 +118,10 @@ export const TextChat: FC<Props> = ({ roomId }) => {
             return "Hier";
         }
 
-        return date.toLocaleDateString ("fr-FR", {
+        return date.toLocaleDateString("fr-FR", {
             day: "numeric",
             month: "long",
-            year: "numeric",
+            year: "numeric"
         });
     };
 
@@ -138,28 +130,26 @@ export const TextChat: FC<Props> = ({ roomId }) => {
             <div ref={scrollRef} className="flex min-h-0 flex-1 flex-col overflow-y-auto py-2">
                 {messages.map((event, index) => {
                     if (event.getType() === "m.room.message") {
-
                         const currentDate = new Date(event.getTs()).toDateString();
-                        const prevDate = index > 0
-                            ? new Date(messages[index - 1].getTs()).toDateString()
-                            : null;
-                        
+                        const prevDate =
+                            index > 0 ? new Date(messages[index - 1].getTs()).toDateString() : null;
+
                         return (
                             <div key={event.getId()}>
                                 {currentDate !== prevDate && (
-                                    <div className="flex items-center gap-2 my-2 px-4">
-                                        <div className="flex-1 h-px bg-border" />
-                                        <span className="text-xs text-muted-foreground">
+                                    <div className="my-2 flex items-center gap-2 px-4">
+                                        <div className="bg-border h-px flex-1" />
+                                        <span className="text-muted-foreground text-xs">
                                             {formatDate(event.getTs())}
                                         </span>
-                                        <div className="flex-1 h-px bg-border" />
+                                        <div className="bg-border h-px flex-1" />
                                     </div>
                                 )}
                                 <MessageItem event={event} roomId={roomId} />
                             </div>
                         );
                     }
-                    
+
                     if (event.getType() === "m.room.member") {
                         return (
                             <div

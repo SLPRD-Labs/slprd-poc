@@ -16,10 +16,10 @@ interface ReactionContent {
 }
 
 interface MessageContent {
-  body: string;
-  "m.new_content"?: {
     body: string;
-  };
+    "m.new_content"?: {
+        body: string;
+    };
 }
 
 const collectReactionsByEmoji = (events: MatrixEvent[], targetEventId: string) => {
@@ -53,7 +53,7 @@ const collectReactionsByEmoji = (events: MatrixEvent[], targetEventId: string) =
     return byEmoji;
 };
 
-const MessageItem: FC<{ event: MatrixEvent, roomId: string }> = ({ event, roomId }) => {
+const MessageItem: FC<{ event: MatrixEvent; roomId: string }> = ({ event, roomId }) => {
     const { client } = useMatrixClient();
     const currentUser = client.getUserId();
     const userSender = event.getSender();
@@ -185,7 +185,7 @@ const MessageItem: FC<{ event: MatrixEvent, roomId: string }> = ({ event, roomId
 
     const handleEdit = () => {
         setIsEditing(true);
-    }
+    };
 
     const handleSave = async () => {
         const messageToSend = editedContent.trim();
@@ -200,8 +200,8 @@ const MessageItem: FC<{ event: MatrixEvent, roomId: string }> = ({ event, roomId
             },
             "m.relates_to": {
                 rel_type: RelationType.Replace,
-                event_id: eventId,
-            },
+                event_id: eventId
+            }
         });
         setIsEditing(false);
     };
@@ -227,7 +227,8 @@ const MessageItem: FC<{ event: MatrixEvent, roomId: string }> = ({ event, roomId
             e.preventDefault();
             handleCancel();
         }
-    };    
+    };
+
     return (
         <div
             className="group hover:bg-secondary relative flex flex-col rounded px-4 py-1"
@@ -242,10 +243,22 @@ const MessageItem: FC<{ event: MatrixEvent, roomId: string }> = ({ event, roomId
                 <div className="bg-background absolute -top-3 right-4 z-10 flex items-center gap-1 rounded-md border px-1 py-0.5 shadow-sm">
                     {isSender && !isRemoved && (
                         <>
-                            <Button variant="ghost" className="cursor-pointer" title="Remove" onClick={() => {handleRemove().catch(console.error);}}>
+                            <Button
+                                variant="ghost"
+                                className="cursor-pointer"
+                                title="Remove"
+                                onClick={() => {
+                                    handleRemove().catch(console.error);
+                                }}
+                            >
                                 <Trash size={16} />
                             </Button>
-                            <Button variant="ghost" className="cursor-pointer" title="Edit" onClick={handleEdit}>
+                            <Button
+                                variant="ghost"
+                                className="cursor-pointer"
+                                title="Edit"
+                                onClick={handleEdit}
+                            >
                                 <Pen size={16} />
                             </Button>
                             <span className="text-gray-300">|</span>
@@ -279,37 +292,60 @@ const MessageItem: FC<{ event: MatrixEvent, roomId: string }> = ({ event, roomId
                         hour: "2-digit",
                         minute: "2-digit"
                     })}
-                    {isEdited ? (" (modifié)") : ""}
-                    {isEdited ? (" (modifié)") : ""}
+                    {isEdited ? " (modifié)" : ""}
                 </span>
             </div>
             <span className="text-sm wrap-break-word whitespace-pre-wrap">
                 <span className="text-sm wrap-break-word whitespace-pre-wrap">
-                    {isRemoved 
-                        ? <span className="text-muted-foreground italic text-xs">Message supprimé</span>
-                        : currentMessage
-                    }
+                    {isRemoved ? (
+                        <span className="text-muted-foreground text-xs italic">
+                            Message supprimé
+                        </span>
+                    ) : (
+                        currentMessage
+                    )}
                 </span>
             </span>
 
-            {isEditing ? (  
+            {isEditing ? (
                 <>
                     <div className="flex w-full items-center gap-2">
                         <Textarea
                             value={editedContent}
-                            onChange={e => {setEditedContent(e.target.value)}}
+                            onChange={e => {
+                                setEditedContent(e.target.value);
+                            }}
                             autoFocus={true}
                             onFocus={e => {
                                 const len = e.target.value.length;
                                 e.target.setSelectionRange(len, len);
                             }}
-                            onKeyDown={handleKeyDown}
+                            onKeyDown={e => {
+                                handleKeyDown(e).catch(console.error);
+                            }}
                         />
                     </div>
-                
-                    <div className="text-xs ml-2 mt-1 text-muted-foreground">
-                        <p>Entrer pour <a className="text-blue-500 hover:underline" href="#" onClick={() => { handleSave().catch(console.error); }}>sauvegarder</a>, 
-                            Echap pour <a className="text-blue-500 hover:underline" href="#" onClick={handleCancel}>annuler</a>
+
+                    <div className="text-muted-foreground mt-1 ml-2 text-xs">
+                        <p>
+                            Entrer pour{" "}
+                            <a
+                                className="text-blue-500 hover:underline"
+                                href="#"
+                                onClick={() => {
+                                    handleSave().catch(console.error);
+                                }}
+                            >
+                                sauvegarder
+                            </a>
+                            , Echap pour{" "}
+                            <a
+                                className="text-blue-500 hover:underline"
+                                href="#"
+                                onClick={handleCancel}
+                            >
+                                annuler
+                            </a>
                         </p>
                     </div>
                 </>
