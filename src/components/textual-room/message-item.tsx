@@ -1,6 +1,7 @@
 import { useMatrixClient } from "@/hooks/use-matrix-client";
 import { Pen, Trash } from "lucide-react";
-import { MatrixEventEvent, MsgType, RelationType, EventType, type MatrixEvent } from "matrix-js-sdk";
+import { MatrixEventEvent, MsgType, RelationType, EventType } from "matrix-js-sdk";
+import type { MatrixEvent } from "matrix-js-sdk";
 import type { FC } from "react";
 import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
@@ -12,6 +13,13 @@ interface ReactionContent {
         event_id?: string;
         key?: string;
     };
+}
+
+interface MessageContent {
+  body: string;
+  "m.new_content"?: {
+    body: string;
+  };
 }
 
 const collectReactionsByEmoji = (events: MatrixEvent[], targetEventId: string) => {
@@ -55,7 +63,9 @@ const MessageItem: FC<{ event: MatrixEvent, roomId: string }> = ({ event, roomId
     const [isEditing, setIsEditing] = useState(false);
     const [isRedacted, setIsRedacted] = useState(event.isRedacted());
     const isRemoved = isRedacted || replacingEvent?.isRedacted();
-    const currentMessage = replacingEvent?.getContent()["m.new_content"]?.body ?? event.getContent().body;
+    const content = event.getContent<MessageContent>();
+    const replacingContent = replacingEvent?.getContent<MessageContent>();
+    const currentMessage = replacingContent?.["m.new_content"]?.body ?? content.body;
     const [editedContent, setEditedContent] = useState(currentMessage);
     const [hovered, setHovered] = useState(false);
     const [isReactionPending, setIsReactionPending] = useState(false);
@@ -164,7 +174,7 @@ const MessageItem: FC<{ event: MatrixEvent, roomId: string }> = ({ event, roomId
     }, [event]);
 
     useEffect(() => {
-        const onRedacted = (_event: MatrixEvent, _redactionEvent: MatrixEvent) => {
+        const onRedacted = () => {
             setIsRedacted(true);
         };
         event.on(MatrixEventEvent.BeforeRedaction, onRedacted);
@@ -179,16 +189,18 @@ const MessageItem: FC<{ event: MatrixEvent, roomId: string }> = ({ event, roomId
 
     const handleSave = async () => {
         const messageToSend = editedContent.trim();
+        const eventId = event.getId();
+        if (!eventId) return;
         await client.sendMessage(roomId, null, {
             msgtype: MsgType.Text,
             body: `*${messageToSend}`,
             "m.new_content": {
                 msgtype: MsgType.Text,
-                body: `${messageToSend}`
+                body: messageToSend
             },
             "m.relates_to": {
                 rel_type: RelationType.Replace,
-                event_id: event.getId()!,
+                event_id: eventId,
             },
         });
         setIsEditing(false);
@@ -200,7 +212,9 @@ const MessageItem: FC<{ event: MatrixEvent, roomId: string }> = ({ event, roomId
     };
 
     const handleRemove = async () => {
-        await client.redactEvent(roomId, event.getId()!);
+        const eventId = event.getId();
+        if (!eventId) return;
+        await client.redactEvent(roomId, eventId);
     };
 
     const handleKeyDown = async (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -228,7 +242,7 @@ const MessageItem: FC<{ event: MatrixEvent, roomId: string }> = ({ event, roomId
                 <div className="bg-background absolute -top-3 right-4 z-10 flex items-center gap-1 rounded-md border px-1 py-0.5 shadow-sm">
                     {isSender && !isRemoved && (
                         <>
-                            <Button variant="ghost" className="cursor-pointer" title="Remove" onClick={handleRemove}>
+                            <Button variant="ghost" className="cursor-pointer" title="Remove" onClick={() => {handleRemove().catch(console.error);}}>
                                 <Trash size={16} />
                             </Button>
                             <Button variant="ghost" className="cursor-pointer" title="Edit" onClick={handleEdit}>
@@ -283,7 +297,7 @@ const MessageItem: FC<{ event: MatrixEvent, roomId: string }> = ({ event, roomId
                     <div className="flex w-full items-center gap-2">
                         <Textarea
                             value={editedContent}
-                            onChange={e => setEditedContent(e.target.value)}
+                            onChange={e => {setEditedContent(e.target.value)}}
                             autoFocus={true}
                             onFocus={e => {
                                 const len = e.target.value.length;
@@ -294,7 +308,7 @@ const MessageItem: FC<{ event: MatrixEvent, roomId: string }> = ({ event, roomId
                     </div>
                 
                     <div className="text-xs ml-2 mt-1 text-muted-foreground">
-                        <p>Entrer pour <a className="text-blue-500 hover:underline" href="#" onClick={handleSave}>sauvegarder</a>, 
+                        <p>Entrer pour <a className="text-blue-500 hover:underline" href="#" onClick={() => { handleSave().catch(console.error); }}>sauvegarder</a>, 
                             Echap pour <a className="text-blue-500 hover:underline" href="#" onClick={handleCancel}>annuler</a>
                         </p>
                     </div>
