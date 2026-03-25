@@ -54,8 +54,7 @@ export function ConversationCard({ room, isActive, onClick }: ConversationCardPr
             } ${isActive ? "bg-accent" : ""}`}
         >
             <div className="relative shrink-0">
-                <RoomAvatar room={room} isRound={true} />
-
+                <RoomAvatar room={room} className="size-8" isRounded />
                 {!isInvite && (
                     <div
                         className={`border-background absolute -right-0.5 -bottom-0.5 h-3 w-3 rounded-full border-2 ${

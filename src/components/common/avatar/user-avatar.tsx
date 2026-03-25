@@ -1,24 +1,26 @@
 import { MatrixAvatar } from "@/components/common/avatar/matrix-avatar";
-import type { User } from "matrix-js-sdk";
 import type { FC } from "react";
 
 interface Props {
-    user: User;
+    userName: string;
+    userAvatarUrl: string | undefined;
     className?: string;
+    rounded: boolean;
 }
 
-export const UserAvatar: FC<Props> = ({ user, className }) => {
-    let fallbackText = user.displayName?.charAt(0).toUpperCase();
-    if (fallbackText === undefined || fallbackText === "") {
+export const UserAvatar: FC<Props> = ({ className, userName, userAvatarUrl, rounded }) => {
+    let fallbackText = userName.charAt(0).toUpperCase();
+    if (fallbackText === "") {
         fallbackText = "U";
     }
 
     return (
         <MatrixAvatar
-            avatarUrl={user.avatarUrl}
-            alt={user.displayName ?? user.userId}
+            avatarUrl={userAvatarUrl}
+            alt={userName}
             fallbackText={fallbackText}
             className={className}
+            isRounded={rounded}
         />
     );
 };

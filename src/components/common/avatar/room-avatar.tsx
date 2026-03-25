@@ -1,33 +1,22 @@
 import { MatrixAvatar } from "@/components/common/avatar/matrix-avatar";
 import type { Room } from "matrix-js-sdk";
 import type { FC } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { cn } from "@/libs/utils/style";
 
 interface Props {
     room: Room;
-    isRound: boolean;
+    isRounded: boolean;
+    className?: string;
 }
 
-export const RoomAvatar: FC<Props> = ({ room, isRound }) => {
-    const mxcAvatarUrl = room.getMxcAvatarUrl();
-
-    return !isRound ? (
+export const RoomAvatar: FC<Props> = ({ room, isRounded, className }) => {
+    return (
         <MatrixAvatar
-            avatarUrl={mxcAvatarUrl}
+            avatarUrl={room.getMxcAvatarUrl()}
             alt={room.name}
+            isRounded={isRounded}
             fallbackText={room.name.charAt(0).toUpperCase()}
-            className="size-full text-lg"
+            className={cn("size-full text-lg", className)}
         />
-    ) : (
-        <Avatar>
-            <AvatarImage
-                src={
-                    mxcAvatarUrl
-                        ? (room.getAvatarUrl(mxcAvatarUrl, 40, 40, "scale", true, false) ?? "")
-                        : ""
-                }
-            />
-            <AvatarFallback>{room.name[0]}</AvatarFallback>
-        </Avatar>
     );
 };

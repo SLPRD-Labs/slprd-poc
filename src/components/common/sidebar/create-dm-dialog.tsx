@@ -46,7 +46,7 @@ export function CreateDMModal() {
                 }
             ></DialogTrigger>
 
-            <DialogContent className="gap-0 p-0 sm:max-w-[106.25px]">
+            <DialogContent className="gap-0 p-0 sm:max-w-sm">
                 <DialogHeader className="border-b p-4">
                     <DialogTitle>Nouvelle conversation</DialogTitle>
                 </DialogHeader>
