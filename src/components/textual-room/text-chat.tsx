@@ -1,6 +1,6 @@
 import { useMatrixClient } from "@/hooks/use-matrix-client";
 import type { MatrixEvent } from "matrix-js-sdk";
-import { KnownMembership, RoomEvent, RoomMemberEvent } from "matrix-js-sdk";
+import { KnownMembership, RelationType, RoomEvent, RoomMemberEvent } from "matrix-js-sdk";
 import type { FC, KeyboardEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowDown, SendHorizonal } from "lucide-react";
@@ -17,16 +17,15 @@ interface Props {
 export const TextChat: FC<Props> = ({ roomId }) => {
     const { client } = useMatrixClient();
 
+    const filterEvents = (event: MatrixEvent) => {
+        if (event.getType() !== "m.room.message" && event.getType() !== "m.room.member")
+            return false;
+        const relatesTo = event.getContent()["m.relates_to"];
+        return relatesTo?.rel_type !== RelationType.Replace;
+    };
+
     const [messages, setMessages] = useState<MatrixEvent[]>(
-        () =>
-            client
-                .getRoom(roomId)
-                ?.getLiveTimeline()
-                .getEvents()
-                .filter(
-                    event =>
-                        event.getType() === "m.room.message" || event.getType() === "m.room.member"
-                ) ?? []
+        () => client.getRoom(roomId)?.getLiveTimeline().getEvents().filter(filterEvents) ?? []
     );
 
     const [typingUsers, setTypingUsers] = useState<string>("");
@@ -37,14 +36,7 @@ export const TextChat: FC<Props> = ({ roomId }) => {
 
     const refreshMessages = useCallback(() => {
         const events =
-            client
-                .getRoom(roomId)
-                ?.getLiveTimeline()
-                .getEvents()
-                .filter(
-                    event =>
-                        event.getType() === "m.room.message" || event.getType() === "m.room.member"
-                ) ?? [];
+            client.getRoom(roomId)?.getLiveTimeline().getEvents().filter(filterEvents) ?? [];
         setMessages([...events]);
     }, [client, roomId]);
 
@@ -114,14 +106,30 @@ export const TextChat: FC<Props> = ({ roomId }) => {
         void client.sendTyping(roomId, true, 4000);
     };
 
+    const formatDate = (timestamp: number) => {
+        const date = new Date(timestamp);
+        const now = new Date();
+        const yesterday = new Date();
+        yesterday.setDate(now.getDate() - 1);
+
+        if (date.toDateString() === now.toDateString()) {
+            return "Aujourd'hui";
+        }
+        if (date.toDateString() === yesterday.toDateString()) {
+            return "Hier";
+        }
+
+        return date.toLocaleDateString("fr-FR", {
+            day: "numeric",
+            month: "long",
+            year: "numeric"
+        });
+    };
+
     return (
         <div className="flex h-full w-full flex-col overflow-hidden">
             <div ref={scrollRef} className="flex min-h-0 flex-1 flex-col overflow-y-auto py-2">
-                {messages.map(event => {
-                    if (event.getType() === "m.room.message") {
-                        return <MessageItem key={event.getId()} event={event} />;
-                    }
-
+                {messages.map((event, index) => {
                     if (event.getType() === "m.room.member") {
                         return (
                             <div
@@ -136,20 +144,48 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                         );
                     }
 
+                    if (event.getType() === "m.room.message") {
+                        const currentDate = new Date(event.getTs()).toDateString();
+
+                        const prevMessageEvent = messages
+                            .slice(0, index)
+                            .reverse()
+                            .find(e => e.getType() === "m.room.message");
+
+                        const prevDate = prevMessageEvent
+                            ? new Date(prevMessageEvent.getTs()).toDateString()
+                            : null;
+
+                        return (
+                            <div key={event.getId()}>
+                                {currentDate !== prevDate && (
+                                    <div className="my-2 flex items-center gap-2 px-4">
+                                        <div className="bg-border h-px flex-1" />
+                                        <span className="text-muted-foreground text-xs">
+                                            {formatDate(event.getTs())}
+                                        </span>
+                                        <div className="bg-border h-px flex-1" />
+                                    </div>
+                                )}
+                                <MessageItem event={event} roomId={roomId} />
+                            </div>
+                        );
+                    }
+
                     return null;
                 })}
 
                 <div ref={bottomRef} />
+            </div>
 
-                <div className="sticky bottom-4 m-4 flex items-end justify-end">
-                    <Button
-                        variant="ghost"
-                        className="bg-secondary hover:bg-primary hover:text-primary-foreground rounded-full p-3 shadow-lg"
-                        onClick={() => bottomRef.current?.scrollIntoView({ behavior: "smooth" })}
-                    >
-                        <ArrowDown className="size-4" />
-                    </Button>
-                </div>
+            <div className="sticky bottom-4 m-4 flex items-end justify-end">
+                <Button
+                    variant="ghost"
+                    className="bg-secondary hover:bg-primary hover:text-primary-foreground rounded-full p-3 shadow-lg"
+                    onClick={() => bottomRef.current?.scrollIntoView({ behavior: "smooth" })}
+                >
+                    <ArrowDown className="size-4" />
+                </Button>
             </div>
 
             <div className="text-muted-foreground flex flex-row items-center gap-2 px-4 text-sm">
