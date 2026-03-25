@@ -1,10 +1,10 @@
 import type { Room } from "matrix-js-sdk";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useMatrixClient } from "@/hooks/use-matrix-client";
 import { usePresence } from "@/hooks/use-presence";
 import { Button } from "@/components/ui/button";
 import { Check, X } from "lucide-react";
 import type { MouseEvent } from "react";
+import { RoomAvatar } from "@/components/common/avatar/room-avatar";
 
 interface ConversationCardProps {
     room: Room;
@@ -52,12 +52,7 @@ export function ConversationCard({ room, isActive, onClick }: ConversationCardPr
             } ${isActive ? "bg-accent" : ""}`}
         >
             <div className="relative shrink-0">
-                <Avatar className={isInvite ? "ring-offset-2" : ""}>
-                    <AvatarImage
-                        src={room.getAvatarUrl(client.getHomeserverUrl(), 40, 40, "scale") ?? ""}
-                    />
-                    <AvatarFallback>{room.name[0]}</AvatarFallback>
-                </Avatar>
+                <RoomAvatar room={room} isRound={true} />
 
                 {!isInvite && (
                     <div
