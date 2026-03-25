@@ -1,12 +1,6 @@
-import { Room } from "@/pages/room";
 import { createFileRoute } from "@tanstack/react-router";
+import { SpaceRoom } from "@/pages/space-room";
 
 export const Route = createFileRoute("/_mainLayout/space/$spaceId/room/$roomId/")({
-    component: SpaceRoomPage
+    component: SpaceRoom
 });
-
-// eslint-disable-next-line react-refresh/only-export-components
-function SpaceRoomPage() {
-    const { roomId } = Route.useParams();
-    return <Room roomId={roomId} />;
-}
