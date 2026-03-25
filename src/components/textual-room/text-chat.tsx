@@ -415,7 +415,7 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                                     {pf.previewUrl ? (
                                         <img
                                             src={pf.previewUrl}
-                                            alt="preview"
+                                            alt={pf.file.name}
                                             className="size-full rounded-lg object-cover"
                                         />
                                     ) : (

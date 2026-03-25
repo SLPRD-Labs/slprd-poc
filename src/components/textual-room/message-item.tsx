@@ -201,6 +201,7 @@ const AuthenticatedMedia: FC<{
                     href={objectUrl}
                     download={body}
                     title="Télécharger"
+                    aria-label="Télécharger la vidéo"
                     className="bg-background text-foreground hover:bg-muted absolute top-2 right-2 flex size-8 items-center justify-center rounded-md border opacity-0 shadow-sm transition-all duration-200 group-hover:opacity-100 hover:scale-105"
                 >
                     <Download className="size-4" />
@@ -235,6 +236,7 @@ const AuthenticatedMedia: FC<{
                     href={objectUrl}
                     download={body}
                     title="Télécharger"
+                    aria-label={`Télécharger ${body}`}
                     className="bg-background text-foreground hover:bg-muted absolute -top-2 -right-2 flex size-8 items-center justify-center rounded-md border opacity-0 shadow-sm transition-all duration-200 group-hover:opacity-100 hover:scale-105"
                 >
                     <Download className="size-4" />
