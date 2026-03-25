@@ -100,6 +100,7 @@ export const TextChat: FC<Props> = ({ roomId }) => {
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             void sendMain();
+            return;
         }
 
         void client.sendTyping(roomId, true, 4000);
