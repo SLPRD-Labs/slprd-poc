@@ -23,7 +23,7 @@ export const RoomAvatar: FC<Props> = ({ room, isRound }) => {
             <AvatarImage
                 src={
                     mxcAvatarUrl
-                        ? room.getAvatarUrl(mxcAvatarUrl, 40, 40, "scale", true, false) ?? ""
+                        ? (room.getAvatarUrl(mxcAvatarUrl, 40, 40, "scale", true, false) ?? "")
                         : ""
                 }
             />

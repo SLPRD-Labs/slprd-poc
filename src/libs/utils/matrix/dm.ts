@@ -1,10 +1,10 @@
-import { Preset } from "matrix-js-sdk";
 import type { MatrixClient } from "matrix-js-sdk";
+import { EventType, KnownMembership, Preset } from "matrix-js-sdk";
 
 type MDirectContent = Partial<Record<string, string[]>>;
 type AccountDataType = Parameters<MatrixClient["getAccountData"]>[0];
 
-const M_DIRECT_EVENT = "m.direct" as AccountDataType;
+const M_DIRECT_EVENT = EventType.Direct as AccountDataType;
 
 const isStringArray = (value: unknown): value is string[] =>
     Array.isArray(value) && value.every(item => typeof item === "string");
@@ -30,21 +30,18 @@ export const getOrCreateDM = async (
     targetUserId: string
 ): Promise<string | undefined> => {
     try {
-        // 1. Récupérer les données m.direct
         const accountData = client.getAccountData(M_DIRECT_EVENT);
         const mDirect = toMDirectContent(accountData?.getContent());
 
         const existingRooms = mDirect[targetUserId] ?? [];
 
-        // 2. Chercher une room où on est encore présent
         const activeRoomId = existingRooms.find((id: string) => {
             const room = client.getRoom(id);
-            return room?.getMyMembership() === "join";
+            return room?.getMyMembership() === KnownMembership.Join;
         });
 
         if (activeRoomId) return activeRoomId;
 
-        // 3. Créer la room si aucune n'est valide
         const response = await client.createRoom({
             invite: [targetUserId],
             is_direct: true,
@@ -53,7 +50,6 @@ export const getOrCreateDM = async (
 
         const newRoomId = response.room_id;
 
-        // 4. Mettre à jour les Account Data
         mDirect[targetUserId] = [...(mDirect[targetUserId] ?? []), newRoomId];
         await client.setAccountData(M_DIRECT_EVENT, mDirect);
 
