@@ -1,6 +1,10 @@
 import { SidebarMenuAction, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { Link } from "@tanstack/react-router";
+<<<<<<< HEAD
 import { Ellipsis, Hash, Volume2 } from "lucide-react";
+=======
+import { Hash, Volume2, Lock } from "lucide-react";
+>>>>>>> 729b139 ((create-room) - Création des room terminée il reste la redirection (Noëllie))
 import type { Room } from "matrix-js-sdk";
 import { RoomEvent } from "matrix-js-sdk";
 import type { FC } from "react";
@@ -16,6 +20,7 @@ interface Props {
 }
 
 export const NavRoom: FC<Props> = ({ spaceId, room, isActive, isCall }) => {
+<<<<<<< HEAD
     const { client } = useMatrixClient();
 
     const [displayName, setDisplayName] = useState(room.name.trim() || room.roomId);
@@ -33,6 +38,9 @@ export const NavRoom: FC<Props> = ({ spaceId, room, isActive, isCall }) => {
             client.off(RoomEvent.Name, onRoomName);
         };
     }, [client, room.roomId]);
+=======
+    const displayName = room.name?.trim() || room.roomId;
+>>>>>>> 729b139 ((create-room) - Création des room terminée il reste la redirection (Noëllie))
 
     return (
         <SidebarMenuItem className="flex flex-row items-center justify-between">
@@ -40,11 +48,15 @@ export const NavRoom: FC<Props> = ({ spaceId, room, isActive, isCall }) => {
                 className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-sm whitespace-nowrap"
                 isActive={isActive}
                 render={
-                    <Link
+                    <Link //TODO : Diriger vers callRoom
                         to="/space/$spaceId/room/$roomId"
                         params={{ spaceId: spaceId, roomId: room.roomId }}
                     >
+<<<<<<< HEAD
                         {isCall ? <Volume2 /> : <Hash />}
+=======
+                        {isCall ? <Volume2 /> : <Hash /> } 
+>>>>>>> 729b139 ((create-room) - Création des room terminée il reste la redirection (Noëllie))
                         <span>{displayName}</span>
                     </Link>
                 }

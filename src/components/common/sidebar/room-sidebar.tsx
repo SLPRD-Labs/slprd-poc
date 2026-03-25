@@ -62,6 +62,13 @@ export const RoomSidebar: FC<Props> = ({ spaceId, activeRoomId }) => {
                                 />
                             ))}
                     </SidebarGroupContent>
+<<<<<<< HEAD
+=======
+                    <Button size="sm" className="w-full border-t cursor-pointer border-none rounded-none bg-[#171717] my-2" onClick={() => { setOpenCreateRoom(true); }}>
+                        <Plus />
+                    </Button>
+                    <CreateRoomDialog openCreateRoom={openCreateRoom} setOpenCreateRoom={setOpenCreateRoom} />
+>>>>>>> 729b139 ((create-room) - Création des room terminée il reste la redirection (Noëllie))
                 </SidebarGroup>
             </SidebarContent>
         </Sidebar>
