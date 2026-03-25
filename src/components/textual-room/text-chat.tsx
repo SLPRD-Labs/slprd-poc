@@ -1,12 +1,6 @@
 import { useMatrixClient } from "@/hooks/use-matrix-client";
-import {
-    KnownMembership,
-    MsgType,
-    RelationType,
-    RoomEvent,
-    RoomMemberEvent
-} from "matrix-js-sdk";
-import type { MatrixEvent } from "matrix-js-sdk"
+import { KnownMembership, MsgType, RelationType, RoomEvent, RoomMemberEvent } from "matrix-js-sdk";
+import type { MatrixEvent } from "matrix-js-sdk";
 import type { ChangeEvent, FC, KeyboardEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowDown, FileIcon, Loader2, Paperclip, SendHorizonal, Trash } from "lucide-react";
