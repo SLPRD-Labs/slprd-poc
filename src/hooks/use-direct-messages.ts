@@ -16,31 +16,43 @@ export const useDirectMessages = (client: MatrixClient) => {
 
         const filteredRooms = allRooms.filter(room => {
             const membership = getMyMembership(room);
+            const isJoinedOrInvited =
+                membership === KnownMembership.Join || membership === KnownMembership.Invite;
+            if (!isJoinedOrInvited) {
+                return false;
+            }
 
-            const isKnownDM =
-                allDmRoomIds.includes(room.roomId) &&
-                (membership === KnownMembership.Join || membership === KnownMembership.Invite);
+            const roomWithGuessDMUserId = room as Room & {
+                guessDMUserId?: () => string | null | undefined;
+            };
+            const guessedDmUserId =
+                typeof roomWithGuessDMUserId.guessDMUserId === "function"
+                    ? roomWithGuessDMUserId.guessDMUserId()
+                    : undefined;
+            const isLikelyDirect =
+                typeof guessedDmUserId === "string" && guessedDmUserId.length > 0;
 
-            const isNewInvitation = membership === KnownMembership.Invite;
+            const isKnownDM = allDmRoomIds.includes(room.roomId);
+            const isInvitation = membership === KnownMembership.Invite;
 
-            return isKnownDM || isNewInvitation;
+            return isKnownDM || isInvitation || isLikelyDirect;
         });
 
         setDmRooms(filteredRooms);
     }, [client]);
 
     useEffect(() => {
+        client.on(RoomEvent.MyMembership, updateDMs);
         client.on(ClientEvent.AccountData, updateDMs);
         client.on(ClientEvent.Room, updateDMs);
-        client.on(RoomEvent.MyMembership, updateDMs);
 
         // eslint-disable-next-line react-hooks/set-state-in-effect
         updateDMs();
 
         return () => {
+            client.removeListener(RoomEvent.MyMembership, updateDMs);
             client.removeListener(ClientEvent.AccountData, updateDMs);
             client.removeListener(ClientEvent.Room, updateDMs);
-            client.removeListener(RoomEvent.MyMembership, updateDMs);
         };
     }, [client, updateDMs]);
 

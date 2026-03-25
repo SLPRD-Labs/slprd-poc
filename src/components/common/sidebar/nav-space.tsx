@@ -21,7 +21,7 @@ export const NavSpace: FC<Props> = ({ space, isActive }) => {
                             isActive={isActive}
                             render={
                                 <Link to="/space/$spaceId" params={{ spaceId: space.roomId }}>
-                                    <RoomAvatar room={space} />
+                                    <RoomAvatar room={space} isRounded={false} />
                                 </Link>
                             }
                         />
