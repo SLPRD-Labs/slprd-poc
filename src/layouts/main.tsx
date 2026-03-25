@@ -29,8 +29,7 @@ export const MainLayout: FC = () => {
 
     const style = {
         "--sidebar-width-icon": "4.5rem",
-        "--sidebar-width":
-            spaceRoomMatchRoute !== false ? "21rem" : "calc(var(--sidebar-width-icon) + 1px)"
+        "--sidebar-width": "21rem"
     } as CSSProperties;
 
     return (

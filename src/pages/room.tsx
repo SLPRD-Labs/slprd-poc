@@ -1,30 +1,24 @@
 import { TextChat } from "@/components/textual-room/text-chat";
 import { useMatrixClient } from "@/hooks/use-matrix-client";
-import { Route } from "@/routes/_mainLayout/space/$spaceId/room/$roomId";
 import { useQuery } from "@tanstack/react-query";
 import type { FC } from "react";
 import { PresenceSidenav } from "@/components/presence-sidenav";
 
-export const Room: FC = () => {
-    const { spaceId, roomId } = Route.useParams();
+interface RoomProps {
+    roomId: string;
+}
 
+export const Room: FC<RoomProps> = ({ roomId }) => {
     const { client, ready } = useMatrixClient();
 
-    const spaceQuery = useQuery({
-        queryKey: ["spaces", spaceId],
-        queryFn: () => client.getRoom(spaceId),
-        staleTime: Infinity,
-        enabled: ready
-    });
-
     const roomQuery = useQuery({
-        queryKey: ["spaces", spaceId, "room", roomId],
+        queryKey: ["rooms", roomId],
         queryFn: () => client.getRoom(roomId),
         staleTime: Infinity,
         enabled: ready
     });
 
-    if (!spaceQuery.isSuccess || !roomQuery.isSuccess) {
+    if (!roomQuery.isSuccess) {
         return null;
     }
 
