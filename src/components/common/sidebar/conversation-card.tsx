@@ -1,3 +1,4 @@
+import { KnownMembership } from "matrix-js-sdk";
 import type { Room } from "matrix-js-sdk";
 import { useMatrixClient } from "@/hooks/use-matrix-client";
 import { usePresence } from "@/hooks/use-presence";
@@ -17,7 +18,7 @@ export function ConversationCard({ room, isActive, onClick }: ConversationCardPr
     const presenceMap = usePresence(client);
 
     const membership = room.getMyMembership();
-    const isInvite = membership === "invite";
+    const isInvite = membership === KnownMembership.Invite;
 
     const otherMember = room.getMembers().find(m => m.userId !== client.getUserId());
     const otherUserId = otherMember?.userId;
