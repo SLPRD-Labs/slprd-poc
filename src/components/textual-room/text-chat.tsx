@@ -1,5 +1,12 @@
 import { useMatrixClient } from "@/hooks/use-matrix-client";
-import { KnownMembership, type MatrixEvent, MsgType, RelationType, RoomEvent, RoomMemberEvent } from "matrix-js-sdk";
+import {
+    KnownMembership,
+    MsgType,
+    RelationType,
+    RoomEvent,
+    RoomMemberEvent
+} from "matrix-js-sdk";
+import type { MatrixEvent } from "matrix-js-sdk"
 import type { ChangeEvent, FC, KeyboardEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowDown, FileIcon, Loader2, Paperclip, SendHorizonal, Trash } from "lucide-react";
@@ -285,7 +292,6 @@ export const TextChat: FC<Props> = ({ roomId }) => {
 
     return (
         <div className="flex h-full w-full flex-col overflow-hidden">
-
             <div
                 ref={scrollRef}
                 onScroll={() => {
@@ -300,12 +306,11 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                 )}
 
                 {messages.map((event, index) => {
-
                     if (event.getType() === "m.room.member") {
                         return (
                             <div
                                 key={event.getId()}
-                                className="text-muted-foreground text-center text-xs my-2"
+                                className="text-muted-foreground my-2 text-center text-xs"
                             >
                                 {event.sender?.name &&
                                     (event.getContent().membership === KnownMembership.Join
@@ -314,7 +319,6 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                             </div>
                         );
                     }
-
 
                     if (event.getType() === "m.room.message") {
                         const currentDate = new Date(event.getTs()).toDateString();
@@ -330,7 +334,6 @@ export const TextChat: FC<Props> = ({ roomId }) => {
 
                         return (
                             <div key={event.getId()}>
-
                                 {currentDate !== prevDate && (
                                     <div className="my-2 flex items-center gap-2 px-4">
                                         <div className="bg-border h-px flex-1" />
@@ -350,7 +353,6 @@ export const TextChat: FC<Props> = ({ roomId }) => {
 
                 <div ref={bottomRef} />
 
-
                 <div className="sticky bottom-4 m-4 flex items-end justify-end">
                     <Button
                         variant="ghost"
@@ -361,7 +363,6 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                     </Button>
                 </div>
             </div>
-
 
             {error && (
                 <div className="mx-4 mt-2 rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-600">
@@ -378,7 +379,6 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                 )}
             </div>
 
-
             <form
                 onSubmit={e => {
                     void sendMain(e);
@@ -394,7 +394,6 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                 />
 
                 <div className="border-input focus-within:border-ring flex max-h-[40vh] flex-1 flex-col overflow-hidden rounded-2xl border bg-transparent transition-all">
-
                     {pendingFiles.length > 0 && (
                         <div className="border-border/40 bg-muted/20 flex gap-3 overflow-x-auto border-b p-3">
                             {pendingFiles.map((pf, index) => (

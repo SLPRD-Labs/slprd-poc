@@ -6,13 +6,7 @@ import type { FC } from "react";
 import type React from "react";
 import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
-import {
-    Dialog,
-    DialogContent,
-    DialogTitle,
-    DialogTrigger,
-    DialogClose
-} from "../ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogTrigger, DialogClose } from "../ui/dialog";
 import { Textarea } from "../ui/textarea";
 
 interface ReactionContent {
@@ -450,9 +444,7 @@ const MessageItem: FC<{ event: MatrixEvent; roomId: string }> = ({ event, roomId
         if (isRemoved) {
             return (
                 <span className="text-sm wrap-break-word whitespace-pre-wrap">
-                    <span className="text-muted-foreground text-xs italic">
-                        Message supprimé
-                    </span>
+                    <span className="text-muted-foreground text-xs italic">Message supprimé</span>
                 </span>
             );
         }
@@ -466,16 +458,22 @@ const MessageItem: FC<{ event: MatrixEvent; roomId: string }> = ({ event, roomId
                 msgtype === "m.video" ||
                 msgtype === "m.audio")
         ) {
-            return <AuthenticatedMedia mxcUrl={mxcUrl} msgtype={msgtype} body={body} fileSize={info?.size} onDialogOpenChange={(open) => {
-                setIsDialogOpen(open);
-                if (open) setHovered(false);
-            }}/>;
+            return (
+                <AuthenticatedMedia
+                    mxcUrl={mxcUrl}
+                    msgtype={msgtype}
+                    body={body}
+                    fileSize={info?.size}
+                    onDialogOpenChange={open => {
+                        setIsDialogOpen(open);
+                        if (open) setHovered(false);
+                    }}
+                />
+            );
         }
 
         return (
-            <span className="text-sm wrap-break-word whitespace-pre-wrap">
-                {currentMessage}
-            </span>
+            <span className="text-sm wrap-break-word whitespace-pre-wrap">{currentMessage}</span>
         );
     };
 
