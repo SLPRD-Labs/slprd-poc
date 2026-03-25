@@ -1,19 +1,20 @@
 import { useMatrixClient } from "@/hooks/use-matrix-client";
+import { getReplyToEventId } from "@/utils/messagesRelations";
 import { MatrixEventEvent, MsgType, RelationType, EventType } from "matrix-js-sdk";
 import type { MatrixEvent } from "matrix-js-sdk";
 import type { FC } from "react";
-import type React from "react";
-import { useEffect, useState } from "react";
-import { AuthenticatedMedia } from "@/components/textual-room/authenticated-media";
-import { Button } from "../ui/button";
-import { Textarea } from "../ui/textarea";
+import { useState } from "react";
 import { MessageSquare, Pen, Trash } from "lucide-react";
-import { ActionDropdown } from "./action-dropdown";
+import { ReplyPreview } from "./reply-preview";
+import { Button } from "../ui/button";
 
 interface Props {
     event: MatrixEvent;
     threadCount?: number;
     onOpenThread?: (rootEventId: string) => void;
+    onJumpToEvent?: (eventId: string) => void;
+    onReply?: (eventId: string) => void;
+    isHighlighted?: boolean;
 }
 
 interface ReactionContent {
@@ -35,18 +36,13 @@ const collectReactionsByEmoji = (events: MatrixEvent[], targetEventId: string) =
     const byEmoji = new Map<string, MatrixEvent[]>();
 
     for (const timelineEvent of events) {
-        if (timelineEvent.getType() !== "m.reaction" || timelineEvent.isRedacted()) {
-            continue;
-        }
+        if (timelineEvent.getType() !== EventType.Reaction || timelineEvent.isRedacted()) continue;
 
         const relatesTo = timelineEvent.getContent<ReactionContent>()["m.relates_to"];
-
-        if (!relatesTo) {
-            continue;
-        }
+        if (!relatesTo) continue;
 
         if (
-            relatesTo.rel_type !== "m.annotation" ||
+            relatesTo.rel_type !== RelationType.Annotation ||
             relatesTo.event_id !== targetEventId ||
             typeof relatesTo.key !== "string" ||
             relatesTo.key.length === 0
@@ -62,7 +58,14 @@ const collectReactionsByEmoji = (events: MatrixEvent[], targetEventId: string) =
     return byEmoji;
 };
 
-const MessageItem: FC<Props> = ({ event, threadCount = 0, onOpenThread  }) => {
+const MessageItem: FC<Props> = ({
+    event,
+    threadCount = 0,
+    onOpenThread,
+    onJumpToEvent,
+    onReply,
+    isHighlighted = false
+}) => {
     const { client } = useMatrixClient();
     const currentUser = client.getUserId();
     const userSender = event.getSender();
@@ -78,6 +81,12 @@ const MessageItem: FC<Props> = ({ event, threadCount = 0, onOpenThread  }) => {
     const [editedContent, setEditedContent] = useState(currentMessage);
     const [hovered, setHovered] = useState(false);
     const [isReactionPending, setIsReactionPending] = useState(false);
+    const [underline, setUnderline] = useState(false);
+
+    const eventId = event.getId();
+    const roomId = event.getRoomId();
+    const replyEventId = getReplyToEventId(event);
+    const isThreadRoot = threadCount > 0;
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     const eventContent = event.getContent();
@@ -86,10 +95,7 @@ const MessageItem: FC<Props> = ({ event, threadCount = 0, onOpenThread  }) => {
     const info = eventContent.info as { size?: number } | undefined;
 
     const getMessageReactions = () => {
-        const roomId = event.getRoomId();
-        const eventId = event.getId();
         if (!roomId || !eventId) return null;
-
         const room = client.getRoom(roomId);
         if (!room) return null;
 
@@ -98,13 +104,8 @@ const MessageItem: FC<Props> = ({ event, threadCount = 0, onOpenThread  }) => {
     };
 
     const toggleReaction = async (emoji: string) => {
-        const roomId = event.getRoomId();
-        const eventId = event.getId();
         const userId = client.getUserId();
-
-        if (!roomId || !eventId || !userId || isReactionPending) {
-            return;
-        }
+        if (!roomId || !eventId || !userId || isReactionPending) return;
 
         const reactionsByEmoji = getMessageReactions();
         const myReactionEvents = (reactionsByEmoji?.get(emoji) ?? []).filter(
@@ -112,7 +113,6 @@ const MessageItem: FC<Props> = ({ event, threadCount = 0, onOpenThread  }) => {
         );
 
         setIsReactionPending(true);
-
         try {
             if (myReactionEvents.length > 0) {
                 const myReactionIds = myReactionEvents
@@ -292,13 +292,12 @@ const MessageItem: FC<Props> = ({ event, threadCount = 0, onOpenThread  }) => {
 
     return (
         <div
-            className={`group relative flex flex-col rounded px-4 py-1 transition-colors ${hovered ? "bg-secondary" : ""} `}
-            onMouseEnter={() => {
-                setHovered(true);
-            }}
-            onMouseLeave={() => {
-                setHovered(false);
-            }}
+            data-event-id={eventId ?? undefined}
+            className={`relative flex flex-col px-4 py-1 transition-colors ${
+                hovered ? "bg-secondary" : ""
+            } ${isHighlighted ? "bg-primary/20 ring-1 ring-primary" : ""}`}
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
         >
             {hovered && !isEditing && !isDialogOpen && (
                 <div className="bg-background absolute -top-3 right-4 z-10 flex items-center gap-1 rounded-md border px-1 py-0.5 shadow-sm">
@@ -346,6 +345,14 @@ const MessageItem: FC<Props> = ({ event, threadCount = 0, onOpenThread  }) => {
                         </>
                     )}
                 </div>
+            )}
+
+            {roomId && replyEventId && (
+                <ReplyPreview
+                    roomId={roomId}
+                    replyEventId={replyEventId}
+                    onJumpToEvent={onJumpToEvent}
+                />
             )}
 
             <div className="flex items-baseline gap-2">
@@ -406,6 +413,10 @@ const MessageItem: FC<Props> = ({ event, threadCount = 0, onOpenThread  }) => {
                 renderContent()
             )}
 
+            <span className="text-sm wrap-break-words whitespace-pre-wrap">
+                {String(event.getContent().body ?? "")}
+            </span>
+
             {renderReactions()}
 
             {isThreadRoot && eventId && (
@@ -414,7 +425,7 @@ const MessageItem: FC<Props> = ({ event, threadCount = 0, onOpenThread  }) => {
                     onClick={() => onOpenThread?.(eventId)}
                     onMouseEnter={() => setUnderline(true)}
                     onMouseLeave={() => setUnderline(false)}
-                    className="text-muted-foreground mt-1 inline-flex w-fit items-center gap-1 rounded-md border bg-white px-2 py-1 text-xs hover:cursor-pointer hover:bg-slate-50"
+                    className="text-muted-foreground mt-1 inline-flex w-fit items-center gap-1 rounded-md border bg-muted px-2 py-1 text-xs hover:cursor-pointer"
                 >
                     <MessageSquare size={14} />
                     Ouvrir le thread •

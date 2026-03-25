@@ -1,4 +1,6 @@
 import { useMatrixClient } from "@/hooks/use-matrix-client";
+import { eventService } from "@/services/matrix/event";
+import { buildThreadRepliesCount, getThreadRootId } from "@/utils/messagesRelations";
 import type { MatrixEvent } from "matrix-js-sdk";
 import {
     EventType,
@@ -8,14 +10,16 @@ import {
     RoomEvent,
     RoomMemberEvent
 } from "matrix-js-sdk";
-import type { FC, KeyboardEvent } from "react";
+import type { FC, KeyboardEvent, SyntheticEvent } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { WrittingAnimation } from "./writting-animation";
-import { Button } from "../ui/button";
+import type { RoomMessageEventContent } from "matrix-js-sdk/lib/@types/events";
 import { ArrowDown, SendHorizonal, X } from "lucide-react";
-import MessageItem from "./message-item";
-import { Textarea } from "../ui/textarea";
+
 import { PresenceSidenav } from "../presence-sidenav";
+import { Button } from "../ui/button";
+import { Textarea } from "../ui/textarea";
+import MessageItem from "./message-item";
+import { WrittingAnimation } from "./writting-animation";
 
 interface Props {
     roomId: string;
@@ -40,39 +44,21 @@ export const TextChat: FC<Props> = ({ roomId }) => {
     const [messages, setMessages] = useState<MatrixEvent[]>(
         () => client.getRoom(roomId)?.getLiveTimeline().getEvents().filter(filterEvents) ?? []
     );
-    const [typingUsers, setTypingUsers] = useState<string>("");
+
+    const [typingUsers, setTypingUsers] = useState("");
     const [input, setInput] = useState("");
+    const [threadInput, setThreadInput] = useState("");
+    const [activeThreadRootId, setActiveThreadRootId] = useState<string | null>(null);
 
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [hasMoreHistory, setHasMoreHistory] = useState(true);
 
+    const highlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
     const scrollRef = useRef<HTMLDivElement>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
 
-    const getThreadRootId = (event: MatrixEvent): string | null => {
-        const relatesTo = event.getContent()?.["m.relates_to"];
-        if (relatesTo?.rel_type === "m.thread" && typeof relatesTo?.event_id === "string") {
-            return relatesTo.event_id;
-        }
-        return null;
-    };
-
-    const { threadRepliesCount } = useMemo(() => {
-        const countByRoot: Record<string, number> = {};
-                const main: MatrixEvent[] = [];
-
-        for (const ev of messages) {
-            if (ev.getType() !== "m.room.message") continue;
-            const rootId = getThreadRootId(ev);
-            if (rootId) {
-                countByRoot[rootId] = (countByRoot[rootId] ?? 0) + 1;
-            } else {
-                main.push(ev);
-            }        
-        }
-
-        return { threadRepliesCount: countByRoot };
-    }, [messages]);
+    const threadRepliesCount = useMemo(() => buildThreadRepliesCount(messages), [messages]);
 
     const activeThreadMessages = useMemo(() => {
         if (!activeThreadRootId) return [];
@@ -80,6 +66,11 @@ export const TextChat: FC<Props> = ({ roomId }) => {
             ev => ev.getType() === "m.room.message" && getThreadRootId(ev) === activeThreadRootId
         );
     }, [messages, activeThreadRootId]);
+
+    const replyToEvent = useMemo(
+        () => messages.find(e => e.getId() === replyToEventId) ?? null,
+        [messages, replyToEventId]
+    );
 
     const refreshMessages = useCallback(() => {
         const events =
@@ -112,21 +103,20 @@ export const TextChat: FC<Props> = ({ roomId }) => {
 
             for (let i = 0; i < 5; i++) {
                 if (cancelled) return;
-
                 if (el.scrollHeight > el.clientHeight) return;
 
                 const loaded = await loadOlder(10);
-
                 if (!loaded) {
                     setHasMoreHistory(false);
                     return;
                 }
 
+                await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
                 bottomRef.current?.scrollIntoView();
             }
         };
 
-        void bootstrapHistory();
+        bootstrapHistory();
 
         return () => {
             cancelled = true;
@@ -144,9 +134,95 @@ export const TextChat: FC<Props> = ({ roomId }) => {
         bottomRef.current?.scrollIntoView();
     }, [roomId]);
 
+    useEffect(() => {
+        return () => {
+            if (highlightTimeoutRef.current) clearTimeout(highlightTimeoutRef.current);
+        };
+    }, []);
+
+    useEffect(() => {
+        const room = client.getRoom(roomId);
+        if (!room) {
+            setTypingUsers("");
+            return;
+        }
+
+        const handler = () => {
+            const typing: string[] = room
+                .getMembersWithMembership(KnownMembership.Join)
+                .filter(member => member.typing && member.userId !== client.getUserId())
+                .map(member => member.name?.trim() || member.userId);
+
+            if (typing.length === 0) setTypingUsers("");
+            else if (typing.length === 1) setTypingUsers(`${typing[0]} est en train d'écrire...`);
+            else if (typing.length === 2) {
+                setTypingUsers(
+                    `${new Intl.ListFormat("fr", {
+                        style: "long",
+                        type: "conjunction"
+                    }).format(typing)} sont en train d'écrire...`
+                );
+            } else setTypingUsers("Plusieurs personnes sont en train d'écrire...");
+        };
+
+        handler();
+        client.on(RoomMemberEvent.Typing, handler);
+
+        return () => {
+            client.off(RoomMemberEvent.Typing, handler);
+            setTypingUsers("");
+        };
+    }, [client, roomId]);
+
+    const waitNextPaint = () =>
+        new Promise<void>(resolve => {
+            requestAnimationFrame(() => resolve());
+        });
+
+    const jumpToEvent = useCallback(
+        async (eventId: string) => {
+            const container = scrollRef.current;
+            if (!container) return;
+
+            const queryTarget = () =>
+                container.querySelector<HTMLElement>(`[data-event-id="${eventId}"]`);
+
+            let target = queryTarget();
+
+            if (!target) {
+                await eventService.getEventById(client, roomId, eventId);
+
+                for (let i = 0; i < 20; i++) {
+                    target = queryTarget();
+                    if (target) break;
+
+                    const loaded = await loadOlder(30);
+                    if (!loaded) break;
+
+                    await waitNextPaint();
+                }
+
+                await waitNextPaint();
+                target = queryTarget();
+                if (!target) return;
+            }
+
+            await waitNextPaint();
+            target.scrollIntoView({ behavior: "smooth", block: "center" });
+
+            setHighlightedEventId(eventId);
+
+            if (highlightTimeoutRef.current) clearTimeout(highlightTimeoutRef.current);
+            highlightTimeoutRef.current = setTimeout(() => {
+                setHighlightedEventId(prev => (prev === eventId ? null : prev));
+            }, 1800);
+        },
+        [client, roomId, loadOlder]
+    );
+
     const handleScroll = useCallback(async () => {
         const el = scrollRef.current;
-        if (!el || isLoadingMore) return;
+        if (!el || isLoadingMore || !hasMoreHistory) return;
 
         if (el.scrollTop <= 24) {
             setIsLoadingMore(true);
@@ -159,6 +235,7 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                     return;
                 }
 
+                await waitNextPaint();
                 el.scrollTop = Math.max(0, el.scrollHeight - prevScrollHeight);
             } finally {
                 setIsLoadingMore(false);
@@ -166,19 +243,7 @@ export const TextChat: FC<Props> = ({ roomId }) => {
         }
     }, [isLoadingMore, hasMoreHistory, loadOlder]);
 
-    useEffect(() => {
-        if (!error) return;
-
-        const timer = setTimeout(() => {
-            setError(null);
-        }, 10000);
-
-        return () => {
-            clearTimeout(timer);
-        };
-    }, [error]);
-
-    useEffect(() => {
+     useEffect(() => {
         const room = client.getRoom(roomId);
         if (!room) return;
 
@@ -210,45 +275,43 @@ export const TextChat: FC<Props> = ({ roomId }) => {
         };
     }, [client, roomId]);
 
-    const handleScroll = useCallback(async () => {
-        const el = scrollRef.current;
-        if (!el || isLoadingMore) return;
+    useEffect(() => {
+        if (!error) return;
 
-        if (el.scrollTop === 0) {
-            setIsLoadingMore(true);
-            const room = client.getRoom(roomId);
+        const timer = setTimeout(() => {
+            setError(null);
+        }, 10000);
 
-            if (!room) {
-                setIsLoadingMore(false);
-                return;
-            }
+        return () => {
+            clearTimeout(timer);
+        };
+    }, [error]);
 
-            const prevScrollHeight = el.scrollHeight;
-
-            try {
-                await client.scrollback(room, 10);
-                refreshMessages();
-
-                requestAnimationFrame(() => {
-                    el.scrollTop = el.scrollHeight - prevScrollHeight;
-                });
-            } finally {
-                setIsLoadingMore(false);
-            }
-        }
-    }, [client, roomId, isLoadingMore, refreshMessages]);
-
-    const sendMain = async (e?: React.SyntheticEvent<HTMLFormElement>) => {
+    const sendMain = async (e?: SyntheticEvent<HTMLFormElement>) => {
         e?.preventDefault();
 
         const body = input.trim();
         if (!body) return;
 
-        await client.sendTyping(roomId, false, 4000);
-        await client.sendTextMessage(roomId, body);
+        const content: RoomMessageEventContent = {
+            msgtype: MsgType.Text,
+            body
+        };
 
-            setInput("");
-            setPendingFiles(prevPendingFiles => {
+        if (replyToEventId) {
+            content["m.relates_to"] = {
+                "m.in_reply_to": {
+                    event_id: replyToEventId
+                }
+            };
+        }
+
+        await client.sendTyping(roomId, false, 4000);
+        await client.sendEvent(roomId, EventType.RoomMessage, content);
+
+        setInput("");
+        setReplyToEventId(null);
+        setPendingFiles(prevPendingFiles => {
                 prevPendingFiles.forEach(pending => {
                     if (pending.previewUrl) {
                         URL.revokeObjectURL(pending.previewUrl);
@@ -268,8 +331,9 @@ export const TextChat: FC<Props> = ({ roomId }) => {
         }
     };
 
-    const sendThread = async (e?: React.SyntheticEvent<HTMLFormElement>) => {
+    const sendThread = async (e?: SyntheticEvent<HTMLFormElement>) => {
         e?.preventDefault();
+
         const body = threadInput.trim();
         if (!body || !activeThreadRootId) return;
 
@@ -292,11 +356,10 @@ export const TextChat: FC<Props> = ({ roomId }) => {
             void sendMain();
             return;
         }
-
         void client.sendTyping(roomId, true, 4000);
     };
 
-    const handleThreadKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    const handleThreadKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             void sendThread();
@@ -379,10 +442,19 @@ export const TextChat: FC<Props> = ({ roomId }) => {
     return (
         <div className="flex h-full w-full flex-row overflow-hidden">
             <div className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
-                <div className="min-h-0 flex-1 overflow-y-auto py-2">
+                <div
+                    ref={scrollRef}
+                    onScroll={() => void handleScroll()}
+                    className="flex min-h-0 flex-1 flex-col overflow-y-auto py-2"
+                >
+                    {isLoadingMore && (
+                        <div className="text-muted-foreground flex justify-center py-2 text-xs">
+                            Chargement...
+                        </div>
+                    )}
+
                     {messages.map(event => {
                         if (event.getType() === "m.room.message") {
-                            // Not showing threaded messages in the main timeline, they are visible in the thread view
                             if (getThreadRootId(event) !== null) return null;
 
                             return (
@@ -391,6 +463,9 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                                     event={event}
                                     threadCount={threadRepliesCount[event.getId() ?? ""] ?? 0}
                                     onOpenThread={setActiveThreadRootId}
+                                    onJumpToEvent={jumpToEvent}
+                                    onReply={setReplyToEventId}
+                                    isHighlighted={highlightedEventId === event.getId()}
                                 />
                             );
                         }
@@ -434,12 +509,26 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                 <div className="text-muted-foreground flex flex-row items-center gap-2 px-4 text-sm">
                     {typingUsers !== "" && (
                         <>
-                            <WrittingAnimation /> {typingUsers}
+                            <WrittingAnimation />
+                            {typingUsers}
                         </>
                     )}
                 </div>
 
-            <form
+                 {replyToEvent && (
+                    <div className="bg-muted/40 flex items-start justify-between border-t px-4 py-2 text-xs">
+                        <div className="min-w-0">
+                            <div className="font-medium">Réponse à {replyToEvent.sender?.name}</div>
+                            <div className="text-muted-foreground truncate">
+                                {String(replyToEvent.getContent()?.body ?? "")}
+                            </div>
+                        </div>
+                        <Button variant="ghost" size="icon" onClick={() => setReplyToEventId(null)}>
+                            <X className="size-4" />
+                        </Button>
+                    </div>
+                )}
+               <form
                 onSubmit={e => {
                     void sendMain(e);
                 }}

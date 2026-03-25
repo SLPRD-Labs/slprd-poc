@@ -10,11 +10,13 @@ import {
 interface Props {
     eventId?: string | null;
     onOpenThread?: (rootEventId: string) => void;
+    onReply?: (eventId: string) => void;
     threadExists?: boolean;
 }
 
-export const ActionDropdown = ({ eventId, onOpenThread, threadExists }: Props) => {
+export const ActionDropdown = ({ eventId, onOpenThread, onReply, threadExists }: Props) => {
     const canOpenThread = Boolean(eventId && onOpenThread);
+    const canReply = Boolean(eventId && onReply);
 
     return (
         <DropdownMenu>
@@ -25,7 +27,13 @@ export const ActionDropdown = ({ eventId, onOpenThread, threadExists }: Props) =
             </DropdownMenuTrigger>
 
             <DropdownMenuContent align="end" className="w-64 p-2">
-                <DropdownMenuItem className="flex justify-between">
+                <DropdownMenuItem
+                    className="flex justify-between"
+                    disabled={!canReply}
+                    onClick={() => {
+                        if (eventId && onReply) onReply(eventId);
+                    }}
+                >
                     Répondre
                     <CornerUpLeft size={16} />
                 </DropdownMenuItem>
