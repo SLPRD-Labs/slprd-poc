@@ -64,12 +64,12 @@ export const TextChat: FC<Props> = ({ roomId }) => {
     useEffect(() => {
         const urlsToRevoke = pendingFiles
             .map(pf => pf.previewUrl)
-            .filter((url) : url is string => Boolean(url))
+            .filter((url): url is string => Boolean(url));
 
         return () => {
             urlsToRevoke.forEach(url => {
                 URL.revokeObjectURL(url);
-            })
+            });
         };
     }, [pendingFiles]);
 
@@ -162,10 +162,10 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                 const mxcUrl = uploadResponse.content_uri;
 
                 const baseContent = {
-                    body:file.name,
+                    body: file.name,
                     url: mxcUrl,
                     info: {
-                        size:file.size,
+                        size: file.size,
                         mimetype: file.type
                     }
                 };
@@ -186,15 +186,15 @@ export const TextChat: FC<Props> = ({ roomId }) => {
             }
 
             setInput("");
-            setPendingFiles((prevPendingFiles) => {
-                prevPendingFiles.forEach((pending) => {
+            setPendingFiles(prevPendingFiles => {
+                prevPendingFiles.forEach(pending => {
                     if (pending.previewUrl) {
                         URL.revokeObjectURL(pending.previewUrl);
                     }
                 });
 
                 return [];
-            })
+            });
             if (textareaRef.current) textareaRef.current.style.height = "auto";
 
             bottomRef.current?.scrollIntoView({ behavior: "smooth" });
