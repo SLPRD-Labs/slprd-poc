@@ -5,8 +5,7 @@ import {
     SidebarContent,
     SidebarGroup,
     SidebarGroupContent,
-    SidebarHeader,
-    SidebarMenu
+    SidebarHeader
 } from "@/components/ui/sidebar";
 import { useMatrixClient } from "@/hooks/use-matrix-client";
 import { spaceService } from "@/services/matrix/space";
@@ -55,20 +54,10 @@ export const RoomSidebar: FC<Props> = ({ spaceId, activeRoomId }) => {
                                     spaceId={spaceId}
                                     room={r}
                                     isActive={activeRoomId === r.roomId}
+                                    isCall={r.isElementVideoRoom() || r.isCallRoom()}
                                 />
                             ))}
                     </SidebarGroupContent>
-                    <SidebarMenu className="gap-1">
-                        {roomsQuery.isSuccess &&
-                            roomsQuery.data.map(r => (
-                                <NavRoom
-                                    key={r.roomId}
-                                    spaceId={spaceId}
-                                    room={r}
-                                    isActive={activeRoomId === r.roomId}
-                                />
-                            ))}
-                    </SidebarMenu>
                     <Button size="sm" className="w-full border-t cursor-pointer border-none rounded-none bg-[#171717] my-2" onClick={() => { setOpenCreateRoom(true); }}>
                         <Plus />
                     </Button>
