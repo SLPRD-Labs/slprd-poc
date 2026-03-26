@@ -1,5 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAvatarUrl } from "@/hooks/use-avatar-url";
+import { useMediaUrl } from "@/hooks/use-media-url";
 import { cn } from "@/libs/utils/style";
 import type { FC } from "react";
 
@@ -12,7 +12,7 @@ interface Props {
 }
 
 export const MatrixAvatar: FC<Props> = ({ avatarUrl, alt, fallbackText, className, isRounded }) => {
-    const imgUrl = useAvatarUrl(avatarUrl);
+    const { url: imgUrl } = useMediaUrl(avatarUrl);
     const roundedClass = isRounded ? "rounded-full" : "rounded-xl";
 
     return (

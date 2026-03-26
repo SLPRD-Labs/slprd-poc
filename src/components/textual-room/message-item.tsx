@@ -5,6 +5,7 @@ import type { MatrixEvent } from "matrix-js-sdk";
 import type { FC } from "react";
 import type React from "react";
 import { useEffect, useState } from "react";
+import { AuthenticatedMedia } from "@/components/textual-room/authenticated-media";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
 
@@ -70,6 +71,12 @@ const MessageItem: FC<{ event: MatrixEvent; roomId: string }> = ({ event, roomId
     const [editedContent, setEditedContent] = useState(currentMessage);
     const [hovered, setHovered] = useState(false);
     const [isReactionPending, setIsReactionPending] = useState(false);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+    const eventContent = event.getContent();
+    const msgtype = eventContent.msgtype;
+    const body = eventContent.body as string;
+    const info = eventContent.info as { size?: number } | undefined;
 
     const getMessageReactions = () => {
         const roomId = event.getRoomId();
@@ -235,6 +242,43 @@ const MessageItem: FC<{ event: MatrixEvent; roomId: string }> = ({ event, roomId
         }
     };
 
+    const renderContent = () => {
+        if (isRemoved) {
+            return (
+                <span className="text-sm wrap-break-word whitespace-pre-wrap">
+                    <span className="text-muted-foreground text-xs italic">Message supprimé</span>
+                </span>
+            );
+        }
+
+        const mxcUrl = eventContent.url as string | undefined;
+
+        if (
+            mxcUrl &&
+            (msgtype === "m.image" ||
+                msgtype === "m.file" ||
+                msgtype === "m.video" ||
+                msgtype === "m.audio")
+        ) {
+            return (
+                <AuthenticatedMedia
+                    mxcUrl={mxcUrl}
+                    msgtype={msgtype}
+                    body={body}
+                    fileSize={info?.size}
+                    onDialogOpenChange={open => {
+                        setIsDialogOpen(open);
+                        if (open) setHovered(false);
+                    }}
+                />
+            );
+        }
+
+        return (
+            <span className="text-sm wrap-break-word whitespace-pre-wrap">{currentMessage}</span>
+        );
+    };
+
     return (
         <div
             className="group hover:bg-secondary relative flex flex-col rounded px-4 py-1"
@@ -245,7 +289,7 @@ const MessageItem: FC<{ event: MatrixEvent; roomId: string }> = ({ event, roomId
                 setHovered(false);
             }}
         >
-            {hovered && !isEditing && (
+            {hovered && !isEditing && !isDialogOpen && (
                 <div className="bg-background absolute -top-3 right-4 z-10 flex items-center gap-1 rounded-md border px-1 py-0.5 shadow-sm">
                     {isSender && !isRemoved && (
                         <>
@@ -305,17 +349,6 @@ const MessageItem: FC<{ event: MatrixEvent; roomId: string }> = ({ event, roomId
                     {isEdited ? " (modifié)" : ""}
                 </span>
             </div>
-            <span className="text-sm wrap-break-word whitespace-pre-wrap">
-                <span className="text-sm wrap-break-word whitespace-pre-wrap">
-                    {isRemoved ? (
-                        <span className="text-muted-foreground text-xs italic">
-                            Message supprimé
-                        </span>
-                    ) : (
-                        currentMessage
-                    )}
-                </span>
-            </span>
 
             {isEditing ? (
                 <>
@@ -358,7 +391,10 @@ const MessageItem: FC<{ event: MatrixEvent; roomId: string }> = ({ event, roomId
                         </p>
                     </div>
                 </>
-            ) : null}
+            ) : (
+                renderContent()
+            )}
+
             {renderReactions()}
         </div>
     );
