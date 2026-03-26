@@ -12,7 +12,7 @@ interface Props {
 }
 
 export const MatrixAvatar: FC<Props> = ({ avatarUrl, alt, fallbackText, className, isRounded }) => {
-    const { url : imgUrl } = useMediaUrl(avatarUrl);
+    const { url: imgUrl } = useMediaUrl(avatarUrl);
     const roundedClass = isRounded ? "rounded-full" : "rounded-xl";
 
     return (

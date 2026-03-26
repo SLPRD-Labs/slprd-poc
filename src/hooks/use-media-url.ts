@@ -7,7 +7,7 @@ export const useMediaUrl = (
     height?: number,
     resizeMethod?: "crop" | "scale",
     enabled = true
-): { url: string | null | undefined, loading: boolean } => {
+): { url: string | null | undefined; loading: boolean } => {
     const { client } = useMatrixClient();
 
     const [avatarUrl, setAvatarUrl] = useState<string | null | undefined>();

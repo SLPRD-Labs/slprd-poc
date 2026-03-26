@@ -15,6 +15,7 @@ interface Props {
 }
 
 interface PendingFile {
+    id: string;
     file: File;
     previewUrl?: string;
 }
@@ -61,18 +62,6 @@ export const TextChat: FC<Props> = ({ roomId }) => {
     useEffect(() => {
         bottomRef.current?.scrollIntoView();
     }, [roomId]);
-
-    useEffect(() => {
-        const urlsToRevoke = pendingFiles
-            .map(pf => pf.previewUrl)
-            .filter((url): url is string => Boolean(url));
-
-        return () => {
-            urlsToRevoke.forEach(url => {
-                URL.revokeObjectURL(url);
-            });
-        };
-    }, [pendingFiles]);
 
     useEffect(() => {
         if (!error) return;
@@ -230,6 +219,7 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                 hasError = true;
             } else {
                 validFiles.push({
+                    id: crypto.randomUUID(),
                     file,
                     previewUrl: file.type.startsWith("image/")
                         ? URL.createObjectURL(file)
@@ -253,8 +243,11 @@ export const TextChat: FC<Props> = ({ roomId }) => {
         }
     };
 
-    const removePendingFile = (index: number) => {
+    const removePendingFile = (idToRemove: string) => {
         setPendingFiles(prev => {
+            const index = prev.findIndex(pf => pf.id === idToRemove);
+            if (index === -1) return prev;
+
             const newFiles = [...prev];
             const removed = newFiles.splice(index, 1)[0];
             if (removed.previewUrl) {
@@ -390,15 +383,15 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                 <div className="border-input focus-within:border-ring flex max-h-[40vh] flex-1 flex-col overflow-hidden rounded-2xl border bg-transparent transition-all">
                     {pendingFiles.length > 0 && (
                         <div className="border-border/40 bg-muted/20 flex gap-3 overflow-x-auto border-b p-3">
-                            {pendingFiles.map((pf, index) => (
+                            {pendingFiles.map(pf => (
                                 <div
-                                    key={index}
+                                    key={pf.id}
                                     className="bg-background relative flex h-16 w-16 shrink-0 items-center justify-center rounded-lg border shadow-sm"
                                 >
                                     <button
                                         type="button"
                                         onClick={() => {
-                                            removePendingFile(index);
+                                            removePendingFile(pf.id);
                                         }}
                                         className="text-destructive-foreground absolute -top-2 -right-2 flex size-6 items-center justify-center rounded-md bg-white shadow-sm transition-all hover:scale-110"
                                         aria-label={`Supprimer ${pf.file.name}`}
