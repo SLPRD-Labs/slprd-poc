@@ -1,10 +1,11 @@
-import type { Room } from "matrix-js-sdk";
-import { KnownMembership } from "matrix-js-sdk";
+import { KnownMembership, RoomEvent } from "matrix-js-sdk";
+import type { Membership, Room } from "matrix-js-sdk";
 import { useMatrixClient } from "@/hooks/use-matrix-client";
 import { usePresence } from "@/hooks/use-presence";
 import { Button } from "@/components/ui/button";
 import { Check, X } from "lucide-react";
 import type { MouseEvent } from "react";
+import { useEffect, useState } from "react";
 import { RoomAvatar } from "@/components/common/avatar/room-avatar";
 import { getMyMembership } from "@/libs/utils/matrix/room";
 
@@ -18,7 +19,22 @@ export function ConversationCard({ room, isActive, onClick }: ConversationCardPr
     const { client } = useMatrixClient();
     const presenceMap = usePresence(client);
 
-    const membership = getMyMembership(room);
+    const [membership, setMembership] = useState(() => getMyMembership(room));
+
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setMembership(getMyMembership(room));
+
+        const handleMyMembership = (_room: Room, nextMembership: Membership) => {
+            setMembership(nextMembership as KnownMembership);
+        };
+
+        room.on(RoomEvent.MyMembership, handleMyMembership);
+        return () => {
+            room.removeListener(RoomEvent.MyMembership, handleMyMembership);
+        };
+    }, [room]);
+
     const isInvite = membership === KnownMembership.Invite;
 
     const otherMember = room.getMembers().find(m => m.userId !== client.getUserId());
@@ -30,6 +46,7 @@ export function ConversationCard({ room, isActive, onClick }: ConversationCardPr
         e.stopPropagation();
         try {
             await client.joinRoom(room.roomId);
+            setMembership(KnownMembership.Join);
         } catch (err) {
             console.error("Erreur acceptation:", err);
         }
@@ -39,6 +56,7 @@ export function ConversationCard({ room, isActive, onClick }: ConversationCardPr
         e.stopPropagation();
         try {
             await client.leave(room.roomId);
+            setMembership(KnownMembership.Leave);
         } catch (err) {
             console.error("Erreur refus:", err);
         }
