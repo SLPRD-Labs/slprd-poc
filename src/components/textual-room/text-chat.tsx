@@ -2,14 +2,7 @@ import { useMatrixClient } from "@/hooks/use-matrix-client";
 import { eventService } from "@/services/matrix/event";
 import { buildThreadRepliesCount, getThreadRootId } from "@/utils/messagesRelations";
 import type { MatrixEvent } from "matrix-js-sdk";
-import {
-    EventType,
-    KnownMembership,
-    MsgType,
-    RelationType,
-    RoomEvent,
-    RoomMemberEvent
-} from "matrix-js-sdk";
+import { EventType, KnownMembership, MsgType, RoomEvent, RoomMemberEvent } from "matrix-js-sdk";
 import type { FC, KeyboardEvent, SyntheticEvent } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { RoomMessageEventContent } from "matrix-js-sdk/lib/@types/events";
@@ -19,6 +12,7 @@ import { PresenceSidenav } from "../presence-sidenav";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
 import MessageItem from "./message-item";
+import { ThreadPanel } from "./thread-panel";
 import { WrittingAnimation } from "./writting-animation";
 
 interface Props {
@@ -47,7 +41,6 @@ export const TextChat: FC<Props> = ({ roomId }) => {
 
     const [typingUsers, setTypingUsers] = useState("");
     const [input, setInput] = useState("");
-    const [threadInput, setThreadInput] = useState("");
     const [activeThreadRootId, setActiveThreadRootId] = useState<string | null>(null);
 
     const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -59,13 +52,6 @@ export const TextChat: FC<Props> = ({ roomId }) => {
     const bottomRef = useRef<HTMLDivElement>(null);
 
     const threadRepliesCount = useMemo(() => buildThreadRepliesCount(messages), [messages]);
-
-    const activeThreadMessages = useMemo(() => {
-        if (!activeThreadRootId) return [];
-        return messages.filter(
-            ev => ev.getType() === "m.room.message" && getThreadRootId(ev) === activeThreadRootId
-        );
-    }, [messages, activeThreadRootId]);
 
     const replyToEvent = useMemo(
         () => messages.find(e => e.getId() === replyToEventId) ?? null,
@@ -329,25 +315,6 @@ export const TextChat: FC<Props> = ({ roomId }) => {
         } finally {
             setIsUploading(false);
         }
-    };
-
-    const sendThread = async (e?: SyntheticEvent<HTMLFormElement>) => {
-        e?.preventDefault();
-
-        const body = threadInput.trim();
-        if (!body || !activeThreadRootId) return;
-
-        await client.sendTyping(roomId, false, 4000);
-        await client.sendEvent(roomId, EventType.RoomMessage, {
-            msgtype: MsgType.Text,
-            body,
-            "m.relates_to": {
-                rel_type: RelationType.Thread,
-                event_id: activeThreadRootId
-            }
-        });
-
-        setThreadInput("");
     };
 
     const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -627,39 +594,14 @@ export const TextChat: FC<Props> = ({ roomId }) => {
             </form>
                         </div>
 
-
-             {activeThreadRootId ? (
-                <aside className="hidden w-90 shrink-0 border-l md:flex md:flex-col">
-                    <div className="flex items-center justify-between border-b p-3">
-                        <span className="text-sm font-semibold">Thread</span>
-                        <Button variant="ghost" onClick={() => setActiveThreadRootId(null)}>
-                            <X size={16} />
-                        </Button>
-                    </div>
-                    <div className="flex-1 overflow-y-auto p-2">
-                        {activeThreadMessages.map(event => (
-                            <MessageItem key={event.getId()} event={event} />
-                        ))}
-                    </div>
-
-                    <form
-                        onSubmit={e => {
-                            void sendThread(e);
-                        }}
-                        className="flex items-center gap-2 border-t p-3"
-                    >
-                        <Textarea
-                            value={threadInput}
-                            onChange={e => setThreadInput(e.target.value)}
-                            onKeyDown={handleThreadKeyDown}
-                            placeholder="Répondre dans le thread..."
-                            className="resize-none overflow-y-auto"
-                        />
-                        <Button type="submit">
-                            <SendHorizonal className="size-4" />
-                        </Button>
-                    </form>
-                </aside>
+            {activeThreadRootId ? (
+                <ThreadPanel
+                    client={client}
+                    roomId={roomId}
+                    activeThreadRootId={activeThreadRootId}
+                    messages={messages}
+                    onClose={() => setActiveThreadRootId(null)}
+                />
             ) : (
                 <div className="h-full w-80 shrink-0 border-l">
                     <PresenceSidenav />
