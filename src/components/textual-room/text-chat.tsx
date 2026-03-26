@@ -137,6 +137,7 @@ export const TextChat: FC<Props> = ({ roomId }) => {
 
     const sendMain = async (e?: React.SyntheticEvent<HTMLFormElement>) => {
         e?.preventDefault();
+        if (isUploading) return;
 
         if (!input.trim() && pendingFiles.length === 0) return;
 
