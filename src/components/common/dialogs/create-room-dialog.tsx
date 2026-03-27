@@ -14,16 +14,15 @@ import { useMatrixClient } from '@/hooks/use-matrix-client';
 export function CreateRoomDialog({
     openCreateRoom,
     setOpenCreateRoom,
+    spaceId
 }: {
     openCreateRoom: boolean;
     setOpenCreateRoom: (open: boolean) => void;
+    spaceId: string;
 }) {
     const [loading, setLoading] = useState<boolean>(false);
+    const [errorMessage, setErrorMessage] = useState<string>('');
     const { client } = useMatrixClient();
-
-    const path = window.location.pathname;
-    const parts = path.split("/");
-    const currentSpaceId = decodeURIComponent(parts[2]);
 
     const handleCreateRoom = async (value: {
         name: string;
@@ -31,6 +30,14 @@ export function CreateRoomDialog({
     }) => 
     {
         setLoading(true);
+
+        if(!value.type) {
+            setErrorMessage('Veuillez selectionner un type de salon.');
+            setLoading(false);
+            return;
+        }
+
+        setErrorMessage('');
 
         const isCall = value.type !== 'text';
 
@@ -46,7 +53,7 @@ export function CreateRoomDialog({
             });
 
             await client.sendStateEvent(
-                currentSpaceId,
+                spaceId,
                 EventType.SpaceChild,
                 { via: [client.getDomain()!] },
                 room_id,
@@ -60,7 +67,7 @@ export function CreateRoomDialog({
     const form = useForm({
         defaultValues: {
             name: '',
-            type: 'public',
+            type: '',
         },
         onSubmit: async ({ value }) => {
             handleCreateRoom(value)
@@ -69,6 +76,7 @@ export function CreateRoomDialog({
 
     useEffect(() => {
         form.reset();
+        setErrorMessage('');
     }, [openCreateRoom])
 
     return (
@@ -84,28 +92,30 @@ export function CreateRoomDialog({
                     <form.Field
                         name="type"
                         children={(field) => (
-                        <RadioGroup
-                            value={field.state.value}
-                            onValueChange={(val) => { field.handleChange(val) }}
-                            className="mt-5"
-                        >
-                            <div className="flex items-center gap-3">
-                                <RadioGroupItem value="vocal" id="vocal" />
-                                <Label htmlFor="vocal" className="flex items-center gap-2">
-                                    <Volume2 size={16} /> Vocal
-                                </Label>
-                            </div>
+                            <RadioGroup
+                                value={field.state.value}
+                                onValueChange={(val) => {
+                                    field.handleChange(val);
+                                }}
+                                className="mt-5"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <RadioGroupItem value="vocal" id="vocal" />
+                                    <Label htmlFor="vocal" className="flex items-center gap-2">
+                                        <Volume2 size={16} /> Vocal
+                                    </Label>
+                                </div>
 
-                            <div className="flex items-center gap-3">
-                                <RadioGroupItem value="text" id="text" />
-                                <Label htmlFor="text" className="flex items-center gap-2">
-                                    <Hash size={16} /> Textuel
-                                </Label>
-                            </div>
-                        </RadioGroup>
+                                <div className="flex items-center gap-3">
+                                    <RadioGroupItem value="text" id="text" />
+                                    <Label htmlFor="text" className="flex items-center gap-2">
+                                        <Hash size={16} /> Textuel
+                                    </Label>
+                                </div>
+                            </RadioGroup>
                         )}
                     />
-            
+
                     <form.Field
                         name="name"
                         children={(field) => (
@@ -114,9 +124,14 @@ export function CreateRoomDialog({
                                 placeholder="Nom du salon"
                                 value={field.state.value}
                                 onChange={(e) => field.handleChange(e.target.value)}
+                                required
                             />
                         )}
                     />
+
+                    {errorMessage && (
+                        <p className="mt-2 text-sm text-destructive">{errorMessage}</p>
+                    )}
 
                 <DialogFooter className='mt-5'>
                     <DialogClose

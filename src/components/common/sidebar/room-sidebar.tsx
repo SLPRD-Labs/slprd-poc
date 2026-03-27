@@ -40,12 +40,14 @@ export const RoomSidebar: FC<Props> = ({ spaceId, activeRoomId }) => {
 
     return (
         <Sidebar collapsible="none" className="flex-1">
-            <SidebarHeader className="border-b p-4 whitespace-nowrap">
-                {spaceQuery.isSuccess && spaceQuery.data?.name}
+            <SidebarHeader className="border-b p-4 flex flex-row items-center justify-between">
+                <span>{spaceQuery.isSuccess && spaceQuery.data?.name}</span>
+                <Button size="sm" className="cursor-pointer border-none rounded-none bg-[#171717]" onClick={() => { setOpenCreateRoom(true); }}>
+                    <Plus />
+                </Button>
             </SidebarHeader>
             <SidebarContent>
                 <SidebarGroup className="px-0">
-                    
                     <SidebarGroupContent>
                         {roomsQuery.isSuccess &&
                             roomsQuery.data.map(r => (
@@ -58,10 +60,7 @@ export const RoomSidebar: FC<Props> = ({ spaceId, activeRoomId }) => {
                                 />
                             ))}
                     </SidebarGroupContent>
-                    <Button size="sm" className="w-full border-t cursor-pointer border-none rounded-none bg-[#171717] my-2" onClick={() => { setOpenCreateRoom(true); }}>
-                        <Plus />
-                    </Button>
-                    <CreateRoomDialog openCreateRoom={openCreateRoom} setOpenCreateRoom={setOpenCreateRoom} />
+                    <CreateRoomDialog openCreateRoom={openCreateRoom} setOpenCreateRoom={setOpenCreateRoom} spaceId={spaceId} />
                 </SidebarGroup>
             </SidebarContent>
         </Sidebar>
