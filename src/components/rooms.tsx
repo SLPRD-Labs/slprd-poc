@@ -17,7 +17,10 @@ export const Rooms: FC = () => {
         const name = formData.get("roomName") as string;
         const inviteRaw = formData.get("invite") as string;
         const invite = inviteRaw
-            ? inviteRaw.split(",").map(s => s.trim()).filter(Boolean)
+            ? inviteRaw
+                  .split(",")
+                  .map(s => s.trim())
+                  .filter(Boolean)
             : [];
 
         setCreating(true);
@@ -27,7 +30,7 @@ export const Rooms: FC = () => {
                 visibility: Visibility.Private,
                 preset: Preset.PrivateChat,
                 invite,
-                power_level_content_override: { events_default: 0 },
+                power_level_content_override: { events_default: 0 }
             });
             setCreatedRoomId(room_id);
         } finally {
@@ -39,7 +42,10 @@ export const Rooms: FC = () => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
         const name = formData.get("roomName") as string;
-        const room_alias_name = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+        const room_alias_name = name
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-|-$/g, "");
 
         setCreating(true);
         try {
@@ -48,7 +54,7 @@ export const Rooms: FC = () => {
                 visibility: Visibility.Public,
                 preset: Preset.PublicChat,
                 room_alias_name,
-                power_level_content_override: { events_default: 0 },
+                power_level_content_override: { events_default: 0 }
             });
             setCreatedRoomId(room_id);
         } finally {

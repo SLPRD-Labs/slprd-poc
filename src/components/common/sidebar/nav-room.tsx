@@ -44,19 +44,26 @@ export const NavRoom: FC<Props> = ({ spaceId, room, isActive, isCall }) => {
                         to="/space/$spaceId/room/$roomId"
                         params={{ spaceId: spaceId, roomId: room.roomId }}
                     >
-                        {isCall ? <Volume2 /> : <Hash /> } 
+                        {isCall ? <Volume2 /> : <Hash />}
                         <span>{displayName}</span>
                     </Link>
                 }
             />
             <SidebarMenuAction
                 showOnHover
-                className="hover:!bg-transparent hover:!text-sidebar-foreground"
-                onClick={() => { setOpenEditRoom(true); }}
+                className="hover:!text-sidebar-foreground hover:!bg-transparent"
+                onClick={() => {
+                    setOpenEditRoom(true);
+                }}
             >
                 <Ellipsis />
             </SidebarMenuAction>
-            <EditRoomDialog openEditRoom={openEditRoom} setOpenEditRoom={setOpenEditRoom} spaceId={spaceId} room={room} />    
+            <EditRoomDialog
+                openEditRoom={openEditRoom}
+                setOpenEditRoom={setOpenEditRoom}
+                spaceId={spaceId}
+                room={room}
+            />
         </SidebarMenuItem>
     );
 };

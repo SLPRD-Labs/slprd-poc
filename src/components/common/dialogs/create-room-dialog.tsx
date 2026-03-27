@@ -1,15 +1,22 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { LoaderCircle, Volume2, Hash } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { LoaderCircle, Volume2, Hash } from "lucide-react";
 import { Visibility, Preset, EventType, RoomType } from "matrix-js-sdk";
-import { useEffect, useState } from 'react';
-import { useForm } from '@tanstack/react-form'
-import { useMatrixClient } from '@/hooks/use-matrix-client';
+import { useEffect, useState } from "react";
+import { useForm } from "@tanstack/react-form";
+import { useMatrixClient } from "@/hooks/use-matrix-client";
 
 export function CreateRoomDialog({
     openCreateRoom,
@@ -21,42 +28,36 @@ export function CreateRoomDialog({
     spaceId: string;
 }) {
     const [loading, setLoading] = useState<boolean>(false);
-    const [errorMessage, setErrorMessage] = useState<string>('');
+    const [errorMessage, setErrorMessage] = useState<string>("");
     const { client } = useMatrixClient();
 
-    const handleCreateRoom = async (value: {
-        name: string;
-        type: string;
-    }) => 
-    {
+    const handleCreateRoom = async (value: { name: string; type: string }) => {
         setLoading(true);
 
-        if(!value.type) {
-            setErrorMessage('Veuillez selectionner un type de salon.');
+        if (!value.type) {
+            setErrorMessage("Veuillez selectionner un type de salon.");
             setLoading(false);
             return;
         }
 
-        setErrorMessage('');
+        setErrorMessage("");
 
-        const isCall = value.type !== 'text';
+        const isCall = value.type !== "text";
 
         try {
             const { room_id } = await client.createRoom({
                 name: value.name,
-                visibility:  Visibility.Public,
+                visibility: Visibility.Public,
                 preset: Preset.PublicChat,
-                creation_content: isCall
-                    ? { type: RoomType.ElementVideo }
-                    : undefined,
+                creation_content: isCall ? { type: RoomType.ElementVideo } : undefined,
                 power_level_content_override: { events_default: 0 }
             });
 
             await client.sendStateEvent(
                 spaceId,
                 EventType.SpaceChild,
-                { via: [client.getDomain() ?? ''] },
-                room_id,
+                { via: [client.getDomain() ?? ""] },
+                room_id
             );
             setOpenCreateRoom(false);
         } finally {
@@ -66,18 +67,18 @@ export function CreateRoomDialog({
 
     const form = useForm({
         defaultValues: {
-            name: '',
-            type: '',
+            name: "",
+            type: ""
         },
         onSubmit: async ({ value }) => {
-            await handleCreateRoom(value)
-        },
-    })
+            await handleCreateRoom(value);
+        }
+    });
 
     useEffect(() => {
         form.reset();
-        setErrorMessage('');
-    }, [openCreateRoom])
+        setErrorMessage("");
+    }, [openCreateRoom]);
 
     return (
         <Dialog open={openCreateRoom} onOpenChange={setOpenCreateRoom}>
@@ -85,12 +86,14 @@ export function CreateRoomDialog({
                 <DialogHeader>
                     <DialogTitle>Créer un salon</DialogTitle>
                 </DialogHeader>
-                <form onSubmit={(e) => {
-                    e.preventDefault();
-                    void form.handleSubmit();
-                }}>
+                <form
+                    onSubmit={e => {
+                        e.preventDefault();
+                        void form.handleSubmit();
+                    }}
+                >
                     <form.Field name="type">
-                        {(field) => (
+                        {field => (
                             <RadioGroup
                                 value={field.state.value}
                                 onValueChange={(val: string) => {
@@ -116,32 +119,34 @@ export function CreateRoomDialog({
                     </form.Field>
 
                     <form.Field name="name">
-                        {(field) => (
+                        {field => (
                             <Input
                                 className="mt-5"
                                 placeholder="Nom du salon"
                                 value={field.state.value}
-                                onChange={(e) => { field.handleChange(e.target.value); }}
+                                onChange={e => {
+                                    field.handleChange(e.target.value);
+                                }}
                                 required
                             />
                         )}
                     </form.Field>
 
                     {errorMessage && (
-                        <p className="mt-2 text-sm text-destructive">{errorMessage}</p>
+                        <p className="text-destructive mt-2 text-sm">{errorMessage}</p>
                     )}
 
-                <DialogFooter className='mt-5'>
-                    <DialogClose
-                        render={<Button type="button" variant="outline" disabled={loading} />}
-                    >
-                        Annuler
-                    </DialogClose>
-                    <Button type="submit" variant="default"  disabled={loading}>
-                        {loading && <LoaderCircle className="animate-spin" />}
-                        Créer
-                    </Button>
-                </DialogFooter>
+                    <DialogFooter className="mt-5">
+                        <DialogClose
+                            render={<Button type="button" variant="outline" disabled={loading} />}
+                        >
+                            Annuler
+                        </DialogClose>
+                        <Button type="submit" variant="default" disabled={loading}>
+                            {loading && <LoaderCircle className="animate-spin" />}
+                            Créer
+                        </Button>
+                    </DialogFooter>
                 </form>
             </DialogContent>
         </Dialog>

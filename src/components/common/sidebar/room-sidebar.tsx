@@ -11,8 +11,8 @@ import { useMatrixClient } from "@/hooks/use-matrix-client";
 import { spaceService } from "@/services/matrix/space";
 import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
-import { useState  } from "react";
-import type {FC} from "react";
+import { useState } from "react";
+import type { FC } from "react";
 import { CreateRoomDialog } from "../dialogs/create-room-dialog";
 
 interface Props {
@@ -40,9 +40,15 @@ export const RoomSidebar: FC<Props> = ({ spaceId, activeRoomId }) => {
 
     return (
         <Sidebar collapsible="none" className="flex-1">
-            <SidebarHeader className="border-b p-4 flex flex-row items-center justify-between">
+            <SidebarHeader className="flex flex-row items-center justify-between border-b p-4">
                 <span>{spaceQuery.isSuccess && spaceQuery.data?.name}</span>
-                <Button size="sm" className="cursor-pointer border-none rounded-none bg-[#171717]" onClick={() => { setOpenCreateRoom(true); }}>
+                <Button
+                    size="sm"
+                    className="cursor-pointer rounded-none border-none bg-[#171717]"
+                    onClick={() => {
+                        setOpenCreateRoom(true);
+                    }}
+                >
                     <Plus />
                 </Button>
             </SidebarHeader>
@@ -60,7 +66,11 @@ export const RoomSidebar: FC<Props> = ({ spaceId, activeRoomId }) => {
                                 />
                             ))}
                     </SidebarGroupContent>
-                    <CreateRoomDialog openCreateRoom={openCreateRoom} setOpenCreateRoom={setOpenCreateRoom} spaceId={spaceId} />
+                    <CreateRoomDialog
+                        openCreateRoom={openCreateRoom}
+                        setOpenCreateRoom={setOpenCreateRoom}
+                        spaceId={spaceId}
+                    />
                 </SidebarGroup>
             </SidebarContent>
         </Sidebar>
