@@ -55,7 +55,7 @@ export function CreateRoomDialog({
             await client.sendStateEvent(
                 spaceId,
                 EventType.SpaceChild,
-                { via: [client.getDomain()!] },
+                { via: [client.getDomain() ?? ''] },
                 room_id,
             );
             setOpenCreateRoom(false);
@@ -70,7 +70,7 @@ export function CreateRoomDialog({
             type: '',
         },
         onSubmit: async ({ value }) => {
-            handleCreateRoom(value)
+            await handleCreateRoom(value)
         },
     })
 
@@ -87,14 +87,13 @@ export function CreateRoomDialog({
                 </DialogHeader>
                 <form onSubmit={(e) => {
                     e.preventDefault();
-                    form.handleSubmit();
+                    void form.handleSubmit();
                 }}>
-                    <form.Field
-                        name="type"
-                        children={(field) => (
+                    <form.Field name="type">
+                        {(field) => (
                             <RadioGroup
                                 value={field.state.value}
-                                onValueChange={(val) => {
+                                onValueChange={(val: string) => {
                                     field.handleChange(val);
                                 }}
                                 className="mt-5"
@@ -114,20 +113,19 @@ export function CreateRoomDialog({
                                 </div>
                             </RadioGroup>
                         )}
-                    />
+                    </form.Field>
 
-                    <form.Field
-                        name="name"
-                        children={(field) => (
+                    <form.Field name="name">
+                        {(field) => (
                             <Input
                                 className="mt-5"
                                 placeholder="Nom du salon"
                                 value={field.state.value}
-                                onChange={(e) => field.handleChange(e.target.value)}
+                                onChange={(e) => { field.handleChange(e.target.value); }}
                                 required
                             />
                         )}
-                    />
+                    </form.Field>
 
                     {errorMessage && (
                         <p className="mt-2 text-sm text-destructive">{errorMessage}</p>

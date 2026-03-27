@@ -5,7 +5,8 @@ import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogT
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LoaderCircle } from 'lucide-react';
-import { EventType, Room } from "matrix-js-sdk";
+import type { Room } from "matrix-js-sdk";
+import { EventType } from "matrix-js-sdk";
 import { useEffect, useState } from 'react';
 import { useForm } from '@tanstack/react-form'
 import { useMatrixClient } from '@/hooks/use-matrix-client';
@@ -57,10 +58,10 @@ export function EditRoomDialog({
 
     const form = useForm({
         defaultValues: {
-            name: room.name ?? '',
+            name: room.name,
         },
         onSubmit: async ({ value }) => {
-            handleEditRoom(value)
+            await handleEditRoom(value)
         },
     })
 
@@ -76,27 +77,26 @@ export function EditRoomDialog({
                 </DialogHeader>
                 <form onSubmit={(e) => {
                     e.preventDefault();
-                    form.handleSubmit();
+                    void form.handleSubmit();
                 }}>            
-                    <form.Field
-                        name="name"
-                        children={(field) => (
+                    <form.Field name="name">
+                        {(field) => (
                             <div className="space-y-2 mt-2">
                                 <Label htmlFor="room-name">Nom</Label>
                                 <Input
                                     id="room-name"
                                     placeholder="Nom du salon"
                                     value={field.state.value}
-                                    onChange={(e) => field.handleChange(e.target.value)}
+                                    onChange={(e) => { field.handleChange(e.target.value); }}
                                     required
                                 />
                             </div>
                         )}
-                    />
+                    </form.Field>
 
                     <DialogFooter className='mt-5'>
                         <DialogClose
-                            render={<Button type="button" variant="destructive" disabled={loading} onClick={handleDeleteRoom}/>}
+                            render={<Button type="button" variant="destructive" disabled={loading} onClick={() => { void handleDeleteRoom(); }} />}
                         >
                             Supprimer
                         </DialogClose>
