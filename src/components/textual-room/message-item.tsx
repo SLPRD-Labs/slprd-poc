@@ -3,10 +3,13 @@ import { getReplyToEventId } from "@/utils/messagesRelations";
 import { MatrixEventEvent, MsgType, RelationType, EventType } from "matrix-js-sdk";
 import type { MatrixEvent } from "matrix-js-sdk";
 import type { FC } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MessageSquare, Pen, Trash } from "lucide-react";
 import { ReplyPreview } from "./reply-preview";
 import { Button } from "../ui/button";
+import { AuthenticatedMedia } from "./authenticated-media";
+import { Textarea } from "../ui/textarea";
+import { ActionDropdown } from "./action-dropdown";
 
 interface Props {
     event: MatrixEvent;
@@ -85,6 +88,9 @@ const MessageItem: FC<Props> = ({
 
     const eventId = event.getId();
     const roomId = event.getRoomId();
+
+    if (!eventId || !roomId) return null;
+
     const replyEventId = getReplyToEventId(event);
     const isThreadRoot = threadCount > 0;
     const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -177,10 +183,6 @@ const MessageItem: FC<Props> = ({
             </div>
         );
     };
-    const [underline, setUnderline] = useState(false);
-
-    const eventId = event.getId();
-    const isThreadRoot = threadCount > 0;
 
     useEffect(() => {
         const onReplaced = () => {
@@ -295,7 +297,7 @@ const MessageItem: FC<Props> = ({
             data-event-id={eventId ?? undefined}
             className={`relative flex flex-col px-4 py-1 transition-colors ${
                 hovered ? "bg-secondary" : ""
-            } ${isHighlighted ? "bg-primary/20 ring-1 ring-primary" : ""}`}
+            } ${isHighlighted ? "bg-primary/20 ring-primary ring-1" : ""}`}
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
         >
@@ -342,6 +344,12 @@ const MessageItem: FC<Props> = ({
                             >
                                 <span className="text-xs">👍</span>
                             </Button>
+                            <ActionDropdown
+                                eventId={eventId}
+                                onOpenThread={onOpenThread}
+                                onReply={onReply}
+                                threadExists={isThreadRoot}
+                            />
                         </>
                     )}
                 </div>
@@ -413,10 +421,6 @@ const MessageItem: FC<Props> = ({
                 renderContent()
             )}
 
-            <span className="text-sm wrap-break-words whitespace-pre-wrap">
-                {String(event.getContent().body ?? "")}
-            </span>
-
             {renderReactions()}
 
             {isThreadRoot && eventId && (
@@ -425,7 +429,7 @@ const MessageItem: FC<Props> = ({
                     onClick={() => onOpenThread?.(eventId)}
                     onMouseEnter={() => setUnderline(true)}
                     onMouseLeave={() => setUnderline(false)}
-                    className="text-muted-foreground mt-1 inline-flex w-fit items-center gap-1 rounded-md border bg-muted px-2 py-1 text-xs hover:cursor-pointer"
+                    className="text-muted-foreground bg-muted mt-1 inline-flex w-fit items-center gap-1 rounded-md border px-2 py-1 text-xs hover:cursor-pointer"
                 >
                     <MessageSquare size={14} />
                     Ouvrir le thread •

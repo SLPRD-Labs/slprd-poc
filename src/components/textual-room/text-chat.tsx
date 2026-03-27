@@ -2,11 +2,18 @@ import { useMatrixClient } from "@/hooks/use-matrix-client";
 import { eventService } from "@/services/matrix/event";
 import { buildThreadRepliesCount, getThreadRootId } from "@/utils/messagesRelations";
 import type { MatrixEvent } from "matrix-js-sdk";
-import { EventType, KnownMembership, MsgType, RoomEvent, RoomMemberEvent } from "matrix-js-sdk";
-import type { FC, KeyboardEvent, SyntheticEvent } from "react";
+import {
+    EventType,
+    KnownMembership,
+    MsgType,
+    RelationType,
+    RoomEvent,
+    RoomMemberEvent
+} from "matrix-js-sdk";
+import type { ChangeEvent, FC, KeyboardEvent, SyntheticEvent } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { RoomMessageEventContent } from "matrix-js-sdk/lib/@types/events";
-import { ArrowDown, SendHorizonal, X } from "lucide-react";
+import { ArrowDown, FileIcon, Loader2, Paperclip, SendHorizonal, Trash, X } from "lucide-react";
 
 import { PresenceSidenav } from "../presence-sidenav";
 import { Button } from "../ui/button";
@@ -41,7 +48,13 @@ export const TextChat: FC<Props> = ({ roomId }) => {
 
     const [typingUsers, setTypingUsers] = useState("");
     const [input, setInput] = useState("");
+    const [replyToEventId, setReplyToEventId] = useState<string | null>(null);
+    const [highlightedEventId, setHighlightedEventId] = useState<string | null>(null);
+
     const [activeThreadRootId, setActiveThreadRootId] = useState<string | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
 
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [hasMoreHistory, setHasMoreHistory] = useState(true);
@@ -50,6 +63,8 @@ export const TextChat: FC<Props> = ({ roomId }) => {
 
     const scrollRef = useRef<HTMLDivElement>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     const threadRepliesCount = useMemo(() => buildThreadRepliesCount(messages), [messages]);
 
@@ -229,7 +244,7 @@ export const TextChat: FC<Props> = ({ roomId }) => {
         }
     }, [isLoadingMore, hasMoreHistory, loadOlder]);
 
-     useEffect(() => {
+    useEffect(() => {
         const room = client.getRoom(roomId);
         if (!room) return;
 
@@ -295,9 +310,39 @@ export const TextChat: FC<Props> = ({ roomId }) => {
         await client.sendTyping(roomId, false, 4000);
         await client.sendEvent(roomId, EventType.RoomMessage, content);
 
-        setInput("");
-        setReplyToEventId(null);
-        setPendingFiles(prevPendingFiles => {
+        try {
+            for (const pending of pendingFiles) {
+                const { file } = pending;
+                const uploadResponse = await client.uploadContent(file);
+                const mxcUrl = uploadResponse.content_uri;
+
+                const baseContent = {
+                    body: file.name,
+                    url: mxcUrl,
+                    info: {
+                        size: file.size,
+                        mimetype: file.type
+                    }
+                };
+
+                if (file.type.startsWith("image/")) {
+                    await client.sendMessage(roomId, { ...baseContent, msgtype: MsgType.Image });
+                } else if (file.type.startsWith("video/")) {
+                    await client.sendMessage(roomId, { ...baseContent, msgtype: MsgType.Video });
+                } else if (file.type.startsWith("audio/")) {
+                    await client.sendMessage(roomId, { ...baseContent, msgtype: MsgType.Audio });
+                } else {
+                    await client.sendMessage(roomId, { ...baseContent, msgtype: MsgType.File });
+                }
+            }
+
+            if (input.trim()) {
+                await client.sendTextMessage(roomId, input.trim());
+            }
+
+            setInput("");
+            setReplyToEventId(null);
+            setPendingFiles(prevPendingFiles => {
                 prevPendingFiles.forEach(pending => {
                     if (pending.previewUrl) {
                         URL.revokeObjectURL(pending.previewUrl);
@@ -321,15 +366,6 @@ export const TextChat: FC<Props> = ({ roomId }) => {
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             void sendMain();
-            return;
-        }
-        void client.sendTyping(roomId, true, 4000);
-    };
-
-    const handleThreadKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-        if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            void sendThread();
             return;
         }
         void client.sendTyping(roomId, true, 4000);
@@ -420,33 +456,41 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                         </div>
                     )}
 
-                    {messages.map(event => {
+                    {messages.map((event, index) => {
                         if (event.getType() === "m.room.message") {
                             if (getThreadRootId(event) !== null) return null;
 
-                            return (
-                                <MessageItem
-                                    key={event.getId()}
-                                    event={event}
-                                    threadCount={threadRepliesCount[event.getId() ?? ""] ?? 0}
-                                    onOpenThread={setActiveThreadRootId}
-                                    onJumpToEvent={jumpToEvent}
-                                    onReply={setReplyToEventId}
-                                    isHighlighted={highlightedEventId === event.getId()}
-                                />
-                            );
-                        }
+                            const currentDate = new Date(event.getTs()).toDateString();
 
-                        if (event.getType() === "m.room.member") {
+                            const prevMessageEvent = messages
+                                .slice(0, index)
+                                .reverse()
+                                .find(e => e.getType() === "m.room.message");
+
+                            const prevDate = prevMessageEvent
+                                ? new Date(prevMessageEvent.getTs()).toDateString()
+                                : null;
+
                             return (
-                                <div
-                                    key={event.getId()}
-                                    className="text-muted-foreground text-center text-xs"
-                                >
-                                    {event.sender?.name &&
-                                        (event.getContent().membership === "join"
-                                            ? `${event.sender.name} a rejoint le salon`
-                                            : `${event.sender.name} a quitté le salon`)}
+                                <div key={event.getId()}>
+                                    {currentDate !== prevDate && (
+                                        <div className="my-2 flex items-center gap-2 px-4">
+                                            <div className="bg-border h-px flex-1" />
+                                            <span className="text-muted-foreground text-xs">
+                                                {formatDate(event.getTs())}
+                                            </span>
+                                            <div className="bg-border h-px flex-1" />
+                                        </div>
+                                    )}
+                                    <MessageItem
+                                        key={event.getId()}
+                                        event={event}
+                                        threadCount={threadRepliesCount[event.getId() ?? ""] ?? 0}
+                                        onOpenThread={setActiveThreadRootId}
+                                        onJumpToEvent={jumpToEvent}
+                                        onReply={setReplyToEventId}
+                                        isHighlighted={highlightedEventId === event.getId()}
+                                    />
                                 </div>
                             );
                         }
@@ -456,22 +500,24 @@ export const TextChat: FC<Props> = ({ roomId }) => {
 
                     <div ref={bottomRef} />
 
-                    <div className="sticky bottom-4 m-4 flex-1 items-end flex justify-end">
+                    <div className="sticky bottom-4 m-4 flex flex-1 items-end justify-end">
                         <Button
                             variant="ghost"
                             className="bg-secondary hover:bg-primary hover:text-primary-foreground rounded-full p-3 shadow-lg"
-                            onClick={() => bottomRef.current?.scrollIntoView({ behavior: "smooth" })}
+                            onClick={() =>
+                                bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+                            }
                         >
                             <ArrowDown className="size-4" />
                         </Button>
                     </div>
                 </div>
 
-                            {error && (
-                <div className="mx-4 mt-2 rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-600">
-                    ⚠️ {error}
-                </div>
-            )}
+                {error && (
+                    <div className="mx-4 mt-2 rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-600">
+                        ⚠️ {error}
+                    </div>
+                )}
 
                 <div className="text-muted-foreground flex flex-row items-center gap-2 px-4 text-sm">
                     {typingUsers !== "" && (
@@ -482,7 +528,7 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                     )}
                 </div>
 
-                 {replyToEvent && (
+                {replyToEvent && (
                     <div className="bg-muted/40 flex items-start justify-between border-t px-4 py-2 text-xs">
                         <div className="min-w-0">
                             <div className="font-medium">Réponse à {replyToEvent.sender?.name}</div>
@@ -495,104 +541,104 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                         </Button>
                     </div>
                 )}
-               <form
-                onSubmit={e => {
-                    void sendMain(e);
-                }}
-                className="bg-background flex items-end gap-2 border-t p-4"
-            >
-                <input
-                    type="file"
-                    multiple
-                    className="hidden"
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                />
-
-                <div className="border-input focus-within:border-ring flex max-h-[40vh] flex-1 flex-col overflow-hidden rounded-2xl border bg-transparent transition-all">
-                    {pendingFiles.length > 0 && (
-                        <div className="border-border/40 bg-muted/20 flex gap-3 overflow-x-auto border-b p-3">
-                            {pendingFiles.map(pf => (
-                                <div
-                                    key={pf.id}
-                                    className="bg-background relative flex h-16 w-16 shrink-0 items-center justify-center rounded-lg border shadow-sm"
-                                >
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            removePendingFile(pf.id);
-                                        }}
-                                        className="text-destructive-foreground absolute -top-2 -right-2 flex size-6 items-center justify-center rounded-md bg-white shadow-sm transition-all hover:scale-110"
-                                        aria-label={`Supprimer ${pf.file.name}`}
-                                    >
-                                        <Trash className="size-3.5" />
-                                    </button>
-                                    {pf.previewUrl ? (
-                                        <img
-                                            src={pf.previewUrl}
-                                            alt={pf.file.name}
-                                            className="size-full rounded-lg object-cover"
-                                        />
-                                    ) : (
-                                        <div className="text-muted-foreground flex flex-col items-center gap-1 overflow-hidden p-1">
-                                            <FileIcon className="size-6 shrink-0" />
-                                            <span className="w-full truncate text-center text-[9px] leading-tight font-medium">
-                                                {pf.file.name}
-                                            </span>
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    )}
-
-                    <div className="flex items-end gap-1 px-1">
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="text-muted-foreground hover:text-foreground mb-1 h-10 w-10 shrink-0 rounded-full"
-                            disabled={isUploading}
-                            onClick={() => fileInputRef.current?.click()}
-                            aria-label="Joindre un fichier"
-                        >
-                            {isUploading ? (
-                                <Loader2 className="size-5 animate-spin" />
-                            ) : (
-                                <Paperclip className="size-5" />
-                            )}
-                        </Button>
-
-                        <Textarea
-                            ref={textareaRef}
-                            value={input}
-                            onChange={e => {
-                                setInput(e.target.value);
-                            }}
-                            onInput={e => {
-                                const target = e.target as HTMLTextAreaElement;
-                                target.style.height = "auto";
-                                target.style.height = `${target.scrollHeight.toString()}px`;
-                            }}
-                            onKeyDown={handleKeyDown}
-                            placeholder={`Message #${client.getRoom(roomId)?.name ?? roomId}`}
-                            rows={1}
-                            className="max-h-[40vh] min-h-12 w-full flex-1 resize-none overflow-y-auto border-0 px-2 py-3 text-base leading-relaxed shadow-none focus-visible:ring-0 md:text-base"
-                        />
-                    </div>
-                </div>
-
-                <Button
-                    type="submit"
-                    size="icon"
-                    className="bg-primary text-primary-foreground hover:bg-primary/90 h-12 w-12 shrink-0 rounded-full md:hidden"
-                    disabled={isUploading || (!input.trim() && pendingFiles.length === 0)}
-                    aria-label="Envoyer le message"
+                <form
+                    onSubmit={e => {
+                        void sendMain(e);
+                    }}
+                    className="bg-background flex items-end gap-2 border-t p-4"
                 >
-                    <SendHorizonal className="size-5" />
-                </Button>
-            </form>
+                    <input
+                        type="file"
+                        multiple
+                        className="hidden"
+                        ref={fileInputRef}
+                        onChange={handleFileChange}
+                    />
+
+                    <div className="border-input focus-within:border-ring flex max-h-[40vh] flex-1 flex-col overflow-hidden rounded-2xl border bg-transparent transition-all">
+                        {pendingFiles.length > 0 && (
+                            <div className="border-border/40 bg-muted/20 flex gap-3 overflow-x-auto border-b p-3">
+                                {pendingFiles.map(pf => (
+                                    <div
+                                        key={pf.id}
+                                        className="bg-background relative flex h-16 w-16 shrink-0 items-center justify-center rounded-lg border shadow-sm"
+                                    >
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                removePendingFile(pf.id);
+                                            }}
+                                            className="text-destructive-foreground absolute -top-2 -right-2 flex size-6 items-center justify-center rounded-md bg-white shadow-sm transition-all hover:scale-110"
+                                            aria-label={`Supprimer ${pf.file.name}`}
+                                        >
+                                            <Trash className="size-3.5" />
+                                        </button>
+                                        {pf.previewUrl ? (
+                                            <img
+                                                src={pf.previewUrl}
+                                                alt={pf.file.name}
+                                                className="size-full rounded-lg object-cover"
+                                            />
+                                        ) : (
+                                            <div className="text-muted-foreground flex flex-col items-center gap-1 overflow-hidden p-1">
+                                                <FileIcon className="size-6 shrink-0" />
+                                                <span className="w-full truncate text-center text-[9px] leading-tight font-medium">
+                                                    {pf.file.name}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        <div className="flex items-end gap-1 px-1">
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="text-muted-foreground hover:text-foreground mb-1 h-10 w-10 shrink-0 rounded-full"
+                                disabled={isUploading}
+                                onClick={() => fileInputRef.current?.click()}
+                                aria-label="Joindre un fichier"
+                            >
+                                {isUploading ? (
+                                    <Loader2 className="size-5 animate-spin" />
+                                ) : (
+                                    <Paperclip className="size-5" />
+                                )}
+                            </Button>
+
+                            <Textarea
+                                ref={textareaRef}
+                                value={input}
+                                onChange={e => {
+                                    setInput(e.target.value);
+                                }}
+                                onInput={e => {
+                                    const target = e.target as HTMLTextAreaElement;
+                                    target.style.height = "auto";
+                                    target.style.height = `${target.scrollHeight.toString()}px`;
+                                }}
+                                onKeyDown={handleKeyDown}
+                                placeholder={`Message #${client.getRoom(roomId)?.name ?? roomId}`}
+                                rows={1}
+                                className="max-h-[40vh] min-h-12 w-full flex-1 resize-none overflow-y-auto border-0 px-2 py-3 text-base leading-relaxed shadow-none focus-visible:ring-0 md:text-base"
+                            />
+
+                            <Button
+                                type="submit"
+                                size="icon"
+                                className="bg-primary text-primary-foreground hover:bg-primary/90 h-12 w-12 shrink-0 rounded-full"
+                                disabled={isUploading || (!input.trim() && pendingFiles.length === 0)}
+                                aria-label="Envoyer le message"
+                            >
+                                <SendHorizonal className="size-5" />
+                            </Button>
                         </div>
+                    </div>
+                </form>
+            </div>
 
             {activeThreadRootId ? (
                 <ThreadPanel
