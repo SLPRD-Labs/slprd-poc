@@ -1,5 +1,5 @@
-import { KnownMembership, RoomEvent } from "matrix-js-sdk";
 import type { Membership, Room } from "matrix-js-sdk";
+import { EventType, KnownMembership, RoomEvent } from "matrix-js-sdk";
 import { useMatrixClient } from "@/hooks/use-matrix-client";
 import { usePresence } from "@/hooks/use-presence";
 import { Button } from "@/components/ui/button";
@@ -47,6 +47,19 @@ export function ConversationCard({ room, isActive, onClick }: ConversationCardPr
         try {
             await client.joinRoom(room.roomId);
             setMembership(KnownMembership.Join);
+
+            if (otherUserId) {
+                const accountData = client.getAccountData(EventType.Direct);
+                const mDirect = accountData ? accountData.getContent() : {};
+                const userDMs = (mDirect as Record<string, string[]>)[otherUserId] ?? [];
+
+                if (!userDMs.includes(room.roomId)) {
+                    await client.setAccountData(EventType.Direct, {
+                        ...mDirect,
+                        [otherUserId]: [...userDMs, room.roomId]
+                    });
+                }
+            }
         } catch (err) {
             console.error("Erreur acceptation:", err);
         }

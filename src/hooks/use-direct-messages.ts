@@ -22,20 +22,19 @@ export const useDirectMessages = (client: MatrixClient) => {
                 return false;
             }
 
-            const roomWithGuessDMUserId = room as Room & {
-                guessDMUserId?: () => string | null | undefined;
-            };
-            const guessedDmUserId =
-                typeof roomWithGuessDMUserId.guessDMUserId === "function"
-                    ? roomWithGuessDMUserId.guessDMUserId()
-                    : undefined;
-            const isLikelyDirect =
-                typeof guessedDmUserId === "string" && guessedDmUserId.length > 0;
+            const memberCount = room.getJoinedMemberCount() + room.getInvitedMemberCount();
+            if (membership === KnownMembership.Join && memberCount !== 2) {
+                return false;
+            }
 
             const isKnownDM = allDmRoomIds.includes(room.roomId);
             const isInvitation = membership === KnownMembership.Invite;
 
-            return isKnownDM || isInvitation || isLikelyDirect;
+            if (room.isSpaceRoom()) {
+                return false;
+            }
+
+            return isKnownDM || (isInvitation && memberCount <= 2);
         });
 
         setDmRooms(filteredRooms);
