@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import { SidebarMenuAction, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { Link } from "@tanstack/react-router";
 import { Ellipsis, Hash, Volume2 } from "lucide-react";
