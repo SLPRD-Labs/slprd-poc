@@ -25,10 +25,6 @@ export function CreateRoomDialog({ spaceId }: { spaceId: string }) {
     const [errorMessage, setErrorMessage] = useState<string>("");
     const { client } = useMatrixClient();
 
-    const path = window.location.pathname;
-    const parts = path.split("/");
-    const currentSpaceId = decodeURIComponent(parts[2]);
-
     const handleCreateRoom = async (value: { name: string; type: string }) => {
         setLoading(true);
 

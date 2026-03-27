@@ -1,5 +1,4 @@
 import { NavRoom } from "@/components/common/sidebar/nav-room";
-import { Button } from "@/components/ui/button";
 import {
     Sidebar,
     SidebarContent,
@@ -21,7 +20,6 @@ interface Props {
 
 export const RoomSidebar: FC<Props> = ({ spaceId, activeRoomId }) => {
     const { client, ready } = useMatrixClient();
-    const [openCreateRoom, setOpenCreateRoom] = useState(false);
 
     const spaceQuery = useQuery({
         queryKey: ["space", spaceId],
@@ -39,7 +37,6 @@ export const RoomSidebar: FC<Props> = ({ spaceId, activeRoomId }) => {
 
     return (
         <Sidebar collapsible="none" className="flex-1">
-<<<<<<< HEAD
             <SidebarHeader className="flex flex-row items-center justify-between border-b p-4 whitespace-nowrap">
                 <span className="truncate font-semibold">
                     {spaceQuery.isSuccess && spaceQuery.data?.name}
@@ -48,13 +45,6 @@ export const RoomSidebar: FC<Props> = ({ spaceId, activeRoomId }) => {
                     <SpaceInviteDialog spaceId={spaceId} />
                     <CreateRoomDialog spaceId={spaceId} />
                 </div>
-=======
-            <SidebarHeader className="border-b p-4 flex flex-row items-center justify-between">
-                <span>{spaceQuery.isSuccess && spaceQuery.data?.name}</span>
-                <Button size="sm" className="cursor-pointer border-none rounded-none bg-[#171717]" onClick={() => { setOpenCreateRoom(true); }}>
-                    <Plus />
-                </Button>
->>>>>>> 8a63d35 ((create-room) - Ajout dialog de modification et suppression)
             </SidebarHeader>
             <SidebarContent>
                 <SidebarGroup className="px-0">
@@ -70,17 +60,6 @@ export const RoomSidebar: FC<Props> = ({ spaceId, activeRoomId }) => {
                                 />
                             ))}
                     </SidebarGroupContent>
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-                    <Button size="sm" className="w-full border-t cursor-pointer border-none rounded-none bg-[#171717] my-2" onClick={() => { setOpenCreateRoom(true); }}>
-                        <Plus />
-                    </Button>
-                    <CreateRoomDialog openCreateRoom={openCreateRoom} setOpenCreateRoom={setOpenCreateRoom} />
->>>>>>> 729b139 ((create-room) - Création des room terminée il reste la redirection (Noëllie))
-=======
-                    <CreateRoomDialog openCreateRoom={openCreateRoom} setOpenCreateRoom={setOpenCreateRoom} spaceId={spaceId} />
->>>>>>> 8a63d35 ((create-room) - Ajout dialog de modification et suppression)
                 </SidebarGroup>
             </SidebarContent>
         </Sidebar>
