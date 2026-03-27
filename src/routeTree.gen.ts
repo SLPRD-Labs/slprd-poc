@@ -13,6 +13,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as MainLayoutRouteImport } from './routes/_mainLayout'
 import { Route as MainLayoutIndexRouteImport } from './routes/_mainLayout/index'
 import { Route as MainLayoutSpaceSpaceIdIndexRouteImport } from './routes/_mainLayout/space/$spaceId/index'
+import { Route as MainLayoutJoinInviteIdIndexRouteImport } from './routes/_mainLayout/join/$inviteId/index'
 import { Route as MainLayoutDmRoomIdIndexRouteImport } from './routes/_mainLayout/dm/$roomId/index'
 import { Route as MainLayoutSpaceSpaceIdRoomIndexRouteImport } from './routes/_mainLayout/space/$spaceId/room/index'
 import { Route as MainLayoutSpaceSpaceIdRoomRoomIdIndexRouteImport } from './routes/_mainLayout/space/$spaceId/room/$roomId/index'
@@ -37,6 +38,12 @@ const MainLayoutSpaceSpaceIdIndexRoute =
     path: '/space/$spaceId/',
     getParentRoute: () => MainLayoutRoute,
   } as any)
+const MainLayoutJoinInviteIdIndexRoute =
+  MainLayoutJoinInviteIdIndexRouteImport.update({
+    id: '/join/$inviteId/',
+    path: '/join/$inviteId/',
+    getParentRoute: () => MainLayoutRoute,
+  } as any)
 const MainLayoutDmRoomIdIndexRoute = MainLayoutDmRoomIdIndexRouteImport.update({
   id: '/dm/$roomId/',
   path: '/dm/$roomId/',
@@ -59,6 +66,7 @@ export interface FileRoutesByFullPath {
   '/': typeof MainLayoutIndexRoute
   '/login': typeof LoginRoute
   '/dm/$roomId/': typeof MainLayoutDmRoomIdIndexRoute
+  '/join/$inviteId/': typeof MainLayoutJoinInviteIdIndexRoute
   '/space/$spaceId/': typeof MainLayoutSpaceSpaceIdIndexRoute
   '/space/$spaceId/room/': typeof MainLayoutSpaceSpaceIdRoomIndexRoute
   '/space/$spaceId/room/$roomId/': typeof MainLayoutSpaceSpaceIdRoomRoomIdIndexRoute
@@ -67,6 +75,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/': typeof MainLayoutIndexRoute
   '/dm/$roomId': typeof MainLayoutDmRoomIdIndexRoute
+  '/join/$inviteId': typeof MainLayoutJoinInviteIdIndexRoute
   '/space/$spaceId': typeof MainLayoutSpaceSpaceIdIndexRoute
   '/space/$spaceId/room': typeof MainLayoutSpaceSpaceIdRoomIndexRoute
   '/space/$spaceId/room/$roomId': typeof MainLayoutSpaceSpaceIdRoomRoomIdIndexRoute
@@ -77,6 +86,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_mainLayout/': typeof MainLayoutIndexRoute
   '/_mainLayout/dm/$roomId/': typeof MainLayoutDmRoomIdIndexRoute
+  '/_mainLayout/join/$inviteId/': typeof MainLayoutJoinInviteIdIndexRoute
   '/_mainLayout/space/$spaceId/': typeof MainLayoutSpaceSpaceIdIndexRoute
   '/_mainLayout/space/$spaceId/room/': typeof MainLayoutSpaceSpaceIdRoomIndexRoute
   '/_mainLayout/space/$spaceId/room/$roomId/': typeof MainLayoutSpaceSpaceIdRoomRoomIdIndexRoute
@@ -87,6 +97,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/dm/$roomId/'
+    | '/join/$inviteId/'
     | '/space/$spaceId/'
     | '/space/$spaceId/room/'
     | '/space/$spaceId/room/$roomId/'
@@ -95,6 +106,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/'
     | '/dm/$roomId'
+    | '/join/$inviteId'
     | '/space/$spaceId'
     | '/space/$spaceId/room'
     | '/space/$spaceId/room/$roomId'
@@ -104,6 +116,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/_mainLayout/'
     | '/_mainLayout/dm/$roomId/'
+    | '/_mainLayout/join/$inviteId/'
     | '/_mainLayout/space/$spaceId/'
     | '/_mainLayout/space/$spaceId/room/'
     | '/_mainLayout/space/$spaceId/room/$roomId/'
@@ -144,6 +157,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MainLayoutSpaceSpaceIdIndexRouteImport
       parentRoute: typeof MainLayoutRoute
     }
+    '/_mainLayout/join/$inviteId/': {
+      id: '/_mainLayout/join/$inviteId/'
+      path: '/join/$inviteId'
+      fullPath: '/join/$inviteId/'
+      preLoaderRoute: typeof MainLayoutJoinInviteIdIndexRouteImport
+      parentRoute: typeof MainLayoutRoute
+    }
     '/_mainLayout/dm/$roomId/': {
       id: '/_mainLayout/dm/$roomId/'
       path: '/dm/$roomId'
@@ -171,6 +191,7 @@ declare module '@tanstack/react-router' {
 interface MainLayoutRouteChildren {
   MainLayoutIndexRoute: typeof MainLayoutIndexRoute
   MainLayoutDmRoomIdIndexRoute: typeof MainLayoutDmRoomIdIndexRoute
+  MainLayoutJoinInviteIdIndexRoute: typeof MainLayoutJoinInviteIdIndexRoute
   MainLayoutSpaceSpaceIdIndexRoute: typeof MainLayoutSpaceSpaceIdIndexRoute
   MainLayoutSpaceSpaceIdRoomIndexRoute: typeof MainLayoutSpaceSpaceIdRoomIndexRoute
   MainLayoutSpaceSpaceIdRoomRoomIdIndexRoute: typeof MainLayoutSpaceSpaceIdRoomRoomIdIndexRoute
@@ -179,6 +200,7 @@ interface MainLayoutRouteChildren {
 const MainLayoutRouteChildren: MainLayoutRouteChildren = {
   MainLayoutIndexRoute: MainLayoutIndexRoute,
   MainLayoutDmRoomIdIndexRoute: MainLayoutDmRoomIdIndexRoute,
+  MainLayoutJoinInviteIdIndexRoute: MainLayoutJoinInviteIdIndexRoute,
   MainLayoutSpaceSpaceIdIndexRoute: MainLayoutSpaceSpaceIdIndexRoute,
   MainLayoutSpaceSpaceIdRoomIndexRoute: MainLayoutSpaceSpaceIdRoomIndexRoute,
   MainLayoutSpaceSpaceIdRoomRoomIdIndexRoute:

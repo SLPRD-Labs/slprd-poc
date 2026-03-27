@@ -1,7 +1,7 @@
 import { getMyMembership } from "@/libs/utils/matrix/room";
 import { getChildOrder, partitionSpacesAndRooms, sanitizeOrder } from "@/libs/utils/matrix/space";
-import type { MatrixClient, Room } from "matrix-js-sdk";
 import { EventTimeline, EventType, KnownMembership } from "matrix-js-sdk";
+import type { MatrixClient, Room } from "matrix-js-sdk";
 
 class SpaceService {
     public getRootAndInvitedSpaces(client: MatrixClient): {
@@ -189,6 +189,57 @@ class SpaceService {
             return undefined;
         }
         return sanitizeOrder(e);
+    }
+
+    public async joinSpaceAndChildren(
+        client: MatrixClient,
+        spaceIdOrAlias: string
+    ): Promise<string> {
+        const joinedSpace = await client.joinRoom(spaceIdOrAlias);
+        const spaceId = joinedSpace.roomId;
+
+        try {
+            const hierarchy = await client.getRoomHierarchy(spaceId, 50, 1);
+
+            const childrenToJoin = hierarchy.rooms.filter(
+                r => r.room_id !== spaceId && r.room_type !== "m.space"
+            );
+
+            await Promise.all(
+                childrenToJoin.map(child =>
+                    client.joinRoom(child.room_id).catch((err: unknown) => {
+                        console.error(
+                            `Impossible de rejoindre le salon enfant ${child.room_id}`,
+                            err
+                        );
+                    })
+                )
+            );
+        } catch (error) {
+            console.warn("Erreur API hierarchy, utilisation du fallback local :", error);
+
+            const space = client.getRoom(spaceId);
+            if (space) {
+                const childEvents =
+                    space
+                        .getLiveTimeline()
+                        .getState(EventTimeline.FORWARDS)
+                        ?.getStateEvents(EventType.SpaceChild) ?? [];
+
+                await Promise.all(
+                    childEvents.map(ev => {
+                        const childId = ev.getStateKey();
+                        if (childId) {
+                            return client.joinRoom(childId).catch(console.error);
+                        }
+                        return Promise.resolve();
+                    })
+                );
+            }
+        }
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        return spaceId;
     }
 }
 

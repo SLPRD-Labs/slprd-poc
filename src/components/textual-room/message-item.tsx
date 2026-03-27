@@ -10,6 +10,7 @@ import { Button } from "../ui/button";
 import { AuthenticatedMedia } from "./authenticated-media";
 import { Textarea } from "../ui/textarea";
 import { ActionDropdown } from "./action-dropdown";
+import { InvitePreviewCard } from "./invite-preview-card";
 
 interface Props {
     event: MatrixEvent;
@@ -288,6 +289,14 @@ const MessageItem: FC<Props> = ({
                     }}
                 />
             );
+        }
+
+        const joinPrefix = `${window.location.origin}/join/`;
+        const trimmedMessage = currentMessage.trim();
+
+        if (trimmedMessage.startsWith(joinPrefix) && !trimmedMessage.includes(" ")) {
+            const inviteId = trimmedMessage.replace(joinPrefix, "");
+            return <InvitePreviewCard inviteId={inviteId} />;
         }
 
         return (
