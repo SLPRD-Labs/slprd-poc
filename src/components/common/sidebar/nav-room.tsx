@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { EditRoomDialog } from "../dialogs/edit-room-dialog";
 import { useMatrixClient } from "@/hooks/use-matrix-client";
 import { useCallContext } from "@/contexts/call-context/call-context";
+import { toast } from "sonner";
 
 interface Props {
     spaceId: string;
@@ -34,6 +35,12 @@ export const NavRoom: FC<Props> = ({ spaceId, room, isActive, isCall }) => {
 
         if (call.state === "idle" && pendingRoomId) {
             call.join(pendingRoomId);
+
+            toast("Switched voice channel", {
+                description: `Now in ${room.name}`,
+                position: "top-center",
+            });
+
             setPendingRoomId(null);
         }
 
