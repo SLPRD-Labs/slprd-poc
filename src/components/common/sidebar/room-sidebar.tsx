@@ -11,6 +11,7 @@ import { useMatrixClient } from "@/hooks/use-matrix-client";
 import { spaceService } from "@/services/matrix/space";
 import { useQuery } from "@tanstack/react-query";
 import type { FC } from "react";
+import { SpaceInviteDialog } from "@/components/common/sidebar/space-invite-dialog";
 
 interface Props {
     spaceId: string;
@@ -36,8 +37,12 @@ export const RoomSidebar: FC<Props> = ({ spaceId, activeRoomId }) => {
 
     return (
         <Sidebar collapsible="none" className="flex-1">
-            <SidebarHeader className="border-b p-4 whitespace-nowrap">
-                {spaceQuery.isSuccess && spaceQuery.data?.name}
+            <SidebarHeader className="flex-row items-center justify-between border-b p-4 whitespace-nowrap">
+                <span className="truncate font-semibold">
+                    {spaceQuery.isSuccess && spaceQuery.data?.name}
+                </span>
+
+                <SpaceInviteDialog spaceId={spaceId} />
             </SidebarHeader>
             <SidebarContent>
                 <SidebarGroup>

@@ -10,6 +10,7 @@ import { Button } from "../ui/button";
 import { AuthenticatedMedia } from "./authenticated-media";
 import { Textarea } from "../ui/textarea";
 import { ActionDropdown } from "./action-dropdown";
+import { InvitePreviewCard } from "./invite-preview-card";
 
 interface Props {
     event: MatrixEvent;
@@ -288,6 +289,23 @@ const MessageItem: FC<Props> = ({
                     }}
                 />
             );
+        }
+
+        const trimmedMessage = currentMessage.trim();
+
+        if (!trimmedMessage.includes(" ")) {
+            try {
+                const url = new URL(trimmedMessage, window.location.origin);
+                const segments = url.pathname.split("/").filter(Boolean);
+                const joinIndex = segments.indexOf("join");
+
+                if (joinIndex !== -1 && segments[joinIndex + 1]) {
+                    const inviteId = segments[joinIndex + 1];
+                    return <InvitePreviewCard inviteId={inviteId} />;
+                }
+            } catch {
+                // not a valid URL
+            }
         }
 
         return (
