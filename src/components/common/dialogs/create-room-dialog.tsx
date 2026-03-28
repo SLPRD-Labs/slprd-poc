@@ -19,11 +19,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "@tanstack/react-form";
 import { useMatrixClient } from "@/hooks/use-matrix-client";
 
-export function CreateRoomDialog({
-    spaceId
-}: {
-    spaceId: string;
-}) {
+export function CreateRoomDialog({ spaceId }: { spaceId: string }) {
     const [loading, setLoading] = useState<boolean>(false);
     const [open, setOpen] = useState<boolean>(false);
     const [errorMessage, setErrorMessage] = useState<string>("");
