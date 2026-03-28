@@ -94,6 +94,12 @@ export const CreateServerDialogContent: FC<Props> = ({ open, onSuccess }) => {
             const generalResponse = await client.createRoom({
                 name: "general",
                 preset: isPublic ? Preset.PublicChat : Preset.PrivateChat,
+                power_level_content_override: {
+                    events: {
+                        "org.matrix.msc3401.call.member": 0,
+                        "m.call.member": 0,
+                    },
+                },
                 initial_state: [
                     {
                         type: "m.room.history_visibility",

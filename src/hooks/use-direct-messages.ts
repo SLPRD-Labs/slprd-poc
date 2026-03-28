@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { MatrixClient, Room } from "matrix-js-sdk";
-import { ClientEvent, EventType, KnownMembership, RoomEvent } from "matrix-js-sdk";
+import { ClientEvent, EventType, KnownMembership, RoomEvent, RoomStateEvent } from "matrix-js-sdk";
 import { getMyMembership } from "@/libs/utils/matrix/room";
 import { toMDirectContent } from "@/libs/utils/matrix/accountData";
 
@@ -45,6 +45,8 @@ export const useDirectMessages = (client: MatrixClient) => {
         client.on(RoomEvent.MyMembership, updateDMs);
         client.on(ClientEvent.AccountData, updateDMs);
         client.on(ClientEvent.Room, updateDMs);
+        client.on(RoomEvent.MyMembership, updateDMs);
+        client.on(RoomStateEvent.Events, updateDMs);
 
         // eslint-disable-next-line react-hooks/set-state-in-effect
         updateDMs();
@@ -53,6 +55,8 @@ export const useDirectMessages = (client: MatrixClient) => {
             client.removeListener(RoomEvent.MyMembership, updateDMs);
             client.removeListener(ClientEvent.AccountData, updateDMs);
             client.removeListener(ClientEvent.Room, updateDMs);
+            client.removeListener(RoomEvent.MyMembership, updateDMs);
+            client.removeListener(RoomStateEvent.Events, updateDMs);
         };
     }, [client, updateDMs]);
 

@@ -8,6 +8,7 @@ import type { MouseEvent } from "react";
 import { useEffect, useState } from "react";
 import { RoomAvatar } from "@/components/common/avatar/room-avatar";
 import { getMyMembership } from "@/libs/utils/matrix/room";
+import { MatrixRTCSessionManagerEvents, MatrixRTCSessionEvent } from "matrix-js-sdk/lib/matrixrtc";
 
 interface ConversationCardProps {
     room: Room;
@@ -18,6 +19,7 @@ interface ConversationCardProps {
 export function ConversationCard({ room, isActive, onClick }: ConversationCardProps) {
     const { client } = useMatrixClient();
     const presenceMap = usePresence(client);
+    const [hasActiveCall, setHasActiveCall] = useState(false);
 
     const [membership, setMembership] = useState(() => getMyMembership(room));
 
@@ -76,6 +78,34 @@ export function ConversationCard({ room, isActive, onClick }: ConversationCardPr
             console.error("Erreur refus:", err);
         }
     };
+    useEffect(() => {
+        const checkActiveCall = () => {
+            const session = client.matrixRTC.getRoomSession(room);
+            setHasActiveCall(session.memberships.some(m => !m.isExpired()));
+        };
+
+        checkActiveCall();
+        const intervalId = window.setInterval(checkActiveCall, 3000);
+
+        const session = client.matrixRTC.getRoomSession(room);
+        session.on(MatrixRTCSessionEvent.MembershipsChanged, checkActiveCall);
+
+        const onSessionEvent = (roomId: string) => {
+            if (roomId === room.roomId) {
+                checkActiveCall();
+            }
+        };
+
+        client.matrixRTC.on(MatrixRTCSessionManagerEvents.SessionStarted, onSessionEvent);
+        client.matrixRTC.on(MatrixRTCSessionManagerEvents.SessionEnded, onSessionEvent);
+
+        return () => {
+            window.clearInterval(intervalId);
+            session.off(MatrixRTCSessionEvent.MembershipsChanged, checkActiveCall);
+            client.matrixRTC.off(MatrixRTCSessionManagerEvents.SessionStarted, onSessionEvent);
+            client.matrixRTC.off(MatrixRTCSessionManagerEvents.SessionEnded, onSessionEvent);
+        };
+    }, [client, room]);
 
     return (
         <div
@@ -103,7 +133,11 @@ export function ConversationCard({ room, isActive, onClick }: ConversationCardPr
 
             <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
                 <span className={`truncate text-sm font-medium`}>{room.name}</span>
-
+                {hasActiveCall && (
+                    <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-800">
+                        En appel
+                    </span>
+                )}
                 {isInvite && (
                     <span className="text-[10px] font-semibold tracking-wider text-purple-500 uppercase">
                         Invitation
