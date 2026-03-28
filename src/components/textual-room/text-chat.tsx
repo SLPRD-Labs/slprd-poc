@@ -302,25 +302,31 @@ export const TextChat: FC<Props> = ({ roomId }) => {
         e?.preventDefault();
 
         const body = input.trim();
-        if (!body) return;
+        const hasFiles = pendingFiles.length > 0;
 
-        const content: RoomMessageEventContent = {
-            msgtype: MsgType.Text,
-            body
-        };
+        if (!body && !hasFiles) return;
 
-        if (replyToEventId) {
-            content["m.relates_to"] = {
-                "m.in_reply_to": {
-                    event_id: replyToEventId
-                }
-            };
-        }
-
-        await client.sendTyping(roomId, false, 4000);
-        await client.sendEvent(roomId, EventType.RoomMessage, content);
+        setIsUploading(true);
 
         try {
+            if (body) {
+                const content: RoomMessageEventContent = {
+                    msgtype: MsgType.Text,
+                    body
+                };
+
+                if (replyToEventId) {
+                    content["m.relates_to"] = {
+                        "m.in_reply_to": {
+                            event_id: replyToEventId
+                        }
+                    };
+                }
+
+                await client.sendTyping(roomId, false, 4000);
+                await client.sendEvent(roomId, EventType.RoomMessage, content);
+            }
+
             for (const pending of pendingFiles) {
                 const { file } = pending;
                 const uploadResponse = await client.uploadContent(file);
@@ -344,10 +350,6 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                 } else {
                     await client.sendMessage(roomId, { ...baseContent, msgtype: MsgType.File });
                 }
-            }
-
-            if (input.trim()) {
-                await client.sendTextMessage(roomId, input.trim());
             }
 
             setInput("");
