@@ -7,6 +7,8 @@ import { useQuery } from "@tanstack/react-query";
 import type { FC } from "react";
 import { useEffect, useState } from "react";
 import { MatrixRTCSessionEvent, MatrixRTCSessionManagerEvents } from "matrix-js-sdk/lib/matrixrtc";
+import { useCallContext } from "@/contexts/call-context/call-context";
+import { Room as CallRoom } from "@/components/room";
 
 interface RoomProps {
     roomId: string;
@@ -14,6 +16,11 @@ interface RoomProps {
 }
 
 export const Room: FC<RoomProps> = ({ roomId, isDm }) => {
+export const Room: FC = () => {
+    const call = useCallContext();
+
+    const { spaceId, roomId } = Route.useParams();
+
     const { client, ready } = useMatrixClient();
     const call = useCallContext();
     const [remoteParticipantCount, setRemoteParticipantCount] = useState(0);
@@ -119,6 +126,19 @@ export const Room: FC<RoomProps> = ({ roomId, isDm }) => {
                         <MatrixLiveKitCall liveKitRoom={call.liveKitRoom} />
                     </div>
                 )}
+                {!isDm && call.state === "active" && call.room.roomId === roomQuery.data?.roomId && (
+                    <>
+                    <CallRoom liveKitRoom={call.liveKitRoom} />
+                    <button
+                        onClick={() => {
+                            void call.leave();
+                        }}
+                    >
+                        Leave
+                    </button>
+                    </>
+                )}
+
                 <div className="min-h-0 flex-1 overflow-hidden">
                     <TextChat roomId={roomId} />
                 </div>
