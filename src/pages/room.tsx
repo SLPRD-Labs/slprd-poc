@@ -2,7 +2,6 @@ import { TextChat } from "@/components/textual-room/text-chat";
 import { useMatrixClient } from "@/hooks/use-matrix-client";
 import { useQuery } from "@tanstack/react-query";
 import type { FC } from "react";
-import { PresenceSidenav } from "@/components/presence-sidenav";
 
 interface RoomProps {
     roomId: string;
@@ -23,14 +22,16 @@ export const Room: FC<RoomProps> = ({ roomId }) => {
     }
 
     return (
-        <div className="flex h-full w-full">
-            <div className="flex h-full w-full flex-col">
-                <div className="flex border-b p-3">
+        <div className="flex h-full w-full overflow-hidden">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+                <div className="shrink-0 border-b p-3">
                     <h2 className="font-semibold"># {roomQuery.data?.name}</h2>
                 </div>
-                <TextChat roomId={roomId} />
+
+                <div className="min-h-0 flex-1 overflow-hidden">
+                    <TextChat roomId={roomId} />
+                </div>
             </div>
-            <PresenceSidenav />
         </div>
     );
 };
