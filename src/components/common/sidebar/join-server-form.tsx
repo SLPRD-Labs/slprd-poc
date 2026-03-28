@@ -32,7 +32,9 @@ export const JoinServerForm: FC<Props> = ({ onBack, onSuccess }) => {
             const url = new URL(trimmed);
             if (url.pathname.includes("/join/")) {
                 const parts = url.pathname.split("/join/");
-                return decodeURIComponent(parts[1]);
+                if (parts.length > 1 && parts[1]) {
+                    return decodeURIComponent(parts[1]);
+                }
             }
         } catch {
             // continue
@@ -86,11 +88,17 @@ export const JoinServerForm: FC<Props> = ({ onBack, onSuccess }) => {
         setError(null);
 
         try {
-            const spaceId = await spaceService.joinSpaceAndChildren(client, roomIdOrAlias);
+            const spaceId = await spaceService.joinSpaceAndChildren(
+                client,
+                roomIdOrAlias,
+                actualSpaceId => {
+                    void queryClient.invalidateQueries({
+                        queryKey: ["space", actualSpaceId, "rooms"]
+                    });
+                }
+            );
 
             await queryClient.invalidateQueries({ queryKey: ["spaces"] });
-            await queryClient.invalidateQueries({ queryKey: ["space", spaceId, "rooms"] });
-
             onSuccess();
 
             await navigate({

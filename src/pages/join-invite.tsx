@@ -16,7 +16,13 @@ export function JoinInvitePage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const decodedInviteId = decodeURIComponent(inviteId);
+    let decodedInviteId = inviteId;
+
+    try {
+        decodedInviteId = decodeURIComponent(inviteId);
+    } catch {
+        /* empty */
+    }
 
     const roomObj = client
         .getRooms()
@@ -37,9 +43,16 @@ export function JoinInvitePage() {
         setLoading(true);
         setError(null);
         try {
-            const spaceId = await spaceService.joinSpaceAndChildren(client, decodedInviteId);
+            const spaceId = await spaceService.joinSpaceAndChildren(
+                client,
+                decodedInviteId,
+                actualSpaceId => {
+                    void queryClient.invalidateQueries({
+                        queryKey: ["space", actualSpaceId, "rooms"]
+                    });
+                }
+            );
             await queryClient.invalidateQueries({ queryKey: ["spaces"] });
-            await queryClient.invalidateQueries({ queryKey: ["space", spaceId, "rooms"] });
 
             await navigate({ to: "/space/$spaceId", params: { spaceId } });
         } catch (err: unknown) {

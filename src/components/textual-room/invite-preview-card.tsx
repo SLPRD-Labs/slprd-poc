@@ -1,5 +1,5 @@
 import type { FC } from "react";
-import { useEffect, useState } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { useMatrixClient } from "@/hooks/use-matrix-client";
 import { useMediaUrl } from "@/hooks/use-media-url";
 import { Compass } from "lucide-react";
@@ -10,7 +10,13 @@ export const InvitePreviewCard: FC<{ inviteId: string }> = ({ inviteId }) => {
     const { client } = useMatrixClient();
     const navigate = useNavigate();
 
-    const decodedId = decodeURIComponent(inviteId);
+    const decodedId = useMemo(() => {
+        try {
+            return decodeURIComponent(inviteId);
+        } catch {
+            return inviteId;
+        }
+    }, [inviteId]);
 
     const [roomData, setRoomData] = useState<{
         roomId: string;
@@ -107,7 +113,9 @@ export const InvitePreviewCard: FC<{ inviteId: string }> = ({ inviteId }) => {
             ) : (
                 <Button
                     className="w-full bg-green-600 font-semibold text-white hover:bg-green-700"
-                    onClick={() => void navigate({ to: "/join/$inviteId", params: { inviteId } })}
+                    onClick={() =>
+                        void navigate({ to: "/join/$inviteId", params: { inviteId: decodedId } })
+                    }
                 >
                     Rejoindre
                 </Button>

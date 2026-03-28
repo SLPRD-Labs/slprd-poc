@@ -37,7 +37,7 @@ export const RoomSidebar: FC<Props> = ({ spaceId, activeRoomId }) => {
 
     return (
         <Sidebar collapsible="none" className="flex-1">
-            <SidebarHeader className="border-b p-4 whitespace-nowrap">
+            <SidebarHeader className="flex-row items-center justify-between border-b p-4 whitespace-nowrap">
                 <span className="truncate font-semibold">
                     {spaceQuery.isSuccess && spaceQuery.data?.name}
                 </span>

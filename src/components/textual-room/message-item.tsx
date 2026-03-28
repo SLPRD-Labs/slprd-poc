@@ -291,12 +291,21 @@ const MessageItem: FC<Props> = ({
             );
         }
 
-        const joinPrefix = `${window.location.origin}/join/`;
         const trimmedMessage = currentMessage.trim();
 
-        if (trimmedMessage.startsWith(joinPrefix) && !trimmedMessage.includes(" ")) {
-            const inviteId = trimmedMessage.replace(joinPrefix, "");
-            return <InvitePreviewCard inviteId={inviteId} />;
+        if (!trimmedMessage.includes(" ")) {
+            try {
+                const url = new URL(trimmedMessage, window.location.origin);
+                const segments = url.pathname.split("/").filter(Boolean);
+                const joinIndex = segments.indexOf("join");
+
+                if (joinIndex !== -1 && segments[joinIndex + 1]) {
+                    const inviteId = segments[joinIndex + 1];
+                    return <InvitePreviewCard inviteId={inviteId} />;
+                }
+            } catch {
+                // not a valid URL
+            }
         }
 
         return (

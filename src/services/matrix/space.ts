@@ -1,7 +1,13 @@
 import { getMyMembership } from "@/libs/utils/matrix/room";
 import { getChildOrder, partitionSpacesAndRooms, sanitizeOrder } from "@/libs/utils/matrix/space";
-import { EventTimeline, EventType, KnownMembership } from "matrix-js-sdk";
-import type { MatrixClient, Room } from "matrix-js-sdk";
+import {
+    ClientEvent,
+    EventTimeline,
+    EventType,
+    KnownMembership,
+    RoomMemberEvent
+} from "matrix-js-sdk";
+import type { MatrixEvent, MatrixClient, Room } from "matrix-js-sdk";
 
 class SpaceService {
     public getRootAndInvitedSpaces(client: MatrixClient): {
@@ -193,53 +199,107 @@ class SpaceService {
 
     public async joinSpaceAndChildren(
         client: MatrixClient,
-        spaceIdOrAlias: string
+        spaceIdOrAlias: string,
+        onProgress?: (spaceId: string) => void
     ): Promise<string> {
         const joinedSpace = await client.joinRoom(spaceIdOrAlias);
         const spaceId = joinedSpace.roomId;
 
-        try {
-            const hierarchy = await client.getRoomHierarchy(spaceId, 50, 1);
+        await this.waitForSpaceSync(client, spaceId);
 
-            const childrenToJoin = hierarchy.rooms.filter(
-                r => r.room_id !== spaceId && r.room_type !== "m.space"
-            );
-
-            await Promise.all(
-                childrenToJoin.map(child =>
-                    client.joinRoom(child.room_id).catch((err: unknown) => {
-                        console.error(
-                            `Impossible de rejoindre le salon enfant ${child.room_id}`,
-                            err
-                        );
-                    })
-                )
-            );
-        } catch (error) {
-            console.warn("Erreur API hierarchy, utilisation du fallback local :", error);
-
-            const space = client.getRoom(spaceId);
-            if (space) {
-                const childEvents =
-                    space
-                        .getLiveTimeline()
-                        .getState(EventTimeline.FORWARDS)
-                        ?.getStateEvents(EventType.SpaceChild) ?? [];
+        void (async () => {
+            try {
+                const hierarchy = await client.getRoomHierarchy(spaceId, 50, 1);
+                const childrenToJoin = hierarchy.rooms.filter(
+                    r => r.room_id !== spaceId && r.room_type !== "m.space"
+                );
 
                 await Promise.all(
-                    childEvents.map(ev => {
-                        const childId = ev.getStateKey();
-                        if (childId) {
-                            return client.joinRoom(childId).catch(console.error);
+                    childrenToJoin.map(async child => {
+                        try {
+                            await client.joinRoom(child.room_id);
+                            await new Promise(r => setTimeout(r, 500));
+
+                            if (onProgress) onProgress(spaceId);
+                        } catch (err) {
+                            console.error(`Impossible de rejoindre ${child.room_id}`, err);
                         }
-                        return Promise.resolve();
                     })
                 );
+            } catch (error) {
+                console.warn("Erreur API hierarchy, utilisation du fallback local :", error);
+                const space = client.getRoom(spaceId);
+                if (space) {
+                    const childEvents =
+                        space
+                            .getLiveTimeline()
+                            .getState(EventTimeline.FORWARDS)
+                            ?.getStateEvents(EventType.SpaceChild) ?? [];
+                    await Promise.all(
+                        childEvents.map(async ev => {
+                            const childId = ev.getStateKey();
+                            if (childId) {
+                                await client.joinRoom(childId).catch(console.error);
+                                await new Promise(r => setTimeout(r, 500));
+                                if (onProgress) onProgress(spaceId);
+                            }
+                        })
+                    );
+                }
             }
-        }
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        })();
 
         return spaceId;
+    }
+
+    private async waitForSpaceSync(
+        client: MatrixClient,
+        spaceId: string,
+        timeoutMs = 10000
+    ): Promise<void> {
+        const existingRoom = client.getRoom(spaceId);
+        if (existingRoom && getMyMembership(existingRoom) === KnownMembership.Join) {
+            return;
+        }
+
+        await new Promise<void>(resolve => {
+            const timeoutId = setTimeout(() => {
+                cleanup();
+                resolve();
+            }, timeoutMs);
+
+            const onRoom = (room: Room) => {
+                if (room.roomId !== spaceId) {
+                    return;
+                }
+
+                if (getMyMembership(room) === KnownMembership.Join) {
+                    cleanup();
+                    resolve();
+                }
+            };
+
+            const onRoomMemberMembership = (_event: MatrixEvent) => {
+                if (_event.getRoomId() !== spaceId) {
+                    return;
+                }
+
+                const room = client.getRoom(spaceId);
+                if (room && getMyMembership(room) === KnownMembership.Join) {
+                    cleanup();
+                    resolve();
+                }
+            };
+
+            const cleanup = () => {
+                clearTimeout(timeoutId);
+                client.off(ClientEvent.Room, onRoom);
+                client.off(RoomMemberEvent.Membership, onRoomMemberMembership);
+            };
+
+            client.on(ClientEvent.Room, onRoom);
+            client.on(RoomMemberEvent.Membership, onRoomMemberMembership);
+        });
     }
 }
 

@@ -130,7 +130,41 @@ export const CreateServerDialogContent: FC<Props> = ({ open, onSuccess }) => {
             });
         } catch (err) {
             console.error("Failed to create space:", err);
-            setError("Échec de la création du serveur");
+
+            let userMessage = "Échec de la création du serveur";
+
+            if (err && typeof err === "object") {
+                const anyErr = err as {
+                    message?: string;
+                    errcode?: string;
+                    body?: { error?: string };
+                    data?: { error?: string; errcode?: string };
+                };
+
+                const serverMessage = anyErr.body?.error ?? anyErr.data?.error ?? anyErr.message;
+
+                const errcode = anyErr.data?.errcode ?? anyErr.errcode;
+
+                if (typeof serverMessage === "string" && serverMessage.trim()) {
+                    const normalized = serverMessage.toLowerCase();
+
+                    if (
+                        normalized.includes("alias") &&
+                        (normalized.includes("already taken") || normalized.includes("in use"))
+                    ) {
+                        userMessage = "Cette addresse de serveur est déjà utilisée.";
+                    } else if (
+                        errcode === "M_FORBIDDEN" ||
+                        normalized.includes("forbidden") ||
+                        normalized.includes("not allowed") ||
+                        normalized.includes("permission")
+                    ) {
+                        userMessage = "Vous n'avez pas la permission de créer ce serveur.";
+                    }
+                }
+            }
+
+            setError(userMessage);
         } finally {
             setLoading(false);
         }
