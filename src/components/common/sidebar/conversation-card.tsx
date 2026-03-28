@@ -51,7 +51,9 @@ export function ConversationCard({ room, isActive, onClick }: ConversationCardPr
             if (otherUserId) {
                 const accountData = client.getAccountData(EventType.Direct);
                 const mDirect = accountData ? accountData.getContent() : {};
-                const userDMs = (mDirect as Record<string, string[]>)[otherUserId] ?? [];
+
+                const rawUserDMs = (mDirect as Record<string, unknown>)[otherUserId];
+                const userDMs = Array.isArray(rawUserDMs) ? (rawUserDMs as string[]) : [];
 
                 if (!userDMs.includes(room.roomId)) {
                     await client.setAccountData(EventType.Direct, {

@@ -22,12 +22,13 @@ export const useDirectMessages = (client: MatrixClient) => {
                 return false;
             }
 
+            const isKnownDM = allDmRoomIds.includes(room.roomId);
             const memberCount = room.getJoinedMemberCount() + room.getInvitedMemberCount();
-            if (membership === KnownMembership.Join && memberCount !== 2) {
+
+            if (membership === KnownMembership.Join && !isKnownDM && memberCount !== 2) {
                 return false;
             }
 
-            const isKnownDM = allDmRoomIds.includes(room.roomId);
             const isInvitation = membership === KnownMembership.Invite;
 
             if (room.isSpaceRoom()) {

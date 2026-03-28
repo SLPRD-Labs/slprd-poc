@@ -45,14 +45,7 @@ export const getOrCreateDM = async (
         const response = await client.createRoom({
             invite: [targetUserId],
             is_direct: true,
-            preset: Preset.PrivateChat,
-            initial_state: [
-                {
-                    type: "m.room.guest_access",
-                    state_key: "",
-                    content: { guest_access: "can_join" }
-                }
-            ]
+            preset: Preset.PrivateChat
         });
 
         const newRoomId = response.room_id;
