@@ -31,11 +31,22 @@ export function EditRoomDialog({
 }) {
     const [loading, setLoading] = useState<boolean>(false);
     const { client } = useMatrixClient();
+    const space = client.getRoom(spaceId);
+    const myUserId = client.getUserId();
+    const canEdit = space?.userMayUpgradeRoom(myUserId ?? "");
+    const [errorMessage, setErrorMessage] = useState<string>("");
+
 
     const handleEditRoom = async (value: { name: string }) => {
         setLoading(true);
+        setErrorMessage("");
 
         try {
+            if (!canEdit) {
+                setErrorMessage("Vous n'avez pas les droits pour modifier ce salon.");
+                return;
+            }
+            
             await client.sendStateEvent(room.roomId, EventType.RoomName, { name: value.name });
             setOpenEditRoom(false);
         } finally {
@@ -45,8 +56,14 @@ export function EditRoomDialog({
 
     const handleDeleteRoom = async () => {
         setLoading(true);
+        setErrorMessage("");
 
         try {
+            if (!canEdit) {
+                setErrorMessage("Vous n'avez pas les droits pour supprimer ce salon.");
+                return;
+            }
+
             await client.sendStateEvent(spaceId, EventType.SpaceChild, {}, room.roomId);
             setOpenEditRoom(false);
         } finally {
@@ -65,6 +82,7 @@ export function EditRoomDialog({
 
     useEffect(() => {
         form.reset();
+        setErrorMessage("");
     }, [openEditRoom]);
 
     return (
@@ -96,8 +114,12 @@ export function EditRoomDialog({
                         )}
                     </form.Field>
 
+                    {errorMessage && (
+                        <p className="text-destructive mt-2 text-sm">{errorMessage}</p>
+                    )}
+
                     <DialogFooter className="mt-5">
-                        <DialogClose
+                        <Button
                             render={
                                 <Button
                                     type="button"
@@ -111,7 +133,7 @@ export function EditRoomDialog({
                         >
                             {loading && <LoaderCircle className="animate-spin" />}
                             Supprimer
-                        </DialogClose>
+                        </Button>
                         <DialogClose
                             render={<Button type="button" variant="outline" disabled={loading} />}
                         >

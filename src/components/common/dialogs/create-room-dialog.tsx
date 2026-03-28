@@ -39,6 +39,15 @@ export function CreateRoomDialog({ spaceId }: { spaceId: string }) {
         const isCall = value.type !== "text";
 
         try {
+            const space = client.getRoom(spaceId);
+            const myUserId = client.getUserId();
+            const myPowerLevel = space?.userMayUpgradeRoom(myUserId ?? "");
+
+            if (!myPowerLevel) {
+                setErrorMessage("Vous n'avez pas les droits pour créer un salon dans cet espace.");
+                return;
+            }
+
             const { room_id } = await client.createRoom({
                 name: value.name,
                 visibility: Visibility.Public,
@@ -53,6 +62,16 @@ export function CreateRoomDialog({ spaceId }: { spaceId: string }) {
                 { via: [client.getDomain() ?? ""] },
                 room_id
             );
+
+            if (space) {
+                const members = space.getJoinedMembers();
+                await Promise.all(
+                    members
+                        .filter(member => member.userId !== client.getUserId())
+                        .map(member => client.invite(room_id, member.userId))
+                );
+            }
+
             setOpen(false);
         } finally {
             setLoading(false);
