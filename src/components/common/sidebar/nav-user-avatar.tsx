@@ -10,7 +10,12 @@ interface Props {
 export const NavUserAvatar: FC<Props> = ({ currentUser, className }) => {
     return (
         <>
-            <UserAvatar user={currentUser} className={className} />
+            <UserAvatar
+                userName={currentUser.displayName ?? currentUser.userId}
+                userAvatarUrl={currentUser.avatarUrl}
+                className={className}
+                rounded={false}
+            />
             <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">
                     {currentUser.displayName ?? currentUser.userId}

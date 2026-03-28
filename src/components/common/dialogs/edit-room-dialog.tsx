@@ -109,6 +109,7 @@ export function EditRoomDialog({
                                 />
                             }
                         >
+                            {loading && <LoaderCircle className="animate-spin" />}
                             Supprimer
                         </DialogClose>
                         <DialogClose

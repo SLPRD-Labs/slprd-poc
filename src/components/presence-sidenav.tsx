@@ -29,7 +29,7 @@ export const PresenceSidenav: FC = () => {
     return (
         <div className="flex h-full w-80 flex-col gap-4 overflow-y-auto border-l p-3">
             <div className="flex flex-col gap-2">
-                <h3 className="text-muted px-2 text-sm font-semibold">En ligne</h3>
+                <h3 className="px-2 text-sm font-semibold">En ligne</h3>
                 {online.map(([userId, data]) => (
                     <div key={userId}>
                         <ProfileCard

@@ -21,7 +21,6 @@ const computePresenceMap = (client: MatrixClient | null): PresenceMap => {
     if (!client) return {};
     const map: PresenceMap = {};
     client.getUsers().forEach(user => {
-        console.log(user);
         map[user.userId] = {
             displayName: user.displayName ?? user.userId,
             status: parsePresence(user.presence),

@@ -35,6 +35,7 @@ database:
     cp_max: 10
 log_config: "/data/localhost.log.config"
 media_store_path: /data/media_store
+max_upload_size: 50M
 registration_shared_secret: "oWf@iMwc@cYEK.*Jz.EAPEq83csCJOhQGxFf6QxMBbkS^yWXxT"
 report_stats: false
 macaroon_secret_key: "HpiVX.7hMjg9.U#oI;nX:juq@D4R4HUjH04QVrhUvBoyz7QVm="

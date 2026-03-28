@@ -1,5 +1,4 @@
 import { NavRoom } from "@/components/common/sidebar/nav-room";
-import { Button } from "@/components/ui/button";
 import {
     Sidebar,
     SidebarContent,
@@ -10,10 +9,9 @@ import {
 import { useMatrixClient } from "@/hooks/use-matrix-client";
 import { spaceService } from "@/services/matrix/space";
 import { useQuery } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
-import { useState } from "react";
 import type { FC } from "react";
 import { CreateRoomDialog } from "../dialogs/create-room-dialog";
+import { SpaceInviteDialog } from "@/components/common/sidebar/space-invite-dialog";
 
 interface Props {
     spaceId: string;
@@ -22,7 +20,6 @@ interface Props {
 
 export const RoomSidebar: FC<Props> = ({ spaceId, activeRoomId }) => {
     const { client, ready } = useMatrixClient();
-    const [openCreateRoom, setOpenCreateRoom] = useState(false);
 
     const spaceQuery = useQuery({
         queryKey: ["space", spaceId],
@@ -40,17 +37,14 @@ export const RoomSidebar: FC<Props> = ({ spaceId, activeRoomId }) => {
 
     return (
         <Sidebar collapsible="none" className="flex-1">
-            <SidebarHeader className="flex flex-row items-center justify-between border-b p-4">
-                <span>{spaceQuery.isSuccess && spaceQuery.data?.name}</span>
-                <Button
-                    size="sm"
-                    className="cursor-pointer rounded-none border-none bg-[#171717]"
-                    onClick={() => {
-                        setOpenCreateRoom(true);
-                    }}
-                >
-                    <Plus />
-                </Button>
+            <SidebarHeader className="flex flex-row items-center justify-between border-b p-4 whitespace-nowrap">
+                <span className="truncate font-semibold">
+                    {spaceQuery.isSuccess && spaceQuery.data?.name}
+                </span>
+                <div className="flex">
+                    <SpaceInviteDialog spaceId={spaceId} />
+                    <CreateRoomDialog spaceId={spaceId} />
+                </div>
             </SidebarHeader>
             <SidebarContent>
                 <SidebarGroup className="px-0">
@@ -66,11 +60,6 @@ export const RoomSidebar: FC<Props> = ({ spaceId, activeRoomId }) => {
                                 />
                             ))}
                     </SidebarGroupContent>
-                    <CreateRoomDialog
-                        openCreateRoom={openCreateRoom}
-                        setOpenCreateRoom={setOpenCreateRoom}
-                        spaceId={spaceId}
-                    />
                 </SidebarGroup>
             </SidebarContent>
         </Sidebar>

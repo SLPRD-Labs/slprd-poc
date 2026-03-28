@@ -7,27 +7,25 @@ import {
     DialogContent,
     DialogFooter,
     DialogHeader,
-    DialogTitle
+    DialogTitle,
+    DialogTrigger
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { LoaderCircle, Volume2, Hash } from "lucide-react";
+import { LoaderCircle, Volume2, Hash, Plus } from "lucide-react";
 import { Visibility, Preset, EventType, RoomType } from "matrix-js-sdk";
 import { useEffect, useState } from "react";
 import { useForm } from "@tanstack/react-form";
 import { useMatrixClient } from "@/hooks/use-matrix-client";
 
 export function CreateRoomDialog({
-    openCreateRoom,
-    setOpenCreateRoom,
     spaceId
 }: {
-    openCreateRoom: boolean;
-    setOpenCreateRoom: (open: boolean) => void;
     spaceId: string;
 }) {
     const [loading, setLoading] = useState<boolean>(false);
+    const [open, setOpen] = useState<boolean>(false);
     const [errorMessage, setErrorMessage] = useState<string>("");
     const { client } = useMatrixClient();
 
@@ -59,7 +57,7 @@ export function CreateRoomDialog({
                 { via: [client.getDomain() ?? ""] },
                 room_id
             );
-            setOpenCreateRoom(false);
+            setOpen(false);
         } finally {
             setLoading(false);
         }
@@ -78,10 +76,20 @@ export function CreateRoomDialog({
     useEffect(() => {
         form.reset();
         setErrorMessage("");
-    }, [openCreateRoom]);
+    }, [open]);
 
     return (
-        <Dialog open={openCreateRoom} onOpenChange={setOpenCreateRoom}>
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger
+                render={
+                    <button
+                        title="Créer un salon"
+                        className="text-muted-foreground hover:bg-accent hover:text-foreground focus:ring-ring flex h-8 w-8 cursor-pointer items-center justify-center rounded-md transition-colors focus:ring-2 focus:outline-none"
+                    />
+                }
+            >
+                <Plus className="size-4" />
+            </DialogTrigger>
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Créer un salon</DialogTitle>
