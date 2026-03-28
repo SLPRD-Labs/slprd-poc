@@ -36,7 +36,6 @@ export function EditRoomDialog({
     const canEdit = space?.userMayUpgradeRoom(myUserId ?? "");
     const [errorMessage, setErrorMessage] = useState<string>("");
 
-
     const handleEditRoom = async (value: { name: string }) => {
         setLoading(true);
         setErrorMessage("");
@@ -46,7 +45,7 @@ export function EditRoomDialog({
                 setErrorMessage("Vous n'avez pas les droits pour modifier ce salon.");
                 return;
             }
-            
+
             await client.sendStateEvent(room.roomId, EventType.RoomName, { name: value.name });
             setOpenEditRoom(false);
         } finally {
