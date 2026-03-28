@@ -102,22 +102,30 @@ export const TextChat: FC<Props> = ({ roomId }) => {
             const el = scrollRef.current;
             if (!el) return;
 
-            for (let i = 0; i < 5; i++) {
-                if (cancelled) return;
-                if (el.scrollHeight > el.clientHeight) return;
+            try {
+                for (let i = 0; i < 5; i++) {
+                    if (cancelled) return;
+                    if (el.scrollHeight > el.clientHeight) return;
 
-                const loaded = await loadOlder(10);
-                if (!loaded) {
-                    setHasMoreHistory(false);
-                    return;
+                    const loaded = await loadOlder(10);
+                    if (!loaded) {
+                        setHasMoreHistory(false);
+                        return;
+                    }
+
+                    await new Promise<void>(resolve =>
+                        requestAnimationFrame(() => {
+                            resolve();
+                        })
+                    );
+                    bottomRef.current?.scrollIntoView();
                 }
-
-                await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
-                bottomRef.current?.scrollIntoView();
+            } catch (err) {
+                console.error("Failed to load history:", err);
             }
         };
 
-        bootstrapHistory();
+        void bootstrapHistory();
 
         return () => {
             cancelled = true;
@@ -152,7 +160,7 @@ export const TextChat: FC<Props> = ({ roomId }) => {
             const typing: string[] = room
                 .getMembersWithMembership(KnownMembership.Join)
                 .filter(member => member.typing && member.userId !== client.getUserId())
-                .map(member => member.name?.trim() || member.userId);
+                .map(member => member.name.trim() || member.userId);
 
             if (typing.length === 0) setTypingUsers("");
             else if (typing.length === 1) setTypingUsers(`${typing[0]} est en train d'écrire...`);
@@ -177,7 +185,9 @@ export const TextChat: FC<Props> = ({ roomId }) => {
 
     const waitNextPaint = () =>
         new Promise<void>(resolve => {
-            requestAnimationFrame(() => resolve());
+            requestAnimationFrame(() => {
+                resolve();
+            });
         });
 
     const jumpToEvent = useCallback(
@@ -487,7 +497,7 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                                         event={event}
                                         threadCount={threadRepliesCount[event.getId() ?? ""] ?? 0}
                                         onOpenThread={setActiveThreadRootId}
-                                        onJumpToEvent={jumpToEvent}
+                                        onJumpToEvent={eventId => void jumpToEvent(eventId)}
                                         onReply={setReplyToEventId}
                                         isHighlighted={highlightedEventId === event.getId()}
                                     />
@@ -533,10 +543,16 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                         <div className="min-w-0">
                             <div className="font-medium">Réponse à {replyToEvent.sender?.name}</div>
                             <div className="text-muted-foreground truncate">
-                                {String(replyToEvent.getContent()?.body ?? "")}
+                                {String(replyToEvent.getContent().body)}
                             </div>
                         </div>
-                        <Button variant="ghost" size="icon" onClick={() => setReplyToEventId(null)}>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                                setReplyToEventId(null);
+                            }}
+                        >
                             <X className="size-4" />
                         </Button>
                     </div>
@@ -630,7 +646,9 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                                 type="submit"
                                 size="icon"
                                 className="bg-primary text-primary-foreground hover:bg-primary/90 h-12 w-12 shrink-0 rounded-full"
-                                disabled={isUploading || (!input.trim() && pendingFiles.length === 0)}
+                                disabled={
+                                    isUploading || (!input.trim() && pendingFiles.length === 0)
+                                }
                                 aria-label="Envoyer le message"
                             >
                                 <SendHorizonal className="size-5" />
@@ -646,7 +664,9 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                     roomId={roomId}
                     activeThreadRootId={activeThreadRootId}
                     messages={messages}
-                    onClose={() => setActiveThreadRootId(null)}
+                    onClose={() => {
+                        setActiveThreadRootId(null);
+                    }}
                 />
             ) : (
                 <div className="h-full w-80 shrink-0 border-l">

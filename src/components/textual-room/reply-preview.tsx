@@ -35,8 +35,12 @@ export const ReplyPreview = ({ roomId, replyEventId, onJumpToEvent }: Props) => 
             type="button"
             onClick={() => onJumpToEvent?.(replyEventId)}
             className="text-muted-foreground/40 hover:text-muted-foreground mb-1 flex w-full items-start gap-2 text-left hover:cursor-pointer"
-            onPointerEnter={() => setHoveredReply(true)}
-            onPointerLeave={() => setHoveredReply(false)}
+            onPointerEnter={() => {
+                setHoveredReply(true);
+            }}
+            onPointerLeave={() => {
+                setHoveredReply(false);
+            }}
         >
             <div
                 className={`mt-1 h-3 w-6 shrink-0 rounded-tl-md border-t-2 border-l-2 ${
@@ -45,7 +49,7 @@ export const ReplyPreview = ({ roomId, replyEventId, onJumpToEvent }: Props) => 
             />
             <div className="min-w-0 flex-1 text-xs">
                 <span className="text-foreground font-medium">@{senderName}</span>
-                <span className="ml-2 truncate">{String(event.getContent()?.body ?? "")}</span>
+                <span className="ml-2 truncate">{String(event.getContent().body)}</span>
             </div>
         </button>
     );

@@ -30,8 +30,7 @@ export const ThreadPanel: FC<Props> = ({
         () =>
             messages.filter(
                 ev =>
-                    ev.getType() === "m.room.message" &&
-                    getThreadRootId(ev) === activeThreadRootId
+                    ev.getType() === "m.room.message" && getThreadRootId(ev) === activeThreadRootId
             ),
         [messages, activeThreadRootId]
     );
@@ -79,10 +78,15 @@ export const ThreadPanel: FC<Props> = ({
                 ))}
             </div>
 
-            <form onSubmit={e => void sendThread(e)} className="flex items-center gap-2 border-t p-3">
+            <form
+                onSubmit={e => void sendThread(e)}
+                className="flex items-center gap-2 border-t p-3"
+            >
                 <Textarea
                     value={threadInput}
-                    onChange={e => setThreadInput(e.target.value)}
+                    onChange={e => {
+                        setThreadInput(e.target.value);
+                    }}
                     onKeyDown={handleThreadKeyDown}
                     placeholder="Répondre dans le thread..."
                     className="resize-none overflow-y-auto"

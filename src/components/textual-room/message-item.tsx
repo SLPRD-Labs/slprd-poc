@@ -39,7 +39,11 @@ const collectReactionsByEmoji = (events: MatrixEvent[], targetEventId: string) =
     const byEmoji = new Map<string, MatrixEvent[]>();
 
     for (const timelineEvent of events) {
-        if (timelineEvent.getType() !== EventType.Reaction || timelineEvent.isRedacted()) continue;
+        if (
+            timelineEvent.getType() !== (EventType.Reaction as string) ||
+            timelineEvent.isRedacted()
+        )
+            continue;
 
         const relatesTo = timelineEvent.getContent<ReactionContent>()["m.relates_to"];
         if (!relatesTo) continue;
@@ -85,15 +89,12 @@ const MessageItem: FC<Props> = ({
     const [hovered, setHovered] = useState(false);
     const [isReactionPending, setIsReactionPending] = useState(false);
     const [underline, setUnderline] = useState(false);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     const eventId = event.getId();
     const roomId = event.getRoomId();
-
-    if (!eventId || !roomId) return null;
-
     const replyEventId = getReplyToEventId(event);
     const isThreadRoot = threadCount > 0;
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     const eventContent = event.getContent();
     const msgtype = eventContent.msgtype;
@@ -204,6 +205,8 @@ const MessageItem: FC<Props> = ({
         };
     }, [event]);
 
+    if (!eventId || !roomId) return null;
+
     const handleEdit = () => {
         setEditedContent(currentMessage);
         setIsEditing(true);
@@ -294,12 +297,16 @@ const MessageItem: FC<Props> = ({
 
     return (
         <div
-            data-event-id={eventId ?? undefined}
+            data-event-id={eventId}
             className={`relative flex flex-col px-4 py-1 transition-colors ${
                 hovered ? "bg-secondary" : ""
             } ${isHighlighted ? "bg-primary/20 ring-primary ring-1" : ""}`}
-            onMouseEnter={() => setHovered(true)}
-            onMouseLeave={() => setHovered(false)}
+            onMouseEnter={() => {
+                setHovered(true);
+            }}
+            onMouseLeave={() => {
+                setHovered(false);
+            }}
         >
             {hovered && !isEditing && !isDialogOpen && (
                 <div className="bg-background absolute -top-3 right-4 z-10 flex items-center gap-1 rounded-md border px-1 py-0.5 shadow-sm">
@@ -426,9 +433,15 @@ const MessageItem: FC<Props> = ({
             {isThreadRoot && eventId && (
                 <button
                     type="button"
-                    onClick={() => onOpenThread?.(eventId)}
-                    onMouseEnter={() => setUnderline(true)}
-                    onMouseLeave={() => setUnderline(false)}
+                    onClick={() => {
+                        onOpenThread?.(eventId);
+                    }}
+                    onMouseEnter={() => {
+                        setUnderline(true);
+                    }}
+                    onMouseLeave={() => {
+                        setUnderline(false);
+                    }}
                     className="text-muted-foreground bg-muted mt-1 inline-flex w-fit items-center gap-1 rounded-md border px-2 py-1 text-xs hover:cursor-pointer"
                 >
                     <MessageSquare size={14} />

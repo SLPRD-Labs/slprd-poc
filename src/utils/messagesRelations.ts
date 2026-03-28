@@ -1,15 +1,15 @@
 import type { MatrixEvent } from "matrix-js-sdk";
 
 export const getThreadRootId = (event: MatrixEvent): string | null => {
-    const relatesTo = event.getContent()?.["m.relates_to"];
-    if (relatesTo?.rel_type === "m.thread" && typeof relatesTo?.event_id === "string") {
+    const relatesTo = event.getContent()["m.relates_to"];
+    if (relatesTo?.rel_type === "m.thread" && typeof relatesTo.event_id === "string") {
         return relatesTo.event_id;
     }
     return null;
 };
 
 export const getReplyToEventId = (event: MatrixEvent): string | null => {
-    const relatesTo = event.getContent()?.["m.relates_to"] as
+    const relatesTo = event.getContent()["m.relates_to"] as
         | { "m.in_reply_to"?: { event_id?: string } }
         | undefined;
 
