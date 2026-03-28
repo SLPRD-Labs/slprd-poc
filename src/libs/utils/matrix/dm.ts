@@ -57,9 +57,11 @@ export const getOrCreateDM = async (
 
         const newRoomId = response.room_id;
 
-        const updatedMDirect: Record<string, string[]> = { ...(mDirect as Record<string, string[]>) };
+        const updatedMDirect: Record<string, string[]> = {
+            ...(mDirect as Record<string, string[]>)
+        };
         updatedMDirect[targetUserId] = [...(updatedMDirect[targetUserId] ?? []), newRoomId];
-        
+
         await client.setAccountData(EventType.Direct, updatedMDirect);
 
         return newRoomId;
