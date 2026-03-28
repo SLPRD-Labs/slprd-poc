@@ -9,6 +9,7 @@ import { TanStackDevtools } from "@tanstack/react-devtools";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "@/index.css";
+import { Toaster } from "@/components/ui/sonner";
 
 const rootElement = document.querySelector("#root");
 if (!rootElement) {
@@ -37,6 +38,7 @@ root.render(
                             }
                         ]}
                     />
+                    <Toaster />
                 </AuthContextProvider>
             </MatrixClientContextProvider>
         </TanStackQueryProvider>
