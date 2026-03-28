@@ -15,6 +15,7 @@ import { EventType, HistoryVisibility, Preset, RoomType } from "matrix-js-sdk";
 import type { FC, SyntheticEvent } from "react";
 import { useEffect, useState } from "react";
 import { JoinServerForm } from "./join-server-form";
+import { MATRIX_ALIAS_LOCALPART_REGEX } from "@/libs/utils/matrix/constants.ts";
 
 interface Props {
     open: boolean;
@@ -55,8 +56,7 @@ export const CreateServerDialogContent: FC<Props> = ({ open, onSuccess }) => {
 
         const trimmedAlias = alias.trim();
         if (isPublic && trimmedAlias) {
-            const aliasLocalPartRegex = /^[0-9a-zA-Z._=-]+$/;
-            if (!aliasLocalPartRegex.test(trimmedAlias)) {
+            if (!MATRIX_ALIAS_LOCALPART_REGEX.test(trimmedAlias)) {
                 setError(
                     "L'adresse du serveur ne peut contenir que des lettres, chiffres, points, tirets, underscores et le signe égal (=)."
                 );

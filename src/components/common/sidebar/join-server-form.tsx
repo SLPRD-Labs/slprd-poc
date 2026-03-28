@@ -9,6 +9,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { Compass, ArrowLeft, Loader2, CheckCircle2 } from "lucide-react";
 import type { FC, SyntheticEvent } from "react";
 import { useState } from "react";
+import { MATRIX_FULL_ID_REGEX } from "@/libs/utils/matrix/constants.ts";
 
 interface Props {
     onBack: () => void;
@@ -42,10 +43,10 @@ export const JoinServerForm: FC<Props> = ({ onBack, onSuccess }) => {
 
         try {
             const decoded = decodeURIComponent(trimmed);
-            const match = /([#!][a-zA-Z0-9_=.-]+:[a-zA-Z0-9.-]+)/.exec(decoded);
+            const match = decoded.match(MATRIX_FULL_ID_REGEX);
             return match ? match[1] : trimmed;
         } catch {
-            const match = /([#!][a-zA-Z0-9_=.-]+:[a-zA-Z0-9.-]+)/.exec(trimmed);
+            const match = trimmed.match(MATRIX_FULL_ID_REGEX);
             return match ? match[1] : trimmed;
         }
     };
