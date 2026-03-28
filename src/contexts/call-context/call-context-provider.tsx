@@ -78,15 +78,10 @@ export const CallContextProvider: FC<PropsWithChildren> = ({ children }) => {
                 };
             }
 
-            rtcSession.joinRTCSession(
-                { userId, deviceId, memberId },
-                [transport],
-                undefined,
-                {
-                    notificationType: "ring",
-                    callIntent: "video"
-                }
-            );
+            rtcSession.joinRTCSession({ userId, deviceId, memberId }, [transport], undefined, {
+                notificationType: "ring",
+                callIntent: "video"
+            });
 
             const body = {
                 device_id: deviceId,

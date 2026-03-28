@@ -64,9 +64,7 @@ export const IncomingCallBanner = () => {
                 return hasOtherUser && !hasCurrentUser;
             });
 
-        setIncomingCall(
-            candidate ? { roomId: candidate.roomId, roomName: candidate.name } : null
-        );
+        setIncomingCall(candidate ? { roomId: candidate.roomId, roomName: candidate.name } : null);
     }, [client]);
 
     useEffect(() => {
@@ -85,13 +83,13 @@ export const IncomingCallBanner = () => {
         // active RTC session to having one, and vice-versa.
         rtcManager.on(MatrixRTCSessionManagerEvents.SessionStarted, detectIncomingCall);
         rtcManager.on(MatrixRTCSessionManagerEvents.SessionEnded, detectIncomingCall);
- 
+
         // RoomStateEvent.Events catches mid-session membership changes: a new
         // participant joining an existing call, or one leaving.
         client.on(RoomStateEvent.Events, detectIncomingCall);
         // Also check when auto-joining new rooms
         client.on(ClientEvent.Room, detectIncomingCall);
- 
+
         return () => {
             rtcManager.off(MatrixRTCSessionManagerEvents.SessionStarted, detectIncomingCall);
             rtcManager.off(MatrixRTCSessionManagerEvents.SessionEnded, detectIncomingCall);

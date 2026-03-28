@@ -97,8 +97,8 @@ export const CreateServerDialogContent: FC<Props> = ({ open, onSuccess }) => {
                 power_level_content_override: {
                     events: {
                         "org.matrix.msc3401.call.member": 0,
-                        "m.call.member": 0,
-                    },
+                        "m.call.member": 0
+                    }
                 },
                 initial_state: [
                     {

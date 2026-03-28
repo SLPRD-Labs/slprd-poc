@@ -33,20 +33,32 @@ const isJoinedRoom = (client: MatrixClient, roomId: string): roomId is string =>
 };
 
 const isOneToOneRoomWithUser = (room: Room, targetUserId: string): boolean => {
-    const validMembers = room.getMembers().filter(member => member.membership === "join" || member.membership === "invite");
+    const validMembers = room
+        .getMembers()
+        .filter(member => member.membership === "join" || member.membership === "invite");
     const hasTargetMember = validMembers.some(member => member.userId === targetUserId);
     return hasTargetMember && validMembers.length === 2;
 };
 
 const canSendRtcMemberState = (room: Room, userId: string): boolean => {
     return (
-        room.getLiveTimeline().getState(EventTimeline.FORWARDS)?.maySendStateEvent(RTC_MEMBER_EVENT, userId)
-        ?? room.getLiveTimeline().getState(EventTimeline.FORWARDS)?.maySendStateEvent(STABLE_RTC_MEMBER_EVENT, userId) ?? false
+        room
+            .getLiveTimeline()
+            .getState(EventTimeline.FORWARDS)
+            ?.maySendStateEvent(RTC_MEMBER_EVENT, userId) ??
+        room
+            .getLiveTimeline()
+            .getState(EventTimeline.FORWARDS)
+            ?.maySendStateEvent(STABLE_RTC_MEMBER_EVENT, userId) ??
+        false
     );
 };
 
 const getPowerLevelsContent = (room: Room): Record<string, unknown> => {
-    const event = room.getLiveTimeline().getState(EventTimeline.FORWARDS)?.getStateEvents("m.room.power_levels", "");
+    const event = room
+        .getLiveTimeline()
+        .getState(EventTimeline.FORWARDS)
+        ?.getStateEvents("m.room.power_levels", "");
     const content = event?.getContent();
     if (!content || typeof content !== "object") {
         return {};
@@ -81,7 +93,12 @@ const ensureCallCompatibleRoom = async (
     }
 
     // If user cannot edit power levels, we cannot repair this room.
-    if (!room.getLiveTimeline().getState(EventTimeline.FORWARDS)?.maySendStateEvent("m.room.power_levels", userId)) {
+    if (
+        !room
+            .getLiveTimeline()
+            .getState(EventTimeline.FORWARDS)
+            ?.maySendStateEvent("m.room.power_levels", userId)
+    ) {
         return false;
     }
 
@@ -91,12 +108,12 @@ const ensureCallCompatibleRoom = async (
     const updatedEvents = {
         ...eventLevels,
         [RTC_MEMBER_EVENT]: 0,
-        [STABLE_RTC_MEMBER_EVENT]: 0,
+        [STABLE_RTC_MEMBER_EVENT]: 0
     };
 
     await client.sendStateEvent(room.roomId, EventType.RoomPowerLevels, {
         ...powerLevels,
-        events: updatedEvents,
+        events: updatedEvents
     });
 
     return canSendRtcMemberState(room, userId);
@@ -110,7 +127,7 @@ export const addRoomToMDirect = async (
     try {
         const accountData = client.getAccountData(M_DIRECT_EVENT);
         const mDirect = toMDirectContent(accountData?.getContent());
-        
+
         const existingRooms = mDirect[targetUserId] ?? [];
         if (!existingRooms.includes(roomId)) {
             mDirect[targetUserId] = [...existingRooms, roomId];
@@ -164,9 +181,9 @@ export const getOrCreateDM = async (
             power_level_content_override: {
                 events: {
                     [RTC_MEMBER_EVENT]: 0,
-                    [STABLE_RTC_MEMBER_EVENT]: 0,
-                },
-            },
+                    [STABLE_RTC_MEMBER_EVENT]: 0
+                }
+            }
         });
 
         const newRoomId = response.room_id;

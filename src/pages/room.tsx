@@ -37,9 +37,7 @@ export const Room: FC<RoomProps> = ({ roomId, isDm }) => {
             const session = client.matrixRTC.getRoomSession(room);
             const activeMemberships = session.memberships.filter(m => !m.isExpired());
             const count = new Set(
-                activeMemberships
-                    .map(m => m.userId)
-                    .filter(userId => userId !== myUserId)
+                activeMemberships.map(m => m.userId).filter(userId => userId !== myUserId)
             ).size;
             setRemoteParticipantCount(count);
         };
