@@ -21,6 +21,7 @@ import { loginLinkOptions } from "@/libs/utils/router";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { ChevronsUpDown, LogOut } from "lucide-react";
 import type { FC } from "react";
+import { Parameters } from "./parameters";
 
 export const NavUser: FC = () => {
     const { logout } = useAuthContext();
@@ -73,6 +74,8 @@ export const NavUser: FC = () => {
                         </DropdownMenuGroup>
                         <DropdownMenuSeparator />
                         <NavThemeSwitcher />
+                        <DropdownMenuSeparator />
+                        <Parameters/>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                             variant="destructive"
