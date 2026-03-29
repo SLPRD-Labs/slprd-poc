@@ -148,6 +148,7 @@ export const Room: FC<RoomProps> = ({ roomId, isDm }) => {
                             </div>
                         </>
                     )}
+
                 </div>
                 {(isDm ?? isCallRoom) &&
                     call.state === "active" &&
