@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { MatrixRTCSessionEvent, MatrixRTCSessionManagerEvents } from "matrix-js-sdk/lib/matrixrtc";
 import { useCallContext } from "@/contexts/call-context/call-context";
 import { Room as CallRoom } from "@/components/room";
+import { RoomType } from "matrix-js-sdk";
 
 interface RoomProps {
     roomId: string;
@@ -16,14 +17,11 @@ interface RoomProps {
 }
 
 export const Room: FC<RoomProps> = ({ roomId, isDm }) => {
-export const Room: FC = () => {
     const call = useCallContext();
-
-    const { spaceId, roomId } = Route.useParams();
 
     const { client, ready } = useMatrixClient();
-    const call = useCallContext();
     const [remoteParticipantCount, setRemoteParticipantCount] = useState(0);
+    const [showChat, setShowChat] = useState<boolean>(true);
 
     const roomQuery = useQuery({
         queryKey: ["rooms", roomId],
@@ -31,6 +29,8 @@ export const Room: FC = () => {
         staleTime: Infinity,
         enabled: ready
     });
+
+    const isCallRoom = roomQuery.data?.getType() === RoomType.ElementVideo;
 
     useEffect(() => {
         if (!ready || !roomQuery.data) {
@@ -83,6 +83,20 @@ export const Room: FC = () => {
             <div className="flex h-full w-full flex-col">
                 <div className="flex border-b p-3">
                     <h2 className="font-semibold"># {roomQuery.data.name}</h2>
+
+                    {!isDm && isCallRoom && (
+                        <>
+                            {call.state === "active" && call.room.roomId === roomQuery.data?.roomId ? (
+                                <button onClick={() => { void call.leave(); setShowChat(true); }}>
+                                    Leave
+                                </button>
+                            ) : (
+                                <button onClick={() => { void call.join(roomId); setShowChat(false); }}>
+                                    Join
+                                </button>
+                            )}
+                        </>
+                    )}
                     {isDm && hasRemoteCall && call.state === "idle" && (
                         <span className="ml-3 rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-800">
                             Appel en cours ({remoteParticipantCount})
@@ -132,16 +146,21 @@ export const Room: FC = () => {
                     <button
                         onClick={() => {
                             void call.leave();
+                            setShowChat(true);
                         }}
                     >
                         Leave
                     </button>
+                    <button onClick={() => setShowChat(!showChat)}>
+                        Toggle chat
+                    </button>
                     </>
                 )}
-
-                <div className="min-h-0 flex-1 overflow-hidden">
-                    <TextChat roomId={roomId} />
-                </div>
+                {showChat && (
+                    <div className="min-h-0 flex-1 overflow-hidden">
+                        <TextChat roomId={roomId} />
+                    </div>
+                )}
             </div>
         </div>
     );
