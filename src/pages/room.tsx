@@ -92,6 +92,12 @@ export const Room: FC<RoomProps> = ({ roomId, isDm }) => {
 
     const hasRemoteCall = remoteParticipantCount > 0;
 
+    
+
+    if (!roomQuery.isSuccess) {
+        return null;
+    }
+
     return (
         <div className="flex h-full w-full">
             <div className="flex h-full min-h-0 w-full flex-col">
