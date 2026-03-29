@@ -60,18 +60,18 @@ export const NavRoom: FC<Props> = ({ spaceId, room, isActive, isCall }) => {
             <Link
                 to="/space/$spaceId/room/$roomId"
                 params={{ spaceId, roomId: room.roomId }}
-                onClick={async () => {
+                onClick={() => {
                     if (!isCall) return;
 
                     if (call.state === "active") {
                         if (call.room.roomId === room.roomId) return;
 
                         setPendingRoomId(room.roomId);
-                        await call.leave();
+                        void call.leave();
                     }
 
                     if (call.state === "idle") {
-                        await call.join(room.roomId);
+                        void call.join(room.roomId);
                     }
                 }}
             >
