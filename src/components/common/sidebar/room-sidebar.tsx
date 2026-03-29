@@ -8,10 +8,12 @@ import {
 } from "@/components/ui/sidebar";
 import { useMatrixClient } from "@/hooks/use-matrix-client";
 import { spaceService } from "@/services/matrix/space";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import type { FC } from "react";
 import { CreateRoomDialog } from "../dialogs/create-room-dialog";
 import { SpaceInviteDialog } from "@/components/common/sidebar/space-invite-dialog";
+import { ClientEvent } from "matrix-js-sdk";
 
 interface Props {
     spaceId: string;
@@ -20,6 +22,18 @@ interface Props {
 
 export const RoomSidebar: FC<Props> = ({ spaceId, activeRoomId }) => {
     const { client, ready } = useMatrixClient();
+    const queryClient = useQueryClient();
+
+    useEffect(() => {
+        if (!ready) return;
+
+        const handler = () => {
+            void queryClient.invalidateQueries({ queryKey: ["space", spaceId, "rooms"] });
+        };
+
+        client.on(ClientEvent.Room, handler);
+        return () => void client.off(ClientEvent.Room, handler);
+    }, [client, ready, spaceId, queryClient]);
 
     const spaceQuery = useQuery({
         queryKey: ["space", spaceId],
@@ -31,7 +45,6 @@ export const RoomSidebar: FC<Props> = ({ spaceId, activeRoomId }) => {
     const roomsQuery = useQuery({
         queryKey: ["space", spaceId, "rooms"],
         queryFn: () => spaceService.getRoomsBySpaceId(client, spaceId),
-        staleTime: Infinity,
         enabled: ready
     });
 
