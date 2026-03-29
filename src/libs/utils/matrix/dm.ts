@@ -110,10 +110,15 @@ const ensureCallCompatibleRoom = async (
         [STABLE_RTC_MEMBER_EVENT]: 0
     };
 
-    await client.sendStateEvent(room.roomId, EventType.RoomPowerLevels, {
-        ...powerLevels,
-        events: updatedEvents
-    }, "");
+    await client.sendStateEvent(
+        room.roomId,
+        EventType.RoomPowerLevels,
+        {
+            ...powerLevels,
+            events: updatedEvents
+        },
+        ""
+    );
 
     return canSendRtcMemberState(room, userId);
 };

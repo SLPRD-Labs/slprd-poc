@@ -94,7 +94,7 @@ export function CreateRoomDialog({ spaceId }: { spaceId: string }) {
         reset();
         setErrorMessage("");
     }, [open, reset]);
-    
+
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger
