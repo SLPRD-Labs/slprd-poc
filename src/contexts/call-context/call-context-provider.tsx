@@ -16,7 +16,36 @@ export const CallContextProvider: FC<PropsWithChildren> = ({ children }) => {
 
     const { client } = useMatrixClient();
 
+    const resetCallState = () => {
+        setCall(null);
+        setJoining(false);
+    };
+
     const join = async (roomId: string) => {
+        if (joining) {
+            return;
+        }
+
+        if (call !== null && call.room.roomId === roomId) {
+            return;
+        }
+
+        if (call !== null) {
+            try {
+                await call.rtcSession.leaveRoomSession(5000);
+            } catch (error: unknown) {
+                console.error("Failed to leave RTC session:", error);
+            }
+
+            try {
+                await call.liveKitRoom.disconnect(true);
+            } catch (error: unknown) {
+                console.error("Failed to disconnect from LiveKit:", error);
+            }
+
+            resetCallState();
+        }
+
         setJoining(true);
 
         try {
@@ -49,7 +78,10 @@ export const CallContextProvider: FC<PropsWithChildren> = ({ children }) => {
                 };
             }
 
-            rtcSession.joinRTCSession({ userId, deviceId, memberId }, [transport]);
+            rtcSession.joinRTCSession({ userId, deviceId, memberId }, [transport], undefined, {
+                notificationType: "ring",
+                callIntent: "video"
+            });
 
             const body = {
                 device_id: deviceId,
@@ -73,9 +105,14 @@ export const CallContextProvider: FC<PropsWithChildren> = ({ children }) => {
                 jwt: string;
             };
 
-            await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-
             const liveKitRoom = new LiveKitRoom();
+            liveKitRoom.on("disconnected", () => {
+                void rtcSession.leaveRoomSession(5000).catch(() => {
+                    // Best effort: disconnection can happen while already leaving.
+                });
+                resetCallState();
+            });
+
             await liveKitRoom.connect(livekitTokenData.url, livekitTokenData.jwt);
 
             setCall({
@@ -95,10 +132,19 @@ export const CallContextProvider: FC<PropsWithChildren> = ({ children }) => {
             return;
         }
 
-        await call.rtcSession.leaveRoomSession();
-        await call.liveKitRoom.disconnect();
+        try {
+            await call.rtcSession.leaveRoomSession(5000);
+        } catch (error: unknown) {
+            console.error("Failed to leave RTC session:", error);
+        }
 
-        setCall(null);
+        try {
+            await call.liveKitRoom.disconnect(true);
+        } catch (error: unknown) {
+            console.error("Failed to disconnect from LiveKit:", error);
+        }
+
+        resetCallState();
     };
 
     let value: ICallContext;

@@ -36,9 +36,6 @@ export const UserDirectoryItem: FC<Props> = ({ user, presence }) => {
                 <Button size="sm" variant="outline">
                     <MessageSquare className="h-4 w-4" />
                 </Button>
-                <Button size="sm" variant="outline">
-                    Call
-                </Button>
             </div>
         </div>
     );

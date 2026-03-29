@@ -79,10 +79,12 @@ export function EditRoomDialog({
         }
     });
 
+    const { reset } = form;
+
     useEffect(() => {
-        form.reset();
+        reset();
         setErrorMessage("");
-    }, [openEditRoom]);
+    }, [openEditRoom, reset]);
 
     return (
         <Dialog open={openEditRoom} onOpenChange={setOpenEditRoom}>

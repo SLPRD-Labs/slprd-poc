@@ -3,5 +3,5 @@ import { Route } from "@/routes/_mainLayout/dm/$roomId";
 
 export function DmRoom() {
     const { roomId } = Route.useParams();
-    return <Room roomId={roomId} />;
+    return <Room roomId={roomId} isDm />;
 }

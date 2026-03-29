@@ -1,4 +1,5 @@
 import { AppSidebar } from "@/components/common/sidebar/sidebar";
+import { IncomingCallBanner } from "@/components/common/incoming-call-banner";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { CallContextProvider } from "@/contexts/call-context/call-context-provider";
 import { Outlet, useMatchRoute } from "@tanstack/react-router";
@@ -44,6 +45,7 @@ export const MainLayout: FC = () => {
                     }
                 />
                 <SidebarInset className="h-dvh overflow-hidden">
+                    <IncomingCallBanner />
                     <Outlet />
                 </SidebarInset>
             </SidebarProvider>
