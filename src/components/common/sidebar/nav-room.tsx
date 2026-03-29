@@ -38,6 +38,7 @@ export const NavRoom: FC<Props> = ({ spaceId, room, isActive, isCall }) => {
 
             toast("Switched voice channel", {
                 description: `Now in ${room.name}`,
+                richColors: true,
                 position: "top-center",
             });
 

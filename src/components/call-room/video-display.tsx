@@ -10,7 +10,7 @@ export const VideoDisplay = () => {
     const gridCols = getGridCols(participants.length);
 
     return (
-        <div className={`flex-1 w-full h-full grid gap-2 p-2 ${gridCols}`}>            
+        <div className={`flex-1 w-full h-full min-h-0 grid auto-rows-fr gap-2 p-2 ${gridCols}`}>            
             {participants.map(participant => {
                 const videoPub = participant
                     .getTrackPublications()
@@ -21,7 +21,7 @@ export const VideoDisplay = () => {
                 return (
                     <div
                         key={participant.identity}
-                        className={`relative bg-black rounded overflow-hidden flex items-center justify-center ${
+                        className={`relative w-full h-full min-h-0 max-h-full bg-gray-200 dark:bg-gray-800 transition-colors rounded overflow-hidden flex items-center justify-center ${
                             participant.isSpeaking ? "ring-2 ring-green-500" : ""
                         }`}
                     >
@@ -32,15 +32,10 @@ export const VideoDisplay = () => {
                                     publication: videoPub,
                                     source: videoPub.source
                                 }}
-                                className="w-full h-full object-cover"
+                                className="absolute inset-0 w-full h-full object-cover"
                             />
                         ) : (
                             <>
-                                {/* <div className="flex flex-col items-center justify-center">
-                                    <div className="h-20 w-20 rounded-full bg-gray-600 flex items-center justify-center text-2xl">
-                                        {participant.identity[0]?.toUpperCase()}
-                                    </div>
-                                </div> */}
                                 <Avatar className="h-24 w-24">
                                     <AvatarImage src="https://github.com/evilrabbit.png" alt="@evilrabbit" />
                                     <AvatarFallback>ER</AvatarFallback>
