@@ -8,6 +8,7 @@ import { useSyncExternalStore, useEffect, useState } from "react";
 import type { FC } from "react";
 import { MatrixRTCSessionEvent, MatrixRTCSessionManagerEvents } from "matrix-js-sdk/lib/matrixrtc";
 import { Room as CallRoom } from "@/components/room";
+import { Hash, Volume2 } from "lucide-react";
 
 interface RoomProps {
     roomId: string;
@@ -95,7 +96,10 @@ export const Room: FC<RoomProps> = ({ roomId, isDm }) => {
         <div className="flex h-full w-full">
             <div className="flex h-full min-h-0 w-full flex-col">
                 <div className="flex items-center border-b p-3">
-                    <h2 className="font-semibold"># {roomName}</h2>
+                    <h2 className="font-semibold flex items-center gap-2">
+                        {isCallRoom ? <Volume2 size={16} /> : <Hash size={16} />}
+                     {roomName}
+                     </h2>
 
                     {(isDm ?? isCallRoom) && (
                         <>
@@ -148,7 +152,6 @@ export const Room: FC<RoomProps> = ({ roomId, isDm }) => {
                             </div>
                         </>
                     )}
-
                 </div>
                 {(isDm ?? isCallRoom) &&
                     call.state === "active" &&
