@@ -134,14 +134,14 @@ export const CallContextProvider: FC<PropsWithChildren> = ({ children }) => {
 
         try {
             await call.rtcSession.leaveRoomSession(5000);
-        } catch {
-            // Continue cleanup even if Matrix leave fails.
+        } catch (error: unknown) {
+            console.error("Failed to leave RTC session:", error);
         }
 
         try {
             await call.liveKitRoom.disconnect(true);
-        } catch {
-            // Continue cleanup even if LiveKit disconnect fails.
+        } catch (error: unknown) {
+            console.error("Failed to disconnect from LiveKit:", error);
         }
 
         resetCallState();
