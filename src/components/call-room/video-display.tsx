@@ -1,52 +1,53 @@
-import { useParticipants, VideoTrack } from "@livekit/components-react";
+import { useParticipants, useTracks, VideoTrack } from "@livekit/components-react";
 import { Track } from "livekit-client";
-import { ParticipantOverlay } from "./participant-overlay";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { ParticipantTile } from "./participant-tile";
+import type { TrackReference, TrackReferenceOrPlaceholder } from "@livekit/components-react";
 
 export const VideoDisplay = () => {
-
     const participants = useParticipants();
+
+    const cameraTracksRaw = useTracks([
+        { source: Track.Source.Camera, withPlaceholder: true }
+    ]);
+
+    const cameraTracks = cameraTracksRaw.filter(isTrackReference);
+
+    const screenTracksRaw = useTracks([
+        { source: Track.Source.ScreenShare, withPlaceholder: false }
+    ]);
+
+    const screenTracks = screenTracksRaw.filter(isTrackReference);
+
+    const activeScreen =
+        screenTracks.find(t => t.participant.isSpeaking) ??
+        screenTracks[0];
+
+    if (activeScreen) {
+        return (
+            <div className="flex h-full w-full">
+                <div className="flex-1 relative bg-black">
+                    <VideoTrack
+                        trackRef={activeScreen}
+                        className="absolute inset-0 w-full h-full object-contain"
+                    />
+                </div>
+
+                <div className="hidden lg:flex w-64 flex-col gap-2 p-2 overflow-y-auto">
+                    {participants.map(p => (
+                        <ParticipantTile participant={p} variant="sidebar" cameraTracks={cameraTracks} />
+                    ))}
+                </div>
+            </div>
+        );
+    }
 
     const gridCols = getGridCols(participants.length);
 
     return (
-        <div className={`flex-1 w-full h-full min-h-0 grid auto-rows-fr gap-2 p-2 ${gridCols}`}>            
-            {participants.map(participant => {
-                const videoPub = participant
-                    .getTrackPublications()
-                    .find(pub => pub.source === Track.Source.Camera);
-
-                const hasVideo = !!videoPub?.track;
-
-                return (
-                    <div
-                        key={participant.identity}
-                        className={`relative w-full h-full min-h-0 max-h-full bg-gray-200 dark:bg-gray-800 transition-colors rounded overflow-hidden flex items-center justify-center ${
-                            participant.isSpeaking ? "ring-2 ring-green-500" : ""
-                        }`}
-                    >
-                        {hasVideo ? (
-                            <VideoTrack
-                                trackRef={{
-                                    participant,
-                                    publication: videoPub,
-                                    source: videoPub.source
-                                }}
-                                className="absolute inset-0 w-full h-full object-cover"
-                            />
-                        ) : (
-                            <>
-                                <Avatar className="h-24 w-24">
-                                    <AvatarImage src="https://github.com/evilrabbit.png" alt="@evilrabbit" />
-                                    <AvatarFallback>ER</AvatarFallback>
-                                </Avatar>
-                            </>
-                        )}
-
-                        <ParticipantOverlay participant={participant} />
-                    </div>
-                );
-            })}
+        <div className={`flex-1 w-full h-full min-h-0 grid auto-rows-fr gap-2 p-2 ${gridCols}`}>
+            {participants.map(p => (
+                <ParticipantTile participant={p} cameraTracks={cameraTracks} />
+            ))}
         </div>
     );
 };
@@ -58,3 +59,9 @@ const getGridCols = (count: number) => {
     if (count <= 6) return "grid-cols-3";
     return "grid-cols-4";
 };
+
+function isTrackReference(
+    track: TrackReferenceOrPlaceholder
+): track is TrackReference {
+    return track.publication !== undefined;
+}
