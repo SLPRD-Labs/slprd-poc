@@ -88,11 +88,13 @@ export function CreateRoomDialog({ spaceId }: { spaceId: string }) {
         }
     });
 
-    useEffect(() => {
-        form.reset();
-        setErrorMessage("");
-    }, [open]);
+    const { reset } = form;
 
+    useEffect(() => {
+        reset();
+        setErrorMessage("");
+    }, [open, reset]);
+    
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger

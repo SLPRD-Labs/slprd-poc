@@ -92,7 +92,6 @@ const ensureCallCompatibleRoom = async (
         return true;
     }
 
-    // If user cannot edit power levels, we cannot repair this room.
     if (
         !room
             .getLiveTimeline()
@@ -114,7 +113,7 @@ const ensureCallCompatibleRoom = async (
     await client.sendStateEvent(room.roomId, EventType.RoomPowerLevels, {
         ...powerLevels,
         events: updatedEvents
-    });
+    }, "");
 
     return canSendRtcMemberState(room, userId);
 };
@@ -148,12 +147,10 @@ export const getOrCreateDM = async (
             return undefined;
         }
 
-        // 1. Read m.direct room candidates.
         const accountData = client.getAccountData(M_DIRECT_EVENT);
         const mDirect = toMDirectContent(accountData?.getContent());
         const existingRooms = mDirect[targetUserId] ?? [];
 
-        // 2. Prefer joined m.direct rooms that are real 1:1 DMs and call-compatible.
         for (const roomId of existingRooms) {
             if (!isJoinedRoom(client, roomId)) {
                 continue;
@@ -173,7 +170,6 @@ export const getOrCreateDM = async (
             }
         }
 
-        // 3. Create a new DM with call member permissions open to everyone.
         const response = await client.createRoom({
             invite: [targetUserId],
             is_direct: true,
@@ -188,7 +184,6 @@ export const getOrCreateDM = async (
 
         const newRoomId = response.room_id;
 
-        // 4. Update m.direct and deduplicate.
         mDirect[targetUserId] = [...new Set([...(mDirect[targetUserId] ?? []), newRoomId])];
         await client.setAccountData(M_DIRECT_EVENT, mDirect);
 

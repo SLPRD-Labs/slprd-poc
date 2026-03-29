@@ -20,8 +20,6 @@ export const IncomingCallBanner = () => {
     const [incomingCall, setIncomingCall] = useState<IncomingCall | null>(null);
     const [joiningIncoming, setJoiningIncoming] = useState(false);
 
-    // useRef instead of useState: mutations never trigger re-renders or effect
-    // recreations, which was causing the interval to reset on every snooze.
     const snoozedUntilByRoom = useRef<Record<string, number>>({});
 
     const detectIncomingCall = useCallback(() => {
@@ -73,21 +71,13 @@ export const IncomingCallBanner = () => {
             return;
         }
 
-        // Initial check in case a call is already in progress on mount.
         detectIncomingCall();
 
-        // Listen to MatrixRTC membership changes instead of polling with setInterval.
-        // This fires immediately when someone joins or leaves a call.
         const rtcManager = client.matrixRTC;
-        // SessionStarted/SessionEnded fire when a room transitions from having no
-        // active RTC session to having one, and vice-versa.
         rtcManager.on(MatrixRTCSessionManagerEvents.SessionStarted, detectIncomingCall);
         rtcManager.on(MatrixRTCSessionManagerEvents.SessionEnded, detectIncomingCall);
 
-        // RoomStateEvent.Events catches mid-session membership changes: a new
-        // participant joining an existing call, or one leaving.
         client.on(RoomStateEvent.Events, detectIncomingCall);
-        // Also check when auto-joining new rooms
         client.on(ClientEvent.Room, detectIncomingCall);
 
         return () => {
@@ -109,14 +99,11 @@ export const IncomingCallBanner = () => {
 
         setJoiningIncoming(true);
 
-        // Capture roomId before the async call in case state changes mid-flight.
         const targetRoomId = incomingCall.roomId;
 
         try {
             await call.join(targetRoomId);
             await navigate({ to: "/dm/$roomId", params: { roomId: targetRoomId } });
-            // Snooze after joining to avoid the banner reappearing immediately if the
-            // user leaves and the remote participant is still in the call.
             snoozeIncomingCall(targetRoomId, 20_000);
             setIncomingCall(null);
         } catch (error) {
@@ -133,7 +120,7 @@ export const IncomingCallBanner = () => {
     return (
         <div className="flex items-center justify-between border-b bg-emerald-50 px-4 py-2">
             <div className="text-sm text-emerald-900">
-                Incoming call in <span className="font-semibold">{incomingCall.roomName}</span>
+                Appel de <span className="font-semibold">{incomingCall.roomName}</span>
             </div>
             <Button
                 variant="ghost"
@@ -143,7 +130,7 @@ export const IncomingCallBanner = () => {
                     setIncomingCall(null);
                 }}
             >
-                Ignore
+                Ignorer
             </Button>
             <Button
                 size="sm"
@@ -152,7 +139,7 @@ export const IncomingCallBanner = () => {
                 }}
                 disabled={joiningIncoming}
             >
-                {joiningIncoming ? "Joining..." : "Join call"}
+                {joiningIncoming ? "En train de rejoindre..." : "Rejoindre l'appel"}
             </Button>
         </div>
     );
