@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { useCallContext } from "@/contexts/call-context/call-context";
 import { useMatrixClient } from "@/hooks/use-matrix-client";
 import { useQuery } from "@tanstack/react-query";
+import { RoomEvent } from "matrix-js-sdk";
+import { useSyncExternalStore } from "react";
 import type { FC } from "react";
 import { useEffect, useState } from "react";
 import { MatrixRTCSessionEvent, MatrixRTCSessionManagerEvents } from "matrix-js-sdk/lib/matrixrtc";
@@ -24,6 +26,14 @@ export const Room: FC<RoomProps> = ({ roomId, isDm }) => {
         staleTime: Infinity,
         enabled: ready
     });
+
+    const roomName = useSyncExternalStore(
+        callback => {
+            client.on(RoomEvent.Name, callback);
+            return () => void client.off(RoomEvent.Name, callback);
+        },
+        () => client.getRoom(roomId)?.name.trim() ?? roomId
+    );
 
     useEffect(() => {
         if (!ready || !roomQuery.data) {
@@ -71,11 +81,17 @@ export const Room: FC<RoomProps> = ({ roomId, isDm }) => {
 
     const hasRemoteCall = remoteParticipantCount > 0;
 
+    
+
+    if (!roomQuery.isSuccess) {
+        return null;
+    }
+
     return (
         <div className="flex h-full w-full">
             <div className="flex h-full w-full flex-col">
                 <div className="flex border-b p-3">
-                    <h2 className="font-semibold"># {roomQuery.data.name}</h2>
+                    <h2 className="font-semibold"># {roomName}</h2>
                     {isDm && hasRemoteCall && call.state === "idle" && (
                         <span className="ml-3 rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-800">
                             Appel en cours ({remoteParticipantCount})

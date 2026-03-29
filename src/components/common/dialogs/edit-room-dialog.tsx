@@ -120,6 +120,11 @@ export function EditRoomDialog({
                     )}
 
                     <DialogFooter className="mt-5">
+                        <DialogClose
+                            render={<Button type="button" variant="outline" disabled={loading} />}
+                        >
+                            Annuler
+                        </DialogClose>
                         <Button
                             render={
                                 <Button
@@ -135,11 +140,6 @@ export function EditRoomDialog({
                             {loading && <LoaderCircle className="animate-spin" />}
                             Supprimer
                         </Button>
-                        <DialogClose
-                            render={<Button type="button" variant="outline" disabled={loading} />}
-                        >
-                            Annuler
-                        </DialogClose>
                         <Button type="submit" variant="default" disabled={loading}>
                             {loading && <LoaderCircle className="animate-spin" />}
                             Modifier

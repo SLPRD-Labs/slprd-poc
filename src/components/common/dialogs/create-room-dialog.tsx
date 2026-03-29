@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { LoaderCircle, Volume2, Hash, Plus } from "lucide-react";
-import { Visibility, Preset, EventType, RoomType } from "matrix-js-sdk";
+import { Visibility, Preset, EventType, RoomType, KnownMembership } from "matrix-js-sdk";
 import { useEffect, useState } from "react";
 import { useForm } from "@tanstack/react-form";
 import { useMatrixClient } from "@/hooks/use-matrix-client";
@@ -64,11 +64,45 @@ export function CreateRoomDialog({ spaceId }: { spaceId: string }) {
             );
 
             if (space) {
-                const members = space.getJoinedMembers();
-                await Promise.all(
-                    members
-                        .filter(member => member.userId !== client.getUserId())
-                        .map(member => client.invite(room_id, member.userId))
+                await client.joinRoom(room_id);
+
+                const currentUserId = client.getUserId();
+                const membersToJoin = space
+                    .getMembersWithMembership(KnownMembership.Join)
+                    .map(member => member.userId)
+                    .filter(userId => userId !== currentUserId);
+
+                const homeserverUrl = client.getHomeserverUrl();
+                const accessToken =
+                    (client as { getAccessToken?: () => string | null }).getAccessToken?.() ?? null;
+
+                const tryForceJoin = async (userId: string): Promise<boolean> => {
+                    if (!homeserverUrl || !accessToken) return false;
+                    try {
+                        const response = await fetch(
+                            `${homeserverUrl}/_synapse/admin/v1/join/${encodeURIComponent(room_id)}`,
+                            {
+                                method: "POST",
+                                headers: {
+                                    Authorization: `Bearer ${accessToken}`,
+                                    "Content-Type": "application/json"
+                                },
+                                body: JSON.stringify({ user_id: userId })
+                            }
+                        );
+                        return response.ok;
+                    } catch {
+                        return false;
+                    }
+                };
+
+                await Promise.allSettled(
+                    membersToJoin.map(async userId => {
+                        const forced = await tryForceJoin(userId);
+                        if (!forced) {
+                            await client.invite(room_id, userId);
+                        }
+                    })
                 );
             }
 
