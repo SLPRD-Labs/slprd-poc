@@ -1,7 +1,8 @@
 import "@livekit/components-styles";
-import { RoomAudioRenderer, RoomContext, VideoConference } from "@livekit/components-react";
+import { RoomAudioRenderer, RoomContext } from "@livekit/components-react";
 import type { Room as LiveKitRoom } from "livekit-client";
 import type { FC } from "react";
+import { CustomCallUI } from "@/components/call-room/custom-call-ui";
 
 interface Props {
     liveKitRoom: LiveKitRoom;
@@ -9,9 +10,9 @@ interface Props {
 
 export const MatrixLiveKitCall: FC<Props> = props => {
     return (
-        <div data-lk-theme="default">
+        <div data-lk-theme="default" className="h-full w-full">
             <RoomContext.Provider value={props.liveKitRoom}>
-                <VideoConference />
+                <CustomCallUI />
                 <RoomAudioRenderer />
             </RoomContext.Provider>
         </div>

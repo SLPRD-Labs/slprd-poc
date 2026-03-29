@@ -2,10 +2,11 @@ import { TextChat } from "@/components/textual-room/text-chat";
 import { useMatrixClient } from "@/hooks/use-matrix-client";
 import { Route } from "@/routes/_mainLayout/space/$spaceId/room/$roomId";
 import { useQuery } from "@tanstack/react-query";
-import type { FC } from "react";
+import { useState, type FC } from "react";
 import { PresenceSidenav } from "@/components/presence-sidenav";
 import { useCallContext } from "@/contexts/call-context/call-context";
 import { Room as CallRoom } from "@/components/room";
+import { RoomType } from "matrix-js-sdk";
 
 export const Room: FC = () => {
     const call = useCallContext();
@@ -13,6 +14,8 @@ export const Room: FC = () => {
     const { spaceId, roomId } = Route.useParams();
 
     const { client, ready } = useMatrixClient();
+
+    const [showChat, setShowChat] = useState<boolean>(true);
 
     const spaceQuery = useQuery({
         queryKey: ["spaces", spaceId],
@@ -28,6 +31,8 @@ export const Room: FC = () => {
         enabled: ready
     });
 
+    const isCallRoom = roomQuery.data?.getType() === RoomType.ElementVideo;
+
     if (!spaceQuery.isSuccess || !roomQuery.isSuccess) {
         return null;
     }
@@ -37,6 +42,20 @@ export const Room: FC = () => {
             <div className="flex h-full w-full flex-col">
                 <div className="flex border-b p-3">
                     <h2 className="font-semibold"># {roomQuery.data?.name}</h2>
+
+                    {isCallRoom && (
+                        <>
+                            {call.state === "active" && call.room.roomId === roomQuery.data?.roomId ? (
+                                <button onClick={() => { void call.leave(); setShowChat(true); }}>
+                                    Leave
+                                </button>
+                            ) : (
+                                <button onClick={() => { void call.join(roomId); setShowChat(false); }}>
+                                    Join
+                                </button>
+                            )}
+                        </>
+                    )}
                 </div>
                 {call.state === "active" && call.room.roomId === roomQuery.data?.roomId && (
                     <>
@@ -44,13 +63,19 @@ export const Room: FC = () => {
                     <button
                         onClick={() => {
                             void call.leave();
+                            setShowChat(true);
                         }}
                     >
                         Leave
                     </button>
+                    <button onClick={() => setShowChat(!showChat)}>
+                        Toggle chat
+                    </button>
                     </>
                 )}
-                <TextChat roomId={roomId} />
+                {showChat && (
+                    <TextChat roomId={roomId} />
+                )}
             </div>
             <PresenceSidenav />
         </div>
