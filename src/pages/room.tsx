@@ -33,6 +33,14 @@ export const Room: FC<RoomProps> = ({ roomId, isDm }) => {
     const isCallRoom = roomQuery.data?.getType() === RoomType.ElementVideo;
 
     useEffect(() => {
+        if (!isCallRoom || isDm) {
+            setShowChat(true);
+        } else {
+            setShowChat(false);
+        }
+    }, [roomId]);
+
+    useEffect(() => {
         if (!ready || !roomQuery.data) {
             return;
         }
@@ -80,22 +88,47 @@ export const Room: FC<RoomProps> = ({ roomId, isDm }) => {
 
     return (
         <div className="flex h-full w-full">
-            <div className="flex h-full w-full flex-col">
-                <div className="flex border-b p-3">
-                    <h2 className="font-semibold"># {roomQuery.data.name}</h2>
+            <div className="flex h-full w-full flex-col min-h-0">
+                <div className="flex items-center justify-between border-b p-3">
+                    <h2 className="font-semibold"># {roomQuery.data?.name}</h2>
 
                     {!isDm && isCallRoom && (
-                        <>
+                        <div className="flex items-center gap-2">
                             {call.state === "active" && call.room.roomId === roomQuery.data?.roomId ? (
-                                <button onClick={() => { void call.leave(); setShowChat(true); }}>
-                                    Leave
-                                </button>
+                                <>
+                                    <button 
+                                        className="px-3 py-1 rounded border border-red-500 text-red-600 hover:bg-red-500/10 transition"
+                                        onClick={() => {
+                                            void call.leave();
+                                            setShowChat(true);
+                                        }}
+                                    >
+                                        Leave call
+                                    </button>
+
+                                    <button
+                                        className="px-3 py-1 rounded bg-gray-200 dark:bg-gray-700"
+                                        onClick={() => setShowChat(!showChat)}
+                                    >
+                                        {showChat ? "Hide chat" : "Show chat"}
+                                    </button>
+                                </>
                             ) : (
-                                <button onClick={() => { void call.join(roomId); setShowChat(false); }}>
-                                    Join
+                                <button 
+                                    className="px-3 py-1 rounded border border-green-500 text-green-600 hover:bg-green-500/10 transition"
+                                    onClick={() => {
+                                        if (call.state === "idle") {
+                                            void call.join(roomId);
+                                            setShowChat(false);
+                                        }
+                                    }}
+                                >
+                                    Join call
                                 </button>
                             )}
-                        </>
+
+                            
+                        </div>
                     )}
                     {isDm && hasRemoteCall && call.state === "idle" && (
                         <span className="ml-3 rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-800">
@@ -141,21 +174,9 @@ export const Room: FC<RoomProps> = ({ roomId, isDm }) => {
                     </div>
                 )}
                 {!isDm && call.state === "active" && call.room.roomId === roomQuery.data?.roomId && (
-                    <>
                     <CallRoom liveKitRoom={call.liveKitRoom} />
-                    <button
-                        onClick={() => {
-                            void call.leave();
-                            setShowChat(true);
-                        }}
-                    >
-                        Leave
-                    </button>
-                    <button onClick={() => setShowChat(!showChat)}>
-                        Toggle chat
-                    </button>
-                    </>
                 )}
+
                 {showChat && (
                     <div className="min-h-0 flex-1 overflow-hidden">
                         <TextChat roomId={roomId} />

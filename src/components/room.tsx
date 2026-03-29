@@ -10,7 +10,7 @@ export const Room: FC<Props> = props => {
 
     return (
         <div className="flex h-full w-full">
-            <div className="flex-1 bg-black flex items-center justify-center">
+            <div className="flex-1 flex items-center justify-center">
                 <MatrixLiveKitCall liveKitRoom={props.liveKitRoom} />
             </div>
         </div>
