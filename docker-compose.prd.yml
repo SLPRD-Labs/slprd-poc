@@ -67,7 +67,6 @@ services:
 
   poc:
     image: ghcr.io/slprd-labs/slprd-poc:latest
-    pull_policy:
     container_name: slprd-poc-prd
     restart: unless-stopped
     networks:
