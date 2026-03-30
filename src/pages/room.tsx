@@ -8,6 +8,7 @@ import { useSyncExternalStore, useEffect, useState } from "react";
 import type { FC } from "react";
 import { MatrixRTCSessionEvent, MatrixRTCSessionManagerEvents } from "matrix-js-sdk/lib/matrixrtc";
 import { Room as CallRoom } from "@/components/room";
+import { MatrixLiveKitCall } from "@/components/matrix-livekit-call";
 
 interface RoomProps {
     roomId: string;
@@ -149,6 +150,12 @@ export const Room: FC<RoomProps> = ({ roomId, isDm }) => {
                         </>
                     )}
                 </div>
+              
+                {isDm && call.state === "active" && call.room.roomId === roomId && (
+                    <div className="border-b bg-slate-950 p-2">
+                        <MatrixLiveKitCall liveKitRoom={call.liveKitRoom} />
+                    </div>
+                )}
                 {(isDm ?? isCallRoom) &&
                     call.state === "active" &&
                     call.room.roomId === roomQuery.data.roomId && (
