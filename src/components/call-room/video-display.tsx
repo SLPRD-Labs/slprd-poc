@@ -6,9 +6,7 @@ import type { TrackReference, TrackReferenceOrPlaceholder } from "@livekit/compo
 export const VideoDisplay = () => {
     const participants = useParticipants();
 
-    const cameraTracksRaw = useTracks([
-        { source: Track.Source.Camera, withPlaceholder: true }
-    ]);
+    const cameraTracksRaw = useTracks([{ source: Track.Source.Camera, withPlaceholder: true }]);
 
     const cameraTracks = cameraTracksRaw.filter(isTrackReference);
 
@@ -19,23 +17,27 @@ export const VideoDisplay = () => {
     const screenTracks = screenTracksRaw.filter(isTrackReference);
 
     const activeScreen: TrackReference | undefined =
-        screenTracks.find(t => t.participant.isSpeaking) ??
-        screenTracks[0];
+        screenTracks.find(t => t.participant.isSpeaking) ?? screenTracks[0];
 
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (activeScreen) {
         return (
             <div className="flex h-full w-full">
-                <div className="flex-1 relative bg-black">
+                <div className="relative flex-1 bg-black">
                     <VideoTrack
                         trackRef={activeScreen}
-                        className="absolute inset-0 w-full h-full object-contain"
+                        className="absolute inset-0 h-full w-full object-contain"
                     />
                 </div>
 
-                <div className="hidden lg:flex w-64 flex-col gap-2 p-2 overflow-y-auto">
+                <div className="hidden w-64 flex-col gap-2 overflow-y-auto p-2 lg:flex">
                     {participants.map(p => (
-                        <ParticipantTile key={p.identity} participant={p} variant="sidebar" cameraTracks={cameraTracks} />
+                        <ParticipantTile
+                            key={p.identity}
+                            participant={p}
+                            variant="sidebar"
+                            cameraTracks={cameraTracks}
+                        />
                     ))}
                 </div>
             </div>
@@ -45,7 +47,7 @@ export const VideoDisplay = () => {
     const gridCols = getGridCols(participants.length);
 
     return (
-        <div className={`flex-1 w-full h-full min-h-0 grid auto-rows-fr gap-2 p-2 ${gridCols}`}>
+        <div className={`grid h-full min-h-0 w-full flex-1 auto-rows-fr gap-2 p-2 ${gridCols}`}>
             {participants.map(p => (
                 <ParticipantTile key={p.identity} participant={p} cameraTracks={cameraTracks} />
             ))}
@@ -61,8 +63,6 @@ const getGridCols = (count: number) => {
     return "grid-cols-4";
 };
 
-function isTrackReference(
-    track: TrackReferenceOrPlaceholder
-): track is TrackReference {
+function isTrackReference(track: TrackReferenceOrPlaceholder): track is TrackReference {
     return track.publication !== undefined;
 }

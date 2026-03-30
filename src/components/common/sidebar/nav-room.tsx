@@ -19,7 +19,7 @@ interface Props {
 
 export const NavRoom: FC<Props> = ({ spaceId, room, isActive, isCall }) => {
     const call = useCallContext();
-    
+
     const { client } = useMatrixClient();
 
     const [displayName, setDisplayName] = useState(room.name.trim() || room.roomId);
@@ -39,7 +39,7 @@ export const NavRoom: FC<Props> = ({ spaceId, room, isActive, isCall }) => {
             toast("Switched voice channel", {
                 description: `Now in ${room.name}`,
                 richColors: true,
-                position: "top-center",
+                position: "top-center"
             });
 
             // eslint-disable-next-line react-hooks/set-state-in-effect

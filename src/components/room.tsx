@@ -7,10 +7,9 @@ interface Props {
 }
 
 export const Room: FC<Props> = props => {
-
     return (
         <div className="flex h-full w-full">
-            <div className="flex-1 flex items-center justify-center border-b">
+            <div className="flex flex-1 items-center justify-center border-b">
                 <MatrixLiveKitCall liveKitRoom={props.liveKitRoom} />
             </div>
         </div>

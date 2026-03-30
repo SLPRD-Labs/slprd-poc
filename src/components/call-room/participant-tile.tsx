@@ -13,25 +13,21 @@ export const ParticipantTile = ({
     cameraTracks: TrackReference[];
     variant?: "grid" | "sidebar";
 }) => {
-    const track = cameraTracks.find(
-        t => t.participant.identity === participant.identity
-    );
+    const track = cameraTracks.find(t => t.participant.identity === participant.identity);
 
     const containerClasses =
-        variant === "sidebar"
-            ? "aspect-video min-h-[80px] max-h-[120px]"
-            : "h-full min-h-0";
+        variant === "sidebar" ? "aspect-video min-h-[80px] max-h-[120px]" : "h-full min-h-0";
 
     return (
         <div
-            className={`relative w-full bg-gray-200 dark:bg-gray-800 transition-colors rounded overflow-hidden flex items-center justify-center ${
+            className={`relative flex w-full items-center justify-center overflow-hidden rounded bg-gray-200 transition-colors dark:bg-gray-800 ${
                 participant.isSpeaking ? "ring-2 ring-green-500" : ""
             } ${containerClasses}`}
         >
             {track ? (
                 <VideoTrack
                     trackRef={track}
-                    className="absolute inset-0 w-full h-full object-cover"
+                    className="absolute inset-0 h-full w-full object-cover"
                 />
             ) : (
                 <Avatar className="h-24 w-24">

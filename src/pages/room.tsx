@@ -85,43 +85,44 @@ export const Room: FC<RoomProps> = ({ roomId, isDm }) => {
 
     return (
         <div className="flex h-full w-full">
-            <div className="flex h-full w-full flex-col min-h-0">
+            <div className="flex h-full min-h-0 w-full flex-col">
                 <div className="flex items-center border-b p-3">
                     <h2 className="font-semibold"># {roomQuery.data.name}</h2>
-                        
-                        {(isDm ?? isCallRoom) && (
-                            <>
-                                {hasRemoteCall && call.state === "idle" && (
-                                    <span className="ml-3 rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-800">
-                                        Appel en cours ({remoteParticipantCount})
-                                    </span>
+
+                    {(isDm ?? isCallRoom) && (
+                        <>
+                            {hasRemoteCall && call.state === "idle" && (
+                                <span className="ml-3 rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-800">
+                                    Appel en cours ({remoteParticipantCount})
+                                </span>
+                            )}
+
+                            <div className="ml-auto flex items-center gap-2">
+                                {call.state === "idle" && (
+                                    <Button
+                                        className="hover:bg-primary/90 transition"
+                                        onClick={() => {
+                                            void call.join(roomId).catch(console.error);
+                                            setShowChat(false);
+                                        }}
+                                    >
+                                        {hasRemoteCall ? "Rejoindre l’appel" : "Démarrer un appel"}
+                                    </Button>
                                 )}
 
-                                <div className="ml-auto flex items-center gap-2">
-                                    {call.state === "idle" && (
-                                        <Button
-                                            className="hover:bg-primary/90 transition"
-                                            onClick={() => {
-                                                void call.join(roomId).catch(console.error);
-                                                setShowChat(false);
-                                            }}
-                                        >
-                                            {hasRemoteCall ? "Rejoindre l’appel" : "Démarrer un appel"}
-                                        </Button>
-                                    )}
+                                {call.state === "joining" && (
+                                    <Button size="sm" disabled>
+                                        Connexion...
+                                    </Button>
+                                )}
 
-                                    {call.state === "joining" && (
-                                        <Button size="sm" disabled>
-                                            Connexion...
-                                        </Button>
-                                    )}
-
-                                    {call.state === "active" && call.room.roomId === roomQuery.data.roomId && (
+                                {call.state === "active" &&
+                                    call.room.roomId === roomQuery.data.roomId && (
                                         <>
                                             <Button
                                                 variant="secondary"
                                                 onClick={() => {
-                                                    setShowChat(prev => !prev)
+                                                    setShowChat(prev => !prev);
                                                 }}
                                             >
                                                 {showChat ? "Masquer le chat" : "Afficher le chat"}
@@ -137,18 +138,18 @@ export const Room: FC<RoomProps> = ({ roomId, isDm }) => {
                                             </Button>
                                         </>
                                     )}
-                                </div>
-                            </>
-                        )}
+                            </div>
+                        </>
+                    )}
                 </div>
 
-                {(isDm ?? isCallRoom) && call.state === "active" && call.room.roomId === roomQuery.data.roomId && (
-                    <CallRoom liveKitRoom={call.liveKitRoom} />
-                )}
+                {(isDm ?? isCallRoom) &&
+                    call.state === "active" &&
+                    call.room.roomId === roomQuery.data.roomId && (
+                        <CallRoom liveKitRoom={call.liveKitRoom} />
+                    )}
 
-                {showChat && (
-                    <TextChat roomId={roomId} />
-                )}
+                {showChat && <TextChat roomId={roomId} />}
             </div>
         </div>
     );

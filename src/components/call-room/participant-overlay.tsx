@@ -8,14 +8,14 @@ export const ParticipantOverlay = ({ participant }: { participant: Participant }
     const displayName = participant.identity.split(":")[0].replace("@", "");
 
     return (
-        <div className="absolute bottom-1 left-1 right-1 flex justify-between items-center text-xs">
-            <span className="truncate bg-black/50 px-2 rounded py-1">{displayName}</span>
+        <div className="absolute right-1 bottom-1 left-1 flex items-center justify-between text-xs">
+            <span className="truncate rounded bg-black/50 px-2 py-1">{displayName}</span>
 
-            <div className="flex gap-1 bg-black/50 px-2 rounded py-1">
-                {!isMuted && <Mic className="text-green-500 w-4 h-4" />}
-                {isMuted && <MicOff className="text-gray-400 w-4 h-4" />}
-                {!isCamOff && <Video className="text-green-500 w-4 h-4" />}
-                {isCamOff && <VideoOff className="text-gray-400 w-4 h-4" />}
+            <div className="flex gap-1 rounded bg-black/50 px-2 py-1">
+                {!isMuted && <Mic className="h-4 w-4 text-green-500" />}
+                {isMuted && <MicOff className="h-4 w-4 text-gray-400" />}
+                {!isCamOff && <Video className="h-4 w-4 text-green-500" />}
+                {isCamOff && <VideoOff className="h-4 w-4 text-gray-400" />}
             </div>
         </div>
     );
