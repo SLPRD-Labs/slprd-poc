@@ -14,6 +14,8 @@ import { Plus } from "lucide-react";
 import { EventType, HistoryVisibility, Preset, RoomType } from "matrix-js-sdk";
 import type { FC, SyntheticEvent } from "react";
 import { useEffect, useState } from "react";
+import { JoinServerForm } from "./join-server-form";
+import { MATRIX_ALIAS_LOCALPART_REGEX } from "@/libs/utils/matrix/constants.ts";
 
 interface Props {
     open: boolean;
@@ -25,6 +27,8 @@ export const CreateServerDialogContent: FC<Props> = ({ open, onSuccess }) => {
     const queryClient = useQueryClient();
     const navigate = useNavigate();
 
+    const [view, setView] = useState<"create" | "join">("create");
+
     const [name, setName] = useState("");
     const [topic, setTopic] = useState("");
     const [isPublic, setIsPublic] = useState(false);
@@ -34,6 +38,7 @@ export const CreateServerDialogContent: FC<Props> = ({ open, onSuccess }) => {
 
     useEffect(() => {
         if (open) {
+            setView("create");
             setName("");
             setTopic("");
             setIsPublic(false);
@@ -51,8 +56,7 @@ export const CreateServerDialogContent: FC<Props> = ({ open, onSuccess }) => {
 
         const trimmedAlias = alias.trim();
         if (isPublic && trimmedAlias) {
-            const aliasLocalpartRegex = /^[0-9a-zA-Z._=-]+$/;
-            if (!aliasLocalpartRegex.test(trimmedAlias)) {
+            if (!MATRIX_ALIAS_LOCALPART_REGEX.test(trimmedAlias)) {
                 setError(
                     "L'adresse du serveur ne peut contenir que des lettres, chiffres, points, tirets, underscores et le signe égal (=)."
                 );
@@ -70,10 +74,7 @@ export const CreateServerDialogContent: FC<Props> = ({ open, onSuccess }) => {
                 preset: isPublic ? Preset.PublicChat : Preset.PrivateChat,
                 room_alias_name: isPublic && trimmedAlias ? trimmedAlias : undefined,
                 creation_content: { type: RoomType.Space },
-                power_level_content_override: {
-                    events_default: 100,
-                    invite: isPublic ? 0 : 50
-                },
+                power_level_content_override: { events_default: 100, invite: isPublic ? 0 : 50 },
                 initial_state: [
                     {
                         type: "m.room.history_visibility",
@@ -93,6 +94,12 @@ export const CreateServerDialogContent: FC<Props> = ({ open, onSuccess }) => {
             const generalResponse = await client.createRoom({
                 name: "general",
                 preset: isPublic ? Preset.PublicChat : Preset.PrivateChat,
+                power_level_content_override: {
+                    events: {
+                        "org.matrix.msc3401.call.member": 0,
+                        "m.call.member": 0
+                    }
+                },
                 initial_state: [
                     {
                         type: "m.room.history_visibility",
@@ -119,12 +126,10 @@ export const CreateServerDialogContent: FC<Props> = ({ open, onSuccess }) => {
                 { via: [homeserver] },
                 generalRoomId
             );
-
             await queryClient.invalidateQueries({ queryKey: ["spaces"] });
             await queryClient.invalidateQueries({ queryKey: ["space", spaceId, "rooms"] });
 
             onSuccess();
-
             await navigate({
                 to: "/space/$spaceId/room/$roomId",
                 params: { spaceId, roomId: generalRoomId }
@@ -132,14 +137,40 @@ export const CreateServerDialogContent: FC<Props> = ({ open, onSuccess }) => {
         } catch (err) {
             console.error("Failed to create space:", err);
 
-            setError(
-                typeof err === "object" &&
-                    err !== null &&
-                    "message" in err &&
-                    typeof err.message === "string"
-                    ? err.message
-                    : "Échec de la création du serveur"
-            );
+            let userMessage = "Échec de la création du serveur";
+
+            if (err && typeof err === "object") {
+                const anyErr = err as {
+                    message?: string;
+                    errcode?: string;
+                    body?: { error?: string };
+                    data?: { error?: string; errcode?: string };
+                };
+
+                const serverMessage = anyErr.body?.error ?? anyErr.data?.error ?? anyErr.message;
+
+                const errcode = anyErr.data?.errcode ?? anyErr.errcode;
+
+                if (typeof serverMessage === "string" && serverMessage.trim()) {
+                    const normalized = serverMessage.toLowerCase();
+
+                    if (
+                        normalized.includes("alias") &&
+                        (normalized.includes("already taken") || normalized.includes("in use"))
+                    ) {
+                        userMessage = "Cette addresse de serveur est déjà utilisée.";
+                    } else if (
+                        errcode === "M_FORBIDDEN" ||
+                        normalized.includes("forbidden") ||
+                        normalized.includes("not allowed") ||
+                        normalized.includes("permission")
+                    ) {
+                        userMessage = "Vous n'avez pas la permission de créer ce serveur.";
+                    }
+                }
+            }
+
+            setError(userMessage);
         } finally {
             setLoading(false);
         }
@@ -147,93 +178,115 @@ export const CreateServerDialogContent: FC<Props> = ({ open, onSuccess }) => {
 
     return (
         <DialogContent>
-            <DialogHeader>
-                <div className="flex flex-row items-center gap-4">
-                    <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-indigo-500 text-white">
-                        <Plus className="size-6" />
-                    </div>
-                    <div className="flex flex-col text-left">
-                        <DialogTitle>Créer un serveur</DialogTitle>
-                        <DialogDescription>
-                            Configurez votre nouvel espace de discussion
-                        </DialogDescription>
-                    </div>
-                </div>
-            </DialogHeader>
+            {view === "join" ? (
+                <JoinServerForm
+                    onBack={() => {
+                        setView("create");
+                    }}
+                    onSuccess={onSuccess}
+                />
+            ) : (
+                <>
+                    <DialogHeader>
+                        <div className="flex flex-row items-center gap-4">
+                            <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-indigo-500 text-white">
+                                <Plus className="size-6" />
+                            </div>
+                            <div className="flex flex-col text-left">
+                                <DialogTitle>Créer un serveur</DialogTitle>
+                                <DialogDescription>
+                                    Configurez votre nouvel espace de discussion
+                                </DialogDescription>
+                            </div>
+                        </div>
+                    </DialogHeader>
 
-            <form
-                onSubmit={e => {
-                    void handleSubmit(e);
-                }}
-                className="flex flex-col gap-4 py-2"
-            >
-                <div className="grid gap-1.5">
-                    <Label htmlFor="space-name">Nom</Label>
-                    <Input
-                        id="space-name"
-                        placeholder="Ex: Mon Super Serveur"
-                        value={name}
-                        onChange={e => {
-                            setName(e.target.value);
-                        }}
-                        required
-                    />
-                </div>
+                    <form onSubmit={e => void handleSubmit(e)} className="flex flex-col gap-4 py-2">
+                        <div className="grid gap-1.5">
+                            <Label htmlFor="space-name">Nom</Label>
+                            <Input
+                                id="space-name"
+                                placeholder="Ex: Mon Super Serveur"
+                                value={name}
+                                onChange={e => {
+                                    setName(e.target.value);
+                                }}
+                                required
+                            />
+                        </div>
 
-                <div className="grid gap-1.5">
-                    <Label htmlFor="space-topic">Description (optionnel)</Label>
-                    <Input
-                        id="space-topic"
-                        placeholder="À quoi sert ce serveur ?"
-                        value={topic}
-                        onChange={e => {
-                            setTopic(e.target.value);
-                        }}
-                    />
-                </div>
+                        <div className="grid gap-1.5">
+                            <Label htmlFor="space-topic">Description (optionnel)</Label>
+                            <Input
+                                id="space-topic"
+                                placeholder="À quoi sert ce serveur ?"
+                                value={topic}
+                                onChange={e => {
+                                    setTopic(e.target.value);
+                                }}
+                            />
+                        </div>
 
-                <div className="border-border flex items-center gap-3 rounded-lg border p-4">
-                    <input
-                        type="checkbox"
-                        id="space-public"
-                        checked={isPublic}
-                        onChange={e => {
-                            setIsPublic(e.target.checked);
-                        }}
-                        className="size-4 rounded border-gray-300"
-                    />
-                    <div className="grid gap-1.5 leading-none">
-                        <Label htmlFor="space-public">Rendre ce serveur public</Label>
-                        <p className="text-muted-foreground text-xs">
-                            N&#39;importe qui pourra le trouver et le rejoindre.
+                        <div className="border-border flex items-center gap-3 rounded-lg border p-4">
+                            <input
+                                type="checkbox"
+                                id="space-public"
+                                checked={isPublic}
+                                onChange={e => {
+                                    setIsPublic(e.target.checked);
+                                }}
+                                className="size-4 rounded border-gray-300"
+                            />
+                            <div className="grid gap-1.5 leading-none">
+                                <Label htmlFor="space-public">Rendre ce serveur public</Label>
+                                <p className="text-muted-foreground text-xs">
+                                    N&#39;importe qui pourra le trouver et le rejoindre.
+                                </p>
+                            </div>
+                        </div>
+
+                        {isPublic && (
+                            <div className="grid gap-1.5">
+                                <Label htmlFor="space-alias">Adresse du serveur (optionnel)</Label>
+                                <Input
+                                    id="space-alias"
+                                    placeholder="ex: mon-serveur"
+                                    value={alias}
+                                    onChange={e => {
+                                        setAlias(e.target.value);
+                                    }}
+                                />
+                            </div>
+                        )}
+
+                        {error && (
+                            <div className="rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-600">
+                                ⚠️ {error}
+                            </div>
+                        )}
+
+                        <Button type="submit" disabled={loading} className="mt-2">
+                            {loading ? "Création en cours..." : "Créer le serveur"}
+                        </Button>
+                    </form>
+
+                    <div className="bg-muted/50 mt-2 flex flex-col items-center justify-center rounded-lg p-4 text-center">
+                        <h3 className="text-sm font-semibold">Vous avez déjà une invitation ?</h3>
+                        <p className="text-muted-foreground mt-1 mb-4 text-xs">
+                            Rejoignez un serveur existant avec son lien ou son identifiant Matrix.
                         </p>
-                    </div>
-                </div>
-
-                {isPublic && (
-                    <div className="grid gap-1.5">
-                        <Label htmlFor="space-alias">Adresse du serveur (optionnel)</Label>
-                        <Input
-                            id="space-alias"
-                            placeholder="ex: mon-serveur"
-                            value={alias}
-                            onChange={e => {
-                                setAlias(e.target.value);
+                        <Button
+                            variant="secondary"
+                            className="w-full"
+                            onClick={() => {
+                                setView("join");
                             }}
-                        />
+                        >
+                            Rejoindre un serveur
+                        </Button>
                     </div>
-                )}
-
-                {error && (
-                    <div className="rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-600">
-                        ⚠️ {error}
-                    </div>
-                )}
-
-                <Button type="submit" disabled={loading} className="mt-2">
-                    {loading ? "Création en cours..." : "Créer le serveur"}
-                </Button>
-            </form>
+                </>
+            )}
         </DialogContent>
     );
 };

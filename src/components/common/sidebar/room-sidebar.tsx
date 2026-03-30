@@ -4,13 +4,16 @@ import {
     SidebarContent,
     SidebarGroup,
     SidebarGroupContent,
-    SidebarHeader,
-    SidebarMenu
+    SidebarHeader
 } from "@/components/ui/sidebar";
 import { useMatrixClient } from "@/hooks/use-matrix-client";
 import { spaceService } from "@/services/matrix/space";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import type { FC } from "react";
+import { CreateRoomDialog } from "../dialogs/create-room-dialog";
+import { SpaceInviteDialog } from "@/components/common/sidebar/space-invite-dialog";
+import { ClientEvent } from "matrix-js-sdk";
 
 interface Props {
     spaceId: string;
@@ -19,6 +22,18 @@ interface Props {
 
 export const RoomSidebar: FC<Props> = ({ spaceId, activeRoomId }) => {
     const { client, ready } = useMatrixClient();
+    const queryClient = useQueryClient();
+
+    useEffect(() => {
+        if (!ready) return;
+
+        const handler = () => {
+            void queryClient.invalidateQueries({ queryKey: ["space", spaceId, "rooms"] });
+        };
+
+        client.on(ClientEvent.Room, handler);
+        return () => void client.off(ClientEvent.Room, handler);
+    }, [client, ready, spaceId, queryClient]);
 
     const spaceQuery = useQuery({
         queryKey: ["space", spaceId],
@@ -30,29 +45,33 @@ export const RoomSidebar: FC<Props> = ({ spaceId, activeRoomId }) => {
     const roomsQuery = useQuery({
         queryKey: ["space", spaceId, "rooms"],
         queryFn: () => spaceService.getRoomsBySpaceId(client, spaceId),
-        staleTime: Infinity,
         enabled: ready
     });
 
     return (
         <Sidebar collapsible="none" className="flex-1">
-            <SidebarHeader className="border-b p-4 whitespace-nowrap">
-                {spaceQuery.isSuccess && spaceQuery.data?.name}
+            <SidebarHeader className="flex flex-row items-center justify-between border-b p-4 whitespace-nowrap">
+                <span className="truncate font-semibold">
+                    {spaceQuery.isSuccess && spaceQuery.data?.name}
+                </span>
+                <div className="flex">
+                    <SpaceInviteDialog spaceId={spaceId} />
+                    <CreateRoomDialog spaceId={spaceId} />
+                </div>
             </SidebarHeader>
             <SidebarContent>
-                <SidebarGroup>
+                <SidebarGroup className="px-0">
                     <SidebarGroupContent>
-                        <SidebarMenu className="gap-1">
-                            {roomsQuery.isSuccess &&
-                                roomsQuery.data.map(r => (
-                                    <NavRoom
-                                        key={r.roomId}
-                                        spaceId={spaceId}
-                                        room={r}
-                                        isActive={activeRoomId === r.roomId}
-                                    />
-                                ))}
-                        </SidebarMenu>
+                        {roomsQuery.isSuccess &&
+                            roomsQuery.data.map(r => (
+                                <NavRoom
+                                    key={r.roomId}
+                                    spaceId={spaceId}
+                                    room={r}
+                                    isActive={activeRoomId === r.roomId}
+                                    isCall={r.isElementVideoRoom() || r.isCallRoom()}
+                                />
+                            ))}
                     </SidebarGroupContent>
                 </SidebarGroup>
             </SidebarContent>
