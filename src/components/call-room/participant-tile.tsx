@@ -1,5 +1,6 @@
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { VideoTrack, type TrackReference } from "@livekit/components-react";
+import type { TrackReference } from "@livekit/components-react";
+import { VideoTrack } from "@livekit/components-react";
 import type { Participant } from "livekit-client";
 import { ParticipantOverlay } from "./participant-overlay";
 

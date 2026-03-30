@@ -1,6 +1,7 @@
+import type { Participant } from "livekit-client";
 import { Mic, MicOff, Video, VideoOff } from "lucide-react";
 
-export const ParticipantOverlay = ({ participant }: { participant: any }) => {
+export const ParticipantOverlay = ({ participant }: { participant: Participant }) => {
     const isMuted = !participant.isMicrophoneEnabled;
     const isCamOff = !participant.isCameraEnabled;
 

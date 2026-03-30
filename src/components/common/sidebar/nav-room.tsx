@@ -34,7 +34,7 @@ export const NavRoom: FC<Props> = ({ spaceId, room, isActive, isCall }) => {
         };
 
         if (call.state === "idle" && pendingRoomId) {
-            call.join(pendingRoomId);
+            void call.join(pendingRoomId);
 
             toast("Switched voice channel", {
                 description: `Now in ${room.name}`,
@@ -42,6 +42,7 @@ export const NavRoom: FC<Props> = ({ spaceId, room, isActive, isCall }) => {
                 position: "top-center",
             });
 
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setPendingRoomId(null);
         }
 
@@ -49,7 +50,7 @@ export const NavRoom: FC<Props> = ({ spaceId, room, isActive, isCall }) => {
         return () => {
             client.off(RoomEvent.Name, onRoomName);
         };
-    }, [client, room.roomId, call.state, pendingRoomId]);
+    }, [client, room, call, pendingRoomId]);
 
     return (
         <SidebarMenuItem className="flex flex-row items-center justify-between">

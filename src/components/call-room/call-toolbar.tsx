@@ -14,11 +14,9 @@ export const CallToolbar = () => {
     return (
         <div className="flex justify-center gap-4 border-t p-3">
             <button
-                onClick={() =>
-                    localParticipant.setMicrophoneEnabled(
-                        !localParticipant.isMicrophoneEnabled
-                    )
-                }
+                onClick={() => void localParticipant.setMicrophoneEnabled(
+                    !localParticipant.isMicrophoneEnabled
+                )}
                 className={`px-3 py-1 rounded ${
                     localParticipant.isMicrophoneEnabled
                         ? "bg-green-600"
@@ -32,11 +30,9 @@ export const CallToolbar = () => {
             </button>
 
             <button
-                onClick={() =>
-                    localParticipant.setCameraEnabled(
-                        !localParticipant.isCameraEnabled
-                    )
-                }
+                onClick={() => void localParticipant.setCameraEnabled(
+                    !localParticipant.isCameraEnabled
+                )}
                 className={`px-3 py-1 rounded ${
                     localParticipant.isCameraEnabled
                         ? "bg-green-600"
@@ -50,11 +46,9 @@ export const CallToolbar = () => {
             </button>
 
             <button
-                onClick={() =>
-                    localParticipant.setScreenShareEnabled(
-                        !localParticipant.isScreenShareEnabled
-                    )
-                }
+                onClick={() => void localParticipant.setScreenShareEnabled(
+                    !localParticipant.isScreenShareEnabled
+                )}
                 className={`px-3 py-1 rounded ${
                     localParticipant.isScreenShareEnabled
                         ? "bg-green-600"

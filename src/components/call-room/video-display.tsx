@@ -18,10 +18,11 @@ export const VideoDisplay = () => {
 
     const screenTracks = screenTracksRaw.filter(isTrackReference);
 
-    const activeScreen =
+    const activeScreen: TrackReference | undefined =
         screenTracks.find(t => t.participant.isSpeaking) ??
         screenTracks[0];
 
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (activeScreen) {
         return (
             <div className="flex h-full w-full">
@@ -34,7 +35,7 @@ export const VideoDisplay = () => {
 
                 <div className="hidden lg:flex w-64 flex-col gap-2 p-2 overflow-y-auto">
                     {participants.map(p => (
-                        <ParticipantTile participant={p} variant="sidebar" cameraTracks={cameraTracks} />
+                        <ParticipantTile key={p.identity} participant={p} variant="sidebar" cameraTracks={cameraTracks} />
                     ))}
                 </div>
             </div>
@@ -46,7 +47,7 @@ export const VideoDisplay = () => {
     return (
         <div className={`flex-1 w-full h-full min-h-0 grid auto-rows-fr gap-2 p-2 ${gridCols}`}>
             {participants.map(p => (
-                <ParticipantTile participant={p} cameraTracks={cameraTracks} />
+                <ParticipantTile key={p.identity} participant={p} cameraTracks={cameraTracks} />
             ))}
         </div>
     );
