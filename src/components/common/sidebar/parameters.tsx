@@ -6,15 +6,13 @@ import {
     DialogTitle
 } from "@/components/ui/dialog";
 import { DropdownMenuSub, DropdownMenuSubTrigger } from "@/components/ui/dropdown-menu";
-import { Separator } from "@/components/ui/separator";
 import { Button } from "@base-ui/react";
 import { Settings } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
-import type { ChangeEvent, FC } from "react";
+import type { FC } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { UserEvent } from "matrix-js-sdk";
 import type { User } from "matrix-js-sdk";
-import { AvatarUpload } from "../avatar/avatar-upload";
 import { useMatrixClient } from "@/hooks/use-matrix-client";
 import { useCurrentUserQuery } from "@/hooks/use-current-user-query";
 import { Input } from "@/components/ui/input";
@@ -27,8 +25,6 @@ export const Parameters: FC = () => {
     const { client } = useMatrixClient();
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [displayName, setDisplayName] = useState("");
-    const [preview, setPreview] = useState<string | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
     const pendingFileRef = useRef<File | null>(null);
 
     const getHttpUrl = useCallback(
@@ -41,7 +37,6 @@ export const Parameters: FC = () => {
 
     const handleCancel = useCallback(() => {
         setSettingsOpen(false);
-        setPreview(null);
         pendingFileRef.current = null;
     }, []);
 
@@ -49,21 +44,7 @@ export const Parameters: FC = () => {
 
     const handleOpenSettings = () => {
         setDisplayName(currentUser.displayName ?? "");
-        setPreview(getHttpUrl(currentUser.avatarUrl));
         setSettingsOpen(true);
-    };
-
-    const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = ev => {
-            setPreview(ev.target?.result as string);
-        };
-        reader.readAsDataURL(file);
-
-        pendingFileRef.current = file;
     };
 
     const uploadAvatar = async (file: File): Promise<string> => {
@@ -150,20 +131,6 @@ export const Parameters: FC = () => {
                     <DialogHeader>
                         <DialogTitle>Modifier le profil</DialogTitle>
                     </DialogHeader>
-
-                    <AvatarUpload
-                        preview={preview}
-                        onUpload={() => fileInputRef.current?.click()}
-                    />
-                    <Input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleFileChange}
-                    />
-
-                    <Separator className="bg-border" />
 
                     <div className="flex flex-col gap-4">
                         <Field>

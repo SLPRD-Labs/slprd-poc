@@ -31,6 +31,7 @@ export const ParticipantTile = ({
         currentUserQuery.isSuccess && currentUserQuery.data?.userId === participant.identity;
     const avatarMxc = isCurrentUser ? currentUserQuery.data?.avatarUrl : undefined;
     const avatarUrl = avatarMxc ? client.mxcUrlToHttp(avatarMxc) : undefined;
+    const displayName = participant.name ?? participant.identity;
 
     return (
         <div
@@ -45,8 +46,7 @@ export const ParticipantTile = ({
                 />
             ) : (
                 <Avatar className="h-24 w-24">
-                    <AvatarImage src={avatarUrl ?? "https://github.com/evilrabbit.png"} />
-                    <AvatarFallback>ER</AvatarFallback>
+                    <AvatarFallback>{displayName.charAt(0).toUpperCase()}</AvatarFallback>
                 </Avatar>
             )}
 
