@@ -1,8 +1,6 @@
 import type { FC } from "react";
 import type { MatrixPublicUser } from "@/hooks/use-user-directory";
-import { Button } from "@/components/ui/button";
 import type { UserPresenceData } from "@/hooks/use-presence";
-import { MessageSquare } from "lucide-react";
 import { UserAvatar } from "@/components/common/avatar/user-avatar";
 
 interface Props {
@@ -31,11 +29,6 @@ export const UserDirectoryItem: FC<Props> = ({ user, presence }) => {
                 <div className="flex flex-col">
                     <span className="text-sm font-medium">{user.display_name ?? user.user_id}</span>
                 </div>
-            </div>
-            <div className="flex gap-2">
-                <Button size="sm" variant="outline">
-                    <MessageSquare className="h-4 w-4" />
-                </Button>
             </div>
         </div>
     );
