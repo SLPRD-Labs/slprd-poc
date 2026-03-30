@@ -3,6 +3,7 @@ import type { TrackReference } from "@livekit/components-react";
 import { VideoTrack } from "@livekit/components-react";
 import type { Participant } from "livekit-client";
 import { ParticipantOverlay } from "./participant-overlay";
+import { useMatrixClient } from "@/hooks/use-matrix-client";
 
 export const ParticipantTile = ({
     participant,
@@ -23,7 +24,10 @@ export const ParticipantTile = ({
     const containerClasses =
         variant === "sidebar" ? "aspect-video min-h-[80px] max-h-[120px]" : "h-full min-h-0";
 
-    const displayName = participant.name ?? participant.identity;
+    const { client } = useMatrixClient();
+    const matrixUser = client.getUser(participant.identity);
+    const participantName = participant.identity.split(":")[0].replace("@", "");
+    const displayName = matrixUser?.displayName ?? participantName;
 
     return (
         <div
