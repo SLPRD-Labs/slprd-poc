@@ -13,7 +13,12 @@ export const ParticipantTile = ({
     cameraTracks: TrackReference[];
     variant?: "grid" | "sidebar";
 }) => {
-    const track = cameraTracks.find(t => t.participant.identity === participant.identity);
+    const track = cameraTracks.find(
+        t =>
+            t.participant.identity === participant.identity &&
+            t.publication.track &&
+            !t.publication.isMuted
+    );
 
     const containerClasses =
         variant === "sidebar" ? "aspect-video min-h-[80px] max-h-[120px]" : "h-full min-h-0";
