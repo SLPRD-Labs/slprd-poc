@@ -27,13 +27,6 @@ export const Parameters: FC = () => {
     const [displayName, setDisplayName] = useState("");
     const pendingFileRef = useRef<File | null>(null);
 
-    const getHttpUrl = useCallback(
-        (mxcUrl: string | undefined) => {
-            if (!mxcUrl) return null;
-            return client.mxcUrlToHttp(mxcUrl, 200, 200, "scale") ?? null;
-        },
-        [client]
-    );
 
     const handleCancel = useCallback(() => {
         setSettingsOpen(false);
