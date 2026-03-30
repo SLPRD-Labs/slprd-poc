@@ -153,6 +153,7 @@ export const Room: FC<RoomProps> = ({ roomId, isDm }) => {
                         </>
                     )}
                 </div>
+              
                 {(isDm ?? isCallRoom) &&
                     call.state === "active" &&
                     call.room.roomId === roomQuery.data.roomId && (
