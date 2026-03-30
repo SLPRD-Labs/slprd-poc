@@ -5,9 +5,9 @@ import { useCallContext } from "@/contexts/call-context/call-context";
 import { useMatrixClient } from "@/hooks/use-matrix-client";
 import { useQuery } from "@tanstack/react-query";
 import { RoomEvent } from "matrix-js-sdk";
-import { useSyncExternalStore } from "react";
+import { useSyncExternalStore , useEffect, useState } from "react";
 import type { FC } from "react";
-import { useEffect, useState } from "react";
+
 import { MatrixRTCSessionEvent, MatrixRTCSessionManagerEvents } from "matrix-js-sdk/lib/matrixrtc";
 
 interface RoomProps {
@@ -81,12 +81,6 @@ export const Room: FC<RoomProps> = ({ roomId, isDm }) => {
 
     const hasRemoteCall = remoteParticipantCount > 0;
 
-    
-
-    if (!roomQuery.isSuccess) {
-        return null;
-    }
-
     return (
         <div className="flex h-full w-full">
             <div className="flex h-full w-full flex-col">
@@ -129,7 +123,6 @@ export const Room: FC<RoomProps> = ({ roomId, isDm }) => {
                             </Button>
                         )}
                     </div>
-                </div>
                 {isDm && call.state === "active" && call.room.roomId === roomId && (
                     <div className="border-b bg-slate-950 p-2">
                         <MatrixLiveKitCall liveKitRoom={call.liveKitRoom} />
@@ -139,6 +132,7 @@ export const Room: FC<RoomProps> = ({ roomId, isDm }) => {
                     <TextChat roomId={roomId} />
                 </div>
             </div>
+        </div>
         </div>
     );
 };
