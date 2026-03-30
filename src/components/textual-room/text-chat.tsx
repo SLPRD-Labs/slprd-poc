@@ -72,6 +72,7 @@ export const TextChat: FC<Props> = ({ roomId }) => {
         () => messages.find(e => e.getId() === replyToEventId) ?? null,
         [messages, replyToEventId]
     );
+    const [nameVersion, setNameVersion] = useState(0);
 
     const refreshMessages = useCallback(() => {
         const events =
@@ -133,9 +134,16 @@ export const TextChat: FC<Props> = ({ roomId }) => {
     }, [roomId, loadOlder]);
 
     useEffect(() => {
+        const onNameChange = () => {
+            refreshMessages();
+            setNameVersion(v => v + 1);
+        };
+
         client.on(RoomEvent.Timeline, refreshMessages);
+        client.on(RoomMemberEvent.Name, onNameChange);
         return () => {
             client.off(RoomEvent.Timeline, refreshMessages);
+            client.off(RoomMemberEvent.Name, onNameChange);
         };
     }, [client, refreshMessages]);
 
@@ -469,6 +477,35 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                     )}
 
                     {messages.map((event, index) => {
+                        if (event.getType() === "m.room.member") {
+                            const content = event.getContent();
+                            const prevContent = event.getPrevContent() as {
+                                membership?: string;
+                            } | null;
+
+                            const membership = content.membership;
+                            const prevMembership = prevContent?.membership;
+
+                            if (
+                                membership === KnownMembership.Join &&
+                                prevMembership === KnownMembership.Join
+                            ) {
+                                return null;
+                            }
+
+                            return (
+                                <div
+                                    key={event.getId()}
+                                    className="text-muted-foreground text-center text-xs"
+                                >
+                                    {event.sender?.name &&
+                                        (event.getContent().membership === KnownMembership.Join
+                                            ? `${event.sender.name} a rejoint le salon`
+                                            : `${event.sender.name} a quitté le salon`)}
+                                </div>
+                            );
+                        }
+
                         if (event.getType() === "m.room.message") {
                             if (getThreadRootId(event) !== null) return null;
 
@@ -483,8 +520,11 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                                 ? new Date(prevMessageEvent.getTs()).toDateString()
                                 : null;
 
+                            const safeEventId = event.getId() ?? "unknown";
+                            const safeVersion = String(nameVersion);
+
                             return (
-                                <div key={event.getId()}>
+                                <div key={safeEventId}>
                                     {currentDate !== prevDate && (
                                         <div className="my-2 flex items-center gap-2 px-4">
                                             <div className="bg-border h-px flex-1" />
@@ -495,7 +535,7 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                                         </div>
                                     )}
                                     <MessageItem
-                                        key={event.getId()}
+                                        key={`${safeEventId}-${safeVersion}`}
                                         event={event}
                                         threadCount={threadRepliesCount[event.getId() ?? ""] ?? 0}
                                         onOpenThread={setActiveThreadRootId}

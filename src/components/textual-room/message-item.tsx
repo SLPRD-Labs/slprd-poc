@@ -1,9 +1,9 @@
 import { useMatrixClient } from "@/hooks/use-matrix-client";
 import { getReplyToEventId } from "@/utils/messagesRelations";
-import { MatrixEventEvent, MsgType, RelationType, EventType } from "matrix-js-sdk";
-import type { MatrixEvent } from "matrix-js-sdk";
+import { MatrixEventEvent, MsgType, RelationType, EventType, RoomMemberEvent } from "matrix-js-sdk";
+import type { MatrixEvent, RoomMember } from "matrix-js-sdk";
 import type { FC } from "react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { MessageSquare, Pen, Trash } from "lucide-react";
 import { ReplyPreview } from "./reply-preview";
 import { Button } from "../ui/button";
@@ -111,6 +111,14 @@ const MessageItem: FC<Props> = ({
         return collectReactionsByEmoji(timelineEvents, eventId);
     };
 
+    const getMemberName = useCallback(() => {
+        const userId = event.getSender();
+        if (!userId) return "";
+        const member = client.getRoom(roomId)?.getMember(userId);
+        return member?.name ?? event.sender?.name ?? userId;
+    }, [client, event, roomId]);
+    const [senderName, setSenderName] = useState(getMemberName);
+
     const toggleReaction = async (emoji: string) => {
         const userId = client.getUserId();
         if (!roomId || !eventId || !userId || isReactionPending) return;
@@ -205,6 +213,19 @@ const MessageItem: FC<Props> = ({
             event.off(MatrixEventEvent.BeforeRedaction, onRedacted);
         };
     }, [event]);
+
+    useEffect(() => {
+        const onNameChange = (_event: MatrixEvent, member: RoomMember) => {
+            if (member.userId === event.getSender()) {
+                setSenderName(getMemberName());
+            }
+        };
+
+        client.on(RoomMemberEvent.Name, onNameChange);
+        return () => {
+            client.off(RoomMemberEvent.Name, onNameChange);
+        };
+    }, [client, event, getMemberName]);
 
     if (!eventId || !roomId) return null;
 
@@ -389,9 +410,7 @@ const MessageItem: FC<Props> = ({
             )}
 
             <div className="flex items-baseline gap-2">
-                <span className="text-sm font-medium text-purple-800">
-                    {event.sender?.name ?? event.getSender()}
-                </span>
+                <span className="text-sm font-medium text-purple-800">{senderName}</span>
                 <span className="text-muted-foreground text-xs">
                     {new Date(event.getTs()).toLocaleTimeString([], {
                         hour: "2-digit",
