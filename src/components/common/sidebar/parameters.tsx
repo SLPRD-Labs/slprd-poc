@@ -3,35 +3,25 @@ import {
     DialogContent,
     DialogFooter,
     DialogHeader,
-    DialogTitle,
+    DialogTitle
 } from "@/components/ui/dialog";
-import {
-    DropdownMenuSub,
-    DropdownMenuSubTrigger,
-} from "@/components/ui/dropdown-menu";
+import { DropdownMenuSub, DropdownMenuSubTrigger } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@base-ui/react";
 import { Settings } from "lucide-react";
-import {
-    useEffect,
-    useRef,
-    useState,
-    type ChangeEvent,
-    type FC,
-} from "react";
+import { useCallback, useRef, useState } from "react";
+import type { ChangeEvent, FC } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { UserEvent, type User } from "matrix-js-sdk";
+import { UserEvent } from "matrix-js-sdk";
+import type { User } from "matrix-js-sdk";
 import { AvatarUpload } from "../avatar/avatar-upload";
 import { useMatrixClient } from "@/hooks/use-matrix-client";
 import { useCurrentUserQuery } from "@/hooks/use-current-user-query";
 import { Input } from "@/components/ui/input";
 import { Field, FieldLabel } from "@/components/ui/field";
-import { useAvatarUrl } from "@/hooks/use-avatar-url";
 
-interface Props {
-    onSave?: () => void;
-}
-export const Parameters: FC<Props> = () => {    const currentUserQuery = useCurrentUserQuery();
+export const Parameters: FC = () => {
+    const currentUserQuery = useCurrentUserQuery();
     const currentUser = currentUserQuery.data;
     const queryClient = useQueryClient();
     const { client } = useMatrixClient();
@@ -40,38 +30,50 @@ export const Parameters: FC<Props> = () => {    const currentUserQuery = useCurr
     const [preview, setPreview] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const pendingFileRef = useRef<File | null>(null);
-    const avatarHttpUrl = useAvatarUrl(currentUser?.avatarUrl);
 
-    useEffect(() => {
-        if (settingsOpen) {
-            setDisplayName(currentUser?.displayName ?? "");
-            if (!pendingFileRef.current) {
-                setPreview(avatarHttpUrl ?? null);
-            }
-        }
-    }, [settingsOpen, avatarHttpUrl]);
+    const getHttpUrl = useCallback(
+        (mxcUrl: string | undefined) => {
+            if (!mxcUrl) return null;
+            return client.mxcUrlToHttp(mxcUrl, 200, 200, "scale") ?? null;
+        },
+        [client]
+    );
+
+    const handleCancel = useCallback(() => {
+        setSettingsOpen(false);
+        setPreview(null);
+        pendingFileRef.current = null;
+    }, []);
 
     if (!currentUser) return null;
+
+    const handleOpenSettings = () => {
+        setDisplayName(currentUser.displayName ?? "");
+        setPreview(getHttpUrl(currentUser.avatarUrl));
+        setSettingsOpen(true);
+    };
 
     const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
         const reader = new FileReader();
-        reader.onload = (ev) => setPreview(ev.target?.result as string);
+        reader.onload = ev => {
+            setPreview(ev.target?.result as string);
+        };
         reader.readAsDataURL(file);
 
         pendingFileRef.current = file;
-    }
+    };
 
     const uploadAvatar = async (file: File): Promise<string> => {
         const { content_uri } = await client.uploadContent(file, {
-            type: file.type,
+            type: file.type
         });
         await client.setAvatarUrl(content_uri);
         return content_uri;
-    }
-    
+    };
+
     const handleSave = async () => {
         const newName = displayName.trim();
         let newAvatarUrl: string | undefined;
@@ -97,7 +99,8 @@ export const Parameters: FC<Props> = () => {    const currentUserQuery = useCurr
         }
 
         queryClient.setQueryData(["currentUser"], (old: User) => {
-            const cloned = Object.create(Object.getPrototypeOf(old)) as User;
+            const proto = Object.getPrototypeOf(old) as object;
+            const cloned = Object.create(proto) as User;
             Object.assign(cloned, old);
             if (newName) cloned.displayName = newName;
             if (newAvatarUrl) cloned.avatarUrl = newAvatarUrl;
@@ -108,39 +111,27 @@ export const Parameters: FC<Props> = () => {    const currentUserQuery = useCurr
         setSettingsOpen(false);
     };
 
-    const handleCancel = () => {
-        if (currentUser.avatarUrl) {
-            const httpUrl = client.mxcUrlToHttp(currentUser.avatarUrl);
-            setPreview(httpUrl);
-        } else {
-            setPreview(null);
-        }
-        pendingFileRef.current = null;
-        setDisplayName(currentUser.displayName ?? "");
-        setSettingsOpen(false);
-    }
-
     const handleKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                e.stopPropagation()
-                await handleSave();
-            }
-    
-            if (e.key === "Escape") {
-                e.preventDefault();
-                e.stopPropagation()
-                handleCancel();
-            }
-        };
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            e.stopPropagation();
+            await handleSave();
+        }
+
+        if (e.key === "Escape") {
+            e.preventDefault();
+            e.stopPropagation();
+            handleCancel();
+        }
+    };
 
     return (
         <>
             <DropdownMenuSub>
                 <DropdownMenuSubTrigger
-                    onClick={(e) => {
+                    onClick={e => {
                         e.preventDefault();
-                        setTimeout(() => setSettingsOpen(true), 0);
+                        handleOpenSettings();
                     }}
                 >
                     <Settings />
@@ -148,9 +139,9 @@ export const Parameters: FC<Props> = () => {    const currentUserQuery = useCurr
                 </DropdownMenuSubTrigger>
             </DropdownMenuSub>
 
-            <Dialog 
-                open={settingsOpen} 
-                onOpenChange={(open) => {
+            <Dialog
+                open={settingsOpen}
+                onOpenChange={open => {
                     if (!open) handleCancel();
                     else setSettingsOpen(true);
                 }}
@@ -163,7 +154,6 @@ export const Parameters: FC<Props> = () => {    const currentUserQuery = useCurr
                     <AvatarUpload
                         preview={preview}
                         onUpload={() => fileInputRef.current?.click()}
-                        
                     />
                     <Input
                         ref={fileInputRef}
@@ -177,29 +167,24 @@ export const Parameters: FC<Props> = () => {    const currentUserQuery = useCurr
 
                     <div className="flex flex-col gap-4">
                         <Field>
-                            <FieldLabel htmlFor="display-name">
-                                Nom d'affichage
-                            </FieldLabel>
+                            <FieldLabel htmlFor="display-name">Nom d&apos;affichage</FieldLabel>
                             <Input
                                 id="display-name"
                                 value={displayName}
-                                onChange={(e) => setDisplayName(e.target.value)}
+                                onChange={e => {
+                                    setDisplayName(e.target.value);
+                                }}
                                 placeholder="Votre nom d'affichage"
-                                onKeyDown={(e) => {
+                                onKeyDown={e => {
                                     e.stopPropagation();
-                                    handleKeyDown(e);
-                                    }}
-                                    
+                                    void handleKeyDown(e);
+                                }}
                             />
                         </Field>
                     </div>
 
                     <DialogFooter className="gap-2">
-                        
-                        <Button
-                            onClick={handleSave}
-                            className="cursor-pointer"
-                        >
+                        <Button onClick={() => void handleSave()} className="cursor-pointer">
                             Sauvegarder
                         </Button>
                     </DialogFooter>

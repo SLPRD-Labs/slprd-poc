@@ -34,7 +34,7 @@ export const PresenceSidenav: FC = () => {
                     <div key={userId}>
                         <ProfileCard
                             displayName={data.displayName}
-                            avatarUrl={data.avatarUrl}
+                            avatarUrl={client.getUser(userId)?.avatarUrl ?? undefined}
                             presenceStatus={data.status}
                         />
                     </div>

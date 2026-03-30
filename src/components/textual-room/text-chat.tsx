@@ -478,11 +478,19 @@ export const TextChat: FC<Props> = ({ roomId }) => {
 
                     {messages.map((event, index) => {
                         if (event.getType() === "m.room.member") {
-                            const prevMembership = event.getPrevContent()?.membership;
-                            const membership = event.getContent().membership;
+                            const content = event.getContent();
+                            const prevContent = event.getPrevContent() as {
+                                membership?: string;
+                            } | null;
 
-                            if (membership === KnownMembership.Join && prevMembership === KnownMembership.Join) {
-                                    return null;
+                            const membership = content.membership;
+                            const prevMembership = prevContent?.membership;
+
+                            if (
+                                membership === KnownMembership.Join &&
+                                prevMembership === KnownMembership.Join
+                            ) {
+                                return null;
                             }
 
                             return (
@@ -512,8 +520,11 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                                 ? new Date(prevMessageEvent.getTs()).toDateString()
                                 : null;
 
+                            const safeEventId = event.getId() ?? "unknown";
+                            const safeVersion = String(nameVersion);
+
                             return (
-                                <div key={event.getId()}>
+                                <div key={safeEventId}>
                                     {currentDate !== prevDate && (
                                         <div className="my-2 flex items-center gap-2 px-4">
                                             <div className="bg-border h-px flex-1" />
@@ -524,7 +535,7 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                                         </div>
                                     )}
                                     <MessageItem
-                                        key={`${event.getId()}-${nameVersion}`}
+                                        key={`${safeEventId}-${safeVersion}`}
                                         event={event}
                                         threadCount={threadRepliesCount[event.getId() ?? ""] ?? 0}
                                         onOpenThread={setActiveThreadRootId}

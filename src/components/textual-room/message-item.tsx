@@ -3,7 +3,7 @@ import { getReplyToEventId } from "@/utils/messagesRelations";
 import { MatrixEventEvent, MsgType, RelationType, EventType, RoomMemberEvent } from "matrix-js-sdk";
 import type { MatrixEvent, RoomMember } from "matrix-js-sdk";
 import type { FC } from "react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { MessageSquare, Pen, Trash } from "lucide-react";
 import { ReplyPreview } from "./reply-preview";
 import { Button } from "../ui/button";
@@ -111,14 +111,14 @@ const MessageItem: FC<Props> = ({
         return collectReactionsByEmoji(timelineEvents, eventId);
     };
 
-    const getMemberName = () => {
+    const getMemberName = useCallback(() => {
         const userId = event.getSender();
         if (!userId) return "";
         const member = client.getRoom(roomId)?.getMember(userId);
         return member?.name ?? event.sender?.name ?? userId;
-    };
+    }, [client, event, roomId]);
     const [senderName, setSenderName] = useState(getMemberName);
-    
+
     const toggleReaction = async (emoji: string) => {
         const userId = client.getUserId();
         if (!roomId || !eventId || !userId || isReactionPending) return;
@@ -225,7 +225,7 @@ const MessageItem: FC<Props> = ({
         return () => {
             client.off(RoomMemberEvent.Name, onNameChange);
         };
-    }, [client, event]);
+    }, [client, event, getMemberName]);
 
     if (!eventId || !roomId) return null;
 

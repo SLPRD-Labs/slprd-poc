@@ -1,4 +1,6 @@
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useCurrentUserQuery } from "@/hooks/use-current-user-query";
+import { useMatrixClient } from "@/hooks/use-matrix-client";
 import type { TrackReference } from "@livekit/components-react";
 import { VideoTrack } from "@livekit/components-react";
 import type { Participant } from "livekit-client";
@@ -23,6 +25,12 @@ export const ParticipantTile = ({
     const containerClasses =
         variant === "sidebar" ? "aspect-video min-h-[80px] max-h-[120px]" : "h-full min-h-0";
 
+    const currentUserQuery = useCurrentUserQuery();
+    const { client } = useMatrixClient();
+    const isCurrentUser = currentUserQuery.isSuccess && currentUserQuery.data?.userId === participant.identity;
+    const avatarMxc = isCurrentUser ? currentUserQuery.data?.avatarUrl : undefined;
+    const avatarUrl = avatarMxc ? client.mxcUrlToHttp(avatarMxc) : undefined;
+
     return (
         <div
             className={`relative flex w-full items-center justify-center overflow-hidden rounded bg-gray-200 transition-colors dark:bg-gray-800 ${
@@ -36,7 +44,7 @@ export const ParticipantTile = ({
                 />
             ) : (
                 <Avatar className="h-24 w-24">
-                    <AvatarImage src="https://github.com/evilrabbit.png" />
+                    <AvatarImage src={avatarUrl ?? "https://github.com/evilrabbit.png"} />
                     <AvatarFallback>ER</AvatarFallback>
                 </Avatar>
             )}
