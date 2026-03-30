@@ -27,7 +27,8 @@ export const ParticipantTile = ({
 
     const currentUserQuery = useCurrentUserQuery();
     const { client } = useMatrixClient();
-    const isCurrentUser = currentUserQuery.isSuccess && currentUserQuery.data?.userId === participant.identity;
+    const isCurrentUser =
+        currentUserQuery.isSuccess && currentUserQuery.data?.userId === participant.identity;
     const avatarMxc = isCurrentUser ? currentUserQuery.data?.avatarUrl : undefined;
     const avatarUrl = avatarMxc ? client.mxcUrlToHttp(avatarMxc) : undefined;
 
