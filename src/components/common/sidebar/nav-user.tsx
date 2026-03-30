@@ -75,7 +75,7 @@ export const NavUser: FC = () => {
                         <DropdownMenuSeparator />
                         <NavThemeSwitcher />
                         <DropdownMenuSeparator />
-                        <Parameters/>
+                        <Parameters />
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                             variant="destructive"

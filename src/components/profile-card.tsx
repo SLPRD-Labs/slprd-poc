@@ -12,13 +12,10 @@ interface Props {
 export const ProfileCard: FC<Props> = ({ displayName, avatarUrl, presenceStatus }) => {
     const { client } = useMatrixClient();
     const currentUserQuery = useCurrentUserQuery();
-    const isCurrentUser = currentUserQuery.isSuccess && currentUserQuery.data?.displayName === displayName;
-    const avatarMxc = isCurrentUser
-        ? currentUserQuery.data?.avatarUrl
-        : avatarUrl;
-    const resolvedAvatarUrl = avatarMxc
-        ? client.mxcUrlToHttp(avatarMxc)
-        : null;
+    const isCurrentUser =
+        currentUserQuery.isSuccess && currentUserQuery.data?.displayName === displayName;
+    const avatarMxc = isCurrentUser ? currentUserQuery.data?.avatarUrl : avatarUrl;
+    const resolvedAvatarUrl = avatarMxc ? client.mxcUrlToHttp(avatarMxc) : null;
     const initial = displayName.trim().charAt(0).toUpperCase() || "?";
 
     return (

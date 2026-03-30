@@ -410,9 +410,7 @@ const MessageItem: FC<Props> = ({
             )}
 
             <div className="flex items-baseline gap-2">
-                <span className="text-sm font-medium text-purple-800">
-                    {senderName}
-                </span>
+                <span className="text-sm font-medium text-purple-800">{senderName}</span>
                 <span className="text-muted-foreground text-xs">
                     {new Date(event.getTs()).toLocaleTimeString([], {
                         hour: "2-digit",

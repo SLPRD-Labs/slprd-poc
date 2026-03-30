@@ -37,6 +37,5 @@ export function AvatarUpload({ preview, onUpload }: AvatarUploadProps) {
                 Importer une photo
             </Button>
         </div>
-
     );
 }
