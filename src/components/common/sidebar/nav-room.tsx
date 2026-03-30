@@ -7,6 +7,8 @@ import type { FC } from "react";
 import { useEffect, useState } from "react";
 import { EditRoomDialog } from "../dialogs/edit-room-dialog";
 import { useMatrixClient } from "@/hooks/use-matrix-client";
+import { useCallContext } from "@/contexts/call-context/call-context";
+import { toast } from "sonner";
 
 interface Props {
     spaceId: string;
@@ -16,10 +18,13 @@ interface Props {
 }
 
 export const NavRoom: FC<Props> = ({ spaceId, room, isActive, isCall }) => {
+    const call = useCallContext();
+
     const { client } = useMatrixClient();
 
     const [displayName, setDisplayName] = useState(room.name.trim() || room.roomId);
     const [openEditRoom, setOpenEditRoom] = useState<boolean>(false);
+    const [pendingRoomId, setPendingRoomId] = useState<string | null>(null);
 
     useEffect(() => {
         const onRoomName = (updatedRoom: Room) => {
@@ -28,11 +33,24 @@ export const NavRoom: FC<Props> = ({ spaceId, room, isActive, isCall }) => {
             }
         };
 
+        if (call.state === "idle" && pendingRoomId) {
+            void call.join(pendingRoomId);
+
+            toast("Switched voice channel", {
+                description: `Now in ${room.name}`,
+                richColors: true,
+                position: "top-center"
+            });
+
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setPendingRoomId(null);
+        }
+
         client.on(RoomEvent.Name, onRoomName);
         return () => {
             client.off(RoomEvent.Name, onRoomName);
         };
-    }, [client, room.roomId]);
+    }, [client, room, call, pendingRoomId]);
 
     return (
         <SidebarMenuItem className="flex flex-row items-center justify-between">
@@ -43,6 +61,20 @@ export const NavRoom: FC<Props> = ({ spaceId, room, isActive, isCall }) => {
                     <Link
                         to="/space/$spaceId/room/$roomId"
                         params={{ spaceId: spaceId, roomId: room.roomId }}
+                        onClick={() => {
+                            if (!isCall) return;
+
+                            if (call.state === "active") {
+                                if (call.room.roomId === room.roomId) return;
+
+                                setPendingRoomId(room.roomId);
+                                void call.leave();
+                            }
+
+                            if (call.state === "idle") {
+                                void call.join(room.roomId);
+                            }
+                        }}
                     >
                         {isCall ? <Volume2 /> : <Hash />}
                         <span>{displayName}</span>
