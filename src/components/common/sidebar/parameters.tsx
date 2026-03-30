@@ -27,7 +27,6 @@ export const Parameters: FC = () => {
     const [displayName, setDisplayName] = useState("");
     const pendingFileRef = useRef<File | null>(null);
 
-
     const handleCancel = useCallback(() => {
         setSettingsOpen(false);
         pendingFileRef.current = null;

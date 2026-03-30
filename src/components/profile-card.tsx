@@ -7,14 +7,16 @@ interface Props {
     presenceStatus: "online" | "offline" | "unavailable";
 }
 
-export const ProfileCard: FC<Props> = props => {    
+export const ProfileCard: FC<Props> = props => {
     return (
         <Item variant="muted" className="w-full">
             <ItemMedia variant="icon">
                 <Avatar>
                     <AvatarFallback>{props.displayName.charAt(0).toUpperCase()}</AvatarFallback>
                     {props.presenceStatus === "online" && <AvatarBadge className="bg-green-500" />}
-                    {props.presenceStatus === "unavailable" && <AvatarBadge className="bg-red-500" />}
+                    {props.presenceStatus === "unavailable" && (
+                        <AvatarBadge className="bg-red-500" />
+                    )}
                     {props.presenceStatus === "offline" && <AvatarBadge className="bg-gray-500" />}
                 </Avatar>
             </ItemMedia>

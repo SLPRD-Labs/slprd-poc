@@ -32,10 +32,7 @@ export const PresenceSidenav: FC = () => {
                 <h3 className="px-2 text-sm font-semibold">En ligne</h3>
                 {online.map(([userId, data]) => (
                     <div key={userId}>
-                        <ProfileCard
-                            displayName={data.displayName}
-                            presenceStatus={data.status}
-                        />
+                        <ProfileCard displayName={data.displayName} presenceStatus={data.status} />
                     </div>
                 ))}
             </div>
