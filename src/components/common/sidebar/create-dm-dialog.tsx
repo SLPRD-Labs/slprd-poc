@@ -51,7 +51,7 @@ export function CreateDMModal() {
                     <DialogTitle>Nouvelle conversation</DialogTitle>
                 </DialogHeader>
 
-                <div className="border-b bg-slate-50/50 p-4">
+                <div className="border-b p-4">
                     <div className="relative">
                         <Search className="text-muted-foreground absolute top-2.5 left-2 h-4 w-4" />
                         <Input
@@ -80,7 +80,7 @@ export function CreateDMModal() {
                                         onClick={() => {
                                             void handleStartChat(user.user_id);
                                         }}
-                                        className="group flex w-full items-center gap-3 rounded-md p-2 transition-all hover:bg-slate-100"
+                                        className="group flex w-full items-center gap-3 rounded-md p-2 transition-all"
                                     >
                                         <div className="relative">
                                             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 font-semibold text-purple-700">

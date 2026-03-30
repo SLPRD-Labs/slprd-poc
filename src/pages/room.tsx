@@ -3,11 +3,12 @@ import { Button } from "@/components/ui/button";
 import { useCallContext } from "@/contexts/call-context/call-context";
 import { useMatrixClient } from "@/hooks/use-matrix-client";
 import { useQuery } from "@tanstack/react-query";
+import { RoomEvent, RoomType } from "matrix-js-sdk";
+import { useSyncExternalStore, useEffect, useState } from "react";
 import type { FC } from "react";
-import { useEffect, useState } from "react";
 import { MatrixRTCSessionEvent, MatrixRTCSessionManagerEvents } from "matrix-js-sdk/lib/matrixrtc";
 import { Room as CallRoom } from "@/components/room";
-import { RoomType } from "matrix-js-sdk";
+import { Hash, Volume2 } from "lucide-react";
 
 interface RoomProps {
     roomId: string;
@@ -29,6 +30,14 @@ export const Room: FC<RoomProps> = ({ roomId, isDm }) => {
     });
 
     const isCallRoom = roomQuery.data?.getType() === RoomType.ElementVideo;
+
+    const roomName = useSyncExternalStore(
+        callback => {
+            client.on(RoomEvent.Name, callback);
+            return () => void client.off(RoomEvent.Name, callback);
+        },
+        () => client.getRoom(roomId)?.name.trim() ?? roomId
+    );
 
     useEffect(() => {
         if (!isCallRoom) {
@@ -87,7 +96,10 @@ export const Room: FC<RoomProps> = ({ roomId, isDm }) => {
         <div className="flex h-full w-full">
             <div className="flex h-full min-h-0 w-full flex-col">
                 <div className="flex items-center border-b p-3">
-                    <h2 className="font-semibold"># {roomQuery.data.name}</h2>
+                    <h2 className="flex items-center gap-2 font-semibold">
+                        {isCallRoom ? <Volume2 size={16} /> : <Hash size={16} />}
+                        {roomName}
+                    </h2>
 
                     {(isDm ?? isCallRoom) && (
                         <>
@@ -96,7 +108,6 @@ export const Room: FC<RoomProps> = ({ roomId, isDm }) => {
                                     Appel en cours ({remoteParticipantCount})
                                 </span>
                             )}
-
                             <div className="ml-auto flex items-center gap-2">
                                 {call.state === "idle" && (
                                     <Button
