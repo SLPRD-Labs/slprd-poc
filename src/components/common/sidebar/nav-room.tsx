@@ -1,17 +1,9 @@
 import { SidebarMenuAction, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
-import { SidebarMenuAction, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { Link } from "@tanstack/react-router";
-import { Ellipsis, Hash, Volume2 } from "lucide-react";
 import { Ellipsis, Hash, Volume2 } from "lucide-react";
 import type { Room } from "matrix-js-sdk";
 import { RoomEvent } from "matrix-js-sdk";
-import { RoomEvent } from "matrix-js-sdk";
 import type { FC } from "react";
-import { useEffect, useState } from "react";
-import { EditRoomDialog } from "../dialogs/edit-room-dialog";
-import { useMatrixClient } from "@/hooks/use-matrix-client";
-import { useCallContext } from "@/contexts/call-context/call-context";
-import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { EditRoomDialog } from "../dialogs/edit-room-dialog";
 import { useMatrixClient } from "@/hooks/use-matrix-client";
@@ -22,7 +14,6 @@ interface Props {
     spaceId: string;
     room: Room;
     isActive?: boolean;
-    isCall?: boolean;
     isCall?: boolean;
 }
 
@@ -63,9 +54,7 @@ export const NavRoom: FC<Props> = ({ spaceId, room, isActive, isCall }) => {
 
     return (
         <SidebarMenuItem className="flex flex-row items-center justify-between">
-        <SidebarMenuItem className="flex flex-row items-center justify-between">
             <SidebarMenuButton
-                className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-sm whitespace-nowrap"
                 className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-sm whitespace-nowrap"
                 isActive={isActive}
                 render={
@@ -91,21 +80,6 @@ export const NavRoom: FC<Props> = ({ spaceId, room, isActive, isCall }) => {
                         <span>{displayName}</span>
                     </Link>
                 }
-            />
-            <SidebarMenuAction
-                showOnHover
-                className="hover:!text-sidebar-foreground hover:!bg-transparent"
-                onClick={() => {
-                    setOpenEditRoom(true);
-                }}
-            >
-                <Ellipsis />
-            </SidebarMenuAction>
-            <EditRoomDialog
-                openEditRoom={openEditRoom}
-                setOpenEditRoom={setOpenEditRoom}
-                spaceId={spaceId}
-                room={room}
             />
             <SidebarMenuAction
                 showOnHover
