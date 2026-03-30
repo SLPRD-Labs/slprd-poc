@@ -1,5 +1,4 @@
 import { TextChat } from "@/components/textual-room/text-chat";
-import { MatrixLiveKitCall } from "@/components/matrix-livekit-call";
 import { Button } from "@/components/ui/button";
 import { useCallContext } from "@/contexts/call-context/call-context";
 import { useMatrixClient } from "@/hooks/use-matrix-client";
@@ -7,7 +6,6 @@ import { useQuery } from "@tanstack/react-query";
 import type { FC } from "react";
 import { useEffect, useState } from "react";
 import { MatrixRTCSessionEvent, MatrixRTCSessionManagerEvents } from "matrix-js-sdk/lib/matrixrtc";
-import { useCallContext } from "@/contexts/call-context/call-context";
 import { Room as CallRoom } from "@/components/room";
 import { RoomType } from "matrix-js-sdk";
 
@@ -33,14 +31,12 @@ export const Room: FC<RoomProps> = ({ roomId, isDm }) => {
     const isCallRoom = roomQuery.data?.getType() === RoomType.ElementVideo;
 
     useEffect(() => {
-        if (!isCallRoom || isDm) {
+        if (!isCallRoom) {
             setShowChat(true);
         } else {
             setShowChat(false);
         }
-    }, [roomId]);
 
-    useEffect(() => {
         if (!ready || !roomQuery.data) {
             return;
         }
@@ -89,98 +85,66 @@ export const Room: FC<RoomProps> = ({ roomId, isDm }) => {
     return (
         <div className="flex h-full w-full">
             <div className="flex h-full w-full flex-col min-h-0">
-                <div className="flex items-center justify-between border-b p-3">
+                <div className="flex items-center border-b p-3">
                     <h2 className="font-semibold"># {roomQuery.data?.name}</h2>
+                        
+                        {(isDm || isCallRoom) && (
+                            <>
+                                {hasRemoteCall && call.state === "idle" && (
+                                    <span className="ml-3 rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-800">
+                                        Appel en cours ({remoteParticipantCount})
+                                    </span>
+                                )}
 
-                    {!isDm && isCallRoom && (
-                        <div className="flex items-center gap-2">
-                            {call.state === "active" && call.room.roomId === roomQuery.data?.roomId ? (
-                                <>
-                                    <button 
-                                        className="px-3 py-1 rounded border border-red-500 text-red-600 hover:bg-red-500/10 transition"
-                                        onClick={() => {
-                                            void call.leave();
-                                            setShowChat(true);
-                                        }}
-                                    >
-                                        Leave call
-                                    </button>
+                                <div className="ml-auto flex items-center gap-2">
+                                    {call.state === "idle" && (
+                                        <Button
+                                            className="hover:bg-primary/90 transition"
+                                            onClick={() => {
+                                                void call.join(roomId).catch(console.error);
+                                                setShowChat(false);
+                                            }}
+                                        >
+                                            {hasRemoteCall ? "Rejoindre l’appel" : "Démarrer un appel"}
+                                        </Button>
+                                    )}
 
-                                    <button
-                                        className="px-3 py-1 rounded bg-gray-200 dark:bg-gray-700"
-                                        onClick={() => setShowChat(!showChat)}
-                                    >
-                                        {showChat ? "Hide chat" : "Show chat"}
-                                    </button>
-                                </>
-                            ) : (
-                                <button 
-                                    className="px-3 py-1 rounded border border-green-500 text-green-600 hover:bg-green-500/10 transition"
-                                    onClick={() => {
-                                        if (call.state === "idle") {
-                                            void call.join(roomId);
-                                            setShowChat(false);
-                                        }
-                                    }}
-                                >
-                                    Join call
-                                </button>
-                            )}
+                                    {call.state === "joining" && (
+                                        <Button size="sm" disabled>
+                                            Connexion...
+                                        </Button>
+                                    )}
 
-                            
-                        </div>
-                    )}
-                    {isDm && hasRemoteCall && call.state === "idle" && (
-                        <span className="ml-3 rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-800">
-                            Appel en cours ({remoteParticipantCount})
-                        </span>
-                    )}
-                    <div className="ml-auto flex items-center gap-2">
-                        {isDm && call.state === "idle" && (
-                            <Button
-                                size="sm"
-                                onClick={() => {
-                                    void call.join(roomId).catch((error: unknown) => {
-                                        console.error("Failed to start/join call:", error);
-                                    });
-                                }}
-                            >
-                                {hasRemoteCall ? "Rejoindre l’appel" : "Démarrer l’appel"}
-                            </Button>
+                                    {call.state === "active" && call.room.roomId === roomQuery.data?.roomId && (
+                                        <>
+                                            <Button
+                                                variant="secondary"
+                                                onClick={() => setShowChat(prev => !prev)}
+                                            >
+                                                {showChat ? "Masquer le chat" : "Afficher le chat"}
+                                            </Button>
+                                            <Button
+                                                variant="destructive"
+                                                onClick={() => {
+                                                    void call.leave().catch(console.error);
+                                                    setShowChat(true);
+                                                }}
+                                            >
+                                                Quitter l’appel
+                                            </Button>
+                                        </>
+                                    )}
+                                </div>
+                            </>
                         )}
-                        {isDm && call.state === "joining" && (
-                            <Button size="sm" disabled>
-                                Connexion...
-                            </Button>
-                        )}
-                        {isDm && call.state === "active" && call.room.roomId === roomId && (
-                            <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => {
-                                    void call.leave().catch((error: unknown) => {
-                                        console.error("Failed to leave call:", error);
-                                    });
-                                }}
-                            >
-                                Quitter l’appel
-                            </Button>
-                        )}
-                    </div>
                 </div>
-                {isDm && call.state === "active" && call.room.roomId === roomId && (
-                    <div className="border-b bg-slate-950 p-2">
-                        <MatrixLiveKitCall liveKitRoom={call.liveKitRoom} />
-                    </div>
-                )}
-                {!isDm && call.state === "active" && call.room.roomId === roomQuery.data?.roomId && (
+
+                {(isDm || isCallRoom) && call.state === "active" && call.room.roomId === roomQuery.data?.roomId && (
                     <CallRoom liveKitRoom={call.liveKitRoom} />
                 )}
 
                 {showChat && (
-                    <div className="min-h-0 flex-1 overflow-hidden">
-                        <TextChat roomId={roomId} />
-                    </div>
+                    <TextChat roomId={roomId} />
                 )}
             </div>
         </div>
