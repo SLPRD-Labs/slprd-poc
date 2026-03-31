@@ -45,6 +45,11 @@ services:
     restart: unless-stopped
     volumes:
       - ./.docker/livekit/livekit.yaml:/etc/livekit.yaml
+    ports:
+      - "7880:7880/tcp"
+      - "7881:7881/tcp"
+      - "7882:7882/tcp"
+      - "50100-50200:50100-50200/udp"
     networks:
       - backend
 
