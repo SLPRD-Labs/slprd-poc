@@ -682,7 +682,7 @@ export const TextChat: FC<Props> = ({ roomId, isDM }) => {
                                 onKeyDown={handleKeyDown}
                                 placeholder={`Message #${client.getRoom(roomId)?.name ?? roomId}`}
                                 rows={1}
-                                className="max-h-[40vh] min-h-12 w-full flex-1 resize-none overflow-y-auto border-0 px-2 py-3 text-base leading-relaxed shadow-none focus-visible:ring-0 md:text-base"
+                                className="max-h-[40vh] min-h-12 w-full flex-1 resize-none overflow-y-auto border-0 bg-transparent px-2 py-3 text-base leading-relaxed shadow-none focus-visible:ring-0 md:text-base dark:bg-transparent"
                             />
 
                             <Button
