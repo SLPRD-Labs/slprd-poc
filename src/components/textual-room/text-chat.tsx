@@ -37,7 +37,11 @@ export const TextChat: FC<Props> = ({ roomId, isDM }) => {
     const { client } = useMatrixClient();
 
     const filterEvents = (event: MatrixEvent) => {
-        if (event.getType() !== "m.room.message" && event.getType() !== "m.room.member")
+        if (
+            event.getType() !== "m.room.message" &&
+            event.getType() !== "m.room.member" &&
+            event.getType() !== "m.room.create"
+        )
             return false;
         const relatesTo = event.getContent()["m.relates_to"];
         return relatesTo?.rel_type !== RelationType.Replace;
@@ -478,6 +482,22 @@ export const TextChat: FC<Props> = ({ roomId, isDM }) => {
                     )}
 
                     {messages.map((event, index) => {
+                        if (event.getType() === "m.room.create") {
+                            const senderId = event.getSender() ?? "";
+                            const member = client.getRoom(roomId)?.getMember(senderId);
+                            const displayName = member?.name ?? event.sender?.name ?? senderId;
+
+                            return (
+                                <div
+                                    key={event.getId()}
+                                    className="text-muted-foreground text-center text-xs"
+                                >
+                                    {displayName} a créé{" "}
+                                    {isDM ? "la discussion privée" : "le salon"}
+                                </div>
+                            );
+                        }
+
                         if (event.getType() === "m.room.member") {
                             const content = event.getContent();
                             const prevContent = event.getPrevContent() as {
@@ -494,15 +514,44 @@ export const TextChat: FC<Props> = ({ roomId, isDM }) => {
                                 return null;
                             }
 
+                            // Masquer le "rejoint" initial du créateur pour éviter les doublons
+                            const creatorId = client
+                                .getRoom(roomId)
+                                ?.currentState.getStateEvents("m.room.create", "")
+                                ?.getSender();
+                            if (
+                                membership === KnownMembership.Join &&
+                                !prevMembership &&
+                                event.getSender() === creatorId
+                            ) {
+                                return null;
+                            }
+
+                            const targetId = event.getStateKey() ?? "";
+                            const senderId = event.getSender() ?? "";
+                            const targetName =
+                                client.getRoom(roomId)?.getMember(targetId)?.name ?? targetId;
+                            const senderName = event.sender?.name ?? senderId;
+
+                            let messageText = "";
+                            if (membership === KnownMembership.Join) {
+                                messageText = `${targetName} a rejoint ${isDM ? "la discussion privée" : "le salon"}`;
+                            } else if (membership === KnownMembership.Leave) {
+                                if (targetId === senderId) {
+                                    messageText = `${targetName} a quitté ${isDM ? "la discussion privée" : "le salon"}`;
+                                } else {
+                                    messageText = `${targetName} a été retiré(e) par ${senderName}`;
+                                }
+                            } else if (membership === KnownMembership.Invite) {
+                                messageText = `${targetName} a été invité(e) par ${senderName}`;
+                            }
+
                             return (
                                 <div
                                     key={event.getId()}
                                     className="text-muted-foreground text-center text-xs"
                                 >
-                                    {event.sender?.name &&
-                                        (event.getContent().membership === KnownMembership.Join
-                                            ? `${event.sender.name} a rejoint le salon`
-                                            : `${event.sender.name} a quitté le salon`)}
+                                    {messageText}
                                 </div>
                             );
                         }
@@ -553,17 +602,19 @@ export const TextChat: FC<Props> = ({ roomId, isDM }) => {
 
                     <div ref={bottomRef} />
 
-                    <div className="sticky bottom-4 m-4 flex flex-1 items-end justify-end">
-                        <Button
-                            variant="ghost"
-                            className="bg-secondary hover:bg-primary hover:text-primary-foreground rounded-full p-3 shadow-lg"
-                            onClick={() =>
-                                bottomRef.current?.scrollIntoView({ behavior: "smooth" })
-                            }
-                        >
-                            <ArrowDown className="size-4" />
-                        </Button>
-                    </div>
+                    {messages.length >= 5 && (
+                        <div className="sticky bottom-4 m-4 flex flex-1 items-end justify-end">
+                            <Button
+                                variant="ghost"
+                                className="bg-secondary hover:bg-primary hover:text-primary-foreground rounded-full p-3 shadow-lg"
+                                onClick={() =>
+                                    bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+                                }
+                            >
+                                <ArrowDown className="size-4" />
+                            </Button>
+                        </div>
+                    )}
                 </div>
 
                 {error && (
