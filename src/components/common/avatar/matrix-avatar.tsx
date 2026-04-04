@@ -16,7 +16,14 @@ export const MatrixAvatar: FC<Props> = ({ avatarUrl, alt, fallbackText, classNam
     const roundedClass = isRounded ? "rounded-full" : "rounded-xl";
 
     return (
-        <Avatar className={cn(roundedClass, `after:${roundedClass}`, className)}>
+        <Avatar
+            className={cn(
+                roundedClass,
+                `after:${roundedClass}`,
+                "after:border-0 after:border-none",
+                className
+            )}
+        >
             <AvatarImage src={imgUrl ?? undefined} alt={alt} className={roundedClass} />
             {imgUrl === null && (
                 <AvatarFallback
