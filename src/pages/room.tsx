@@ -4,8 +4,8 @@ import { useCallContext } from "@/contexts/call-context/call-context";
 import { useMatrixClient } from "@/hooks/use-matrix-client";
 import { useQuery } from "@tanstack/react-query";
 import { RoomEvent, RoomType } from "matrix-js-sdk";
-import { useSyncExternalStore, useEffect, useState } from "react";
 import type { FC } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { MatrixRTCSessionEvent, MatrixRTCSessionManagerEvents } from "matrix-js-sdk/lib/matrixrtc";
 import { Room as CallRoom } from "@/components/room";
 import { Hash, Volume2 } from "lucide-react";
@@ -160,7 +160,7 @@ export const Room: FC<RoomProps> = ({ roomId, isDm }) => {
                         <CallRoom liveKitRoom={call.liveKitRoom} />
                     )}
 
-                {showChat && <TextChat roomId={roomId} />}
+                {showChat && <TextChat roomId={roomId} isDM={isDm} />}
             </div>
         </div>
     );

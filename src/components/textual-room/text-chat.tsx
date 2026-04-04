@@ -24,6 +24,7 @@ import { WrittingAnimation } from "./writting-animation";
 
 interface Props {
     roomId: string;
+    isDM?: boolean;
 }
 
 interface PendingFile {
@@ -32,7 +33,7 @@ interface PendingFile {
     previewUrl?: string;
 }
 
-export const TextChat: FC<Props> = ({ roomId }) => {
+export const TextChat: FC<Props> = ({ roomId, isDM }) => {
     const { client } = useMatrixClient();
 
     const filterEvents = (event: MatrixEvent) => {
@@ -711,9 +712,11 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                     }}
                 />
             ) : (
-                <div className="h-full w-80 shrink-0 border-l">
-                    <PresenceSidenav />
-                </div>
+                !isDM && (
+                    <div className="h-full w-80 shrink-0 border-l">
+                        <PresenceSidenav />
+                    </div>
+                )
             )}
         </div>
     );
