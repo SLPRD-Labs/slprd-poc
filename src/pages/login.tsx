@@ -48,10 +48,8 @@ export const Login: FC = () => {
                 <CardHeader className="flex flex-col items-center gap-4 pt-10 pb-2">
                     <img className="block h-12 w-auto" src={logo} alt="logo" />
                     <div className="text-center">
-                        <h2 className="text-2xl font-bold text-slate-900">Bon retour parmi nous</h2>
-                        <p className="mt-1 text-sm text-slate-500">
-                            Accédez à votre espace S.L.P.R.D
-                        </p>
+                        <h2 className="text-primary text-2xl font-bold">Bon retour parmi nous</h2>
+                        <p className="mt-1 text-sm">Accédez à votre espace S.L.P.R.D</p>
                     </div>
                 </CardHeader>
 

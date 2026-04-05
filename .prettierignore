@@ -5,3 +5,4 @@ src/components/ui/*
 !src/components/ui/data-table-column-header.tsx
 !src/components/ui/data-table-actions.tsx
 src/routeTree.gen.ts
+README.md

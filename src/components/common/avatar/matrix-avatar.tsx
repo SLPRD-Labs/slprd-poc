@@ -13,10 +13,12 @@ interface Props {
 
 export const MatrixAvatar: FC<Props> = ({ avatarUrl, alt, fallbackText, className, isRounded }) => {
     const { url: imgUrl } = useMediaUrl(avatarUrl);
+
     const roundedClass = isRounded ? "rounded-full" : "rounded-xl";
+    const afterRoundedClass = isRounded ? "after:rounded-full" : "after:rounded-xl";
 
     return (
-        <Avatar className={cn(roundedClass, `after:${roundedClass}`, className)}>
+        <Avatar className={cn(roundedClass, afterRoundedClass, className)}>
             <AvatarImage src={imgUrl ?? undefined} alt={alt} className={roundedClass} />
             {imgUrl === null && (
                 <AvatarFallback
