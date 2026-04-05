@@ -1,8 +1,8 @@
 import { useMatrixClient } from "@/hooks/use-matrix-client";
 import { eventService } from "@/services/matrix/event";
 import { buildThreadRepliesCount, getThreadRootId } from "@/utils/messagesRelations";
-import type { MatrixEvent } from "matrix-js-sdk";
 import {
+    Direction,
     EventType,
     KnownMembership,
     MsgType,
@@ -10,6 +10,7 @@ import {
     RoomEvent,
     RoomMemberEvent
 } from "matrix-js-sdk";
+import type { MatrixEvent } from "matrix-js-sdk";
 import type { ChangeEvent, FC, KeyboardEvent, SyntheticEvent } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { RoomMessageEventContent } from "matrix-js-sdk/lib/@types/events";
@@ -100,7 +101,6 @@ export const TextChat: FC<Props> = ({ roomId, isDM }) => {
         [client, roomId, refreshMessages]
     );
 
-    // Loading more history on mount until we fill the scroll container or we reach the end of history
     useEffect(() => {
         let cancelled = false;
 
@@ -514,10 +514,12 @@ export const TextChat: FC<Props> = ({ roomId, isDM }) => {
                                 return null;
                             }
 
-                            // Masquer le "rejoint" initial du créateur pour éviter les doublons
-                            const creatorId = client
+                            const timelineState = client
                                 .getRoom(roomId)
-                                ?.currentState.getStateEvents("m.room.create", "")
+                                ?.getLiveTimeline()
+                                .getState(Direction.Forward);
+                            const creatorId = timelineState
+                                ?.getStateEvents("m.room.create", "")
                                 ?.getSender();
                             if (
                                 membership === KnownMembership.Join &&
