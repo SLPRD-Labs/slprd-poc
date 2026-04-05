@@ -20,11 +20,13 @@ export const ActionDropdown = ({ eventId, onOpenThread, onReply, threadExists }:
 
     return (
         <DropdownMenu>
-            <DropdownMenuTrigger>
-                <Button variant="ghost" title="More actions">
-                    <Ellipsis size={16} />
-                </Button>
-            </DropdownMenuTrigger>
+            <DropdownMenuTrigger
+                render={
+                    <Button variant="ghost" title="More actions">
+                        <Ellipsis size={16} />
+                    </Button>
+                }
+            />
 
             <DropdownMenuContent align="end" className="w-64 p-2">
                 <DropdownMenuItem
