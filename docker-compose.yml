@@ -43,15 +43,14 @@ services:
     container_name: slprd-poc-livekit
     command: --dev --config /etc/livekit.yaml
     restart: unless-stopped
+    network_mode: "bridge"
+    ports:
+      - "7880:7880"
+      - "7881:7881"
+      - "7882:7882/udp"
+      - "50100-50200:50100-50200/udp"
     volumes:
       - ./.docker/livekit/livekit.yaml:/etc/livekit.yaml
-    ports:
-      - "7880:7880/tcp"
-      - "7881:7881/tcp"
-      - "7882:7882/tcp"
-      - "50100-50200:50100-50200/udp"
-    networks:
-      - backend
 
   lk-jwt:
     image: ghcr.io/element-hq/lk-jwt-service:0.4.1
