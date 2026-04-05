@@ -1,8 +1,8 @@
 import { useMatrixClient } from "@/hooks/use-matrix-client";
 import { eventService } from "@/services/matrix/event";
 import { buildThreadRepliesCount, getThreadRootId } from "@/utils/messagesRelations";
-import type { MatrixEvent } from "matrix-js-sdk";
 import {
+    Direction,
     EventType,
     KnownMembership,
     MsgType,
@@ -10,6 +10,7 @@ import {
     RoomEvent,
     RoomMemberEvent
 } from "matrix-js-sdk";
+import type { MatrixEvent } from "matrix-js-sdk";
 import type { ChangeEvent, FC, KeyboardEvent, SyntheticEvent } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { RoomMessageEventContent } from "matrix-js-sdk/lib/@types/events";
@@ -24,6 +25,7 @@ import { WrittingAnimation } from "./writting-animation";
 
 interface Props {
     roomId: string;
+    isDM?: boolean;
 }
 
 interface PendingFile {
@@ -32,11 +34,15 @@ interface PendingFile {
     previewUrl?: string;
 }
 
-export const TextChat: FC<Props> = ({ roomId }) => {
+export const TextChat: FC<Props> = ({ roomId, isDM }) => {
     const { client } = useMatrixClient();
 
     const filterEvents = (event: MatrixEvent) => {
-        if (event.getType() !== "m.room.message" && event.getType() !== "m.room.member")
+        if (
+            event.getType() !== "m.room.message" &&
+            event.getType() !== "m.room.member" &&
+            event.getType() !== "m.room.create"
+        )
             return false;
         const relatesTo = event.getContent()["m.relates_to"];
         return relatesTo?.rel_type !== RelationType.Replace;
@@ -95,7 +101,6 @@ export const TextChat: FC<Props> = ({ roomId }) => {
         [client, roomId, refreshMessages]
     );
 
-    // Loading more history on mount until we fill the scroll container or we reach the end of history
     useEffect(() => {
         let cancelled = false;
 
@@ -477,6 +482,22 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                     )}
 
                     {messages.map((event, index) => {
+                        if (event.getType() === "m.room.create") {
+                            const senderId = event.getSender() ?? "";
+                            const member = client.getRoom(roomId)?.getMember(senderId);
+                            const displayName = member?.name ?? event.sender?.name ?? senderId;
+
+                            return (
+                                <div
+                                    key={event.getId()}
+                                    className="text-muted-foreground text-center text-xs"
+                                >
+                                    {displayName} a créé{" "}
+                                    {isDM ? "la discussion privée" : "le salon"}
+                                </div>
+                            );
+                        }
+
                         if (event.getType() === "m.room.member") {
                             const content = event.getContent();
                             const prevContent = event.getPrevContent() as {
@@ -493,15 +514,46 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                                 return null;
                             }
 
+                            const timelineState = client
+                                .getRoom(roomId)
+                                ?.getLiveTimeline()
+                                .getState(Direction.Forward);
+                            const creatorId = timelineState
+                                ?.getStateEvents("m.room.create", "")
+                                ?.getSender();
+                            if (
+                                membership === KnownMembership.Join &&
+                                !prevMembership &&
+                                event.getSender() === creatorId
+                            ) {
+                                return null;
+                            }
+
+                            const targetId = event.getStateKey() ?? "";
+                            const senderId = event.getSender() ?? "";
+                            const targetName =
+                                client.getRoom(roomId)?.getMember(targetId)?.name ?? targetId;
+                            const senderName = event.sender?.name ?? senderId;
+
+                            let messageText = "";
+                            if (membership === KnownMembership.Join) {
+                                messageText = `${targetName} a rejoint ${isDM ? "la discussion privée" : "le salon"}`;
+                            } else if (membership === KnownMembership.Leave) {
+                                if (targetId === senderId) {
+                                    messageText = `${targetName} a quitté ${isDM ? "la discussion privée" : "le salon"}`;
+                                } else {
+                                    messageText = `${targetName} a été retiré(e) par ${senderName}`;
+                                }
+                            } else if (membership === KnownMembership.Invite) {
+                                messageText = `${targetName} a été invité(e) par ${senderName}`;
+                            }
+
                             return (
                                 <div
                                     key={event.getId()}
                                     className="text-muted-foreground text-center text-xs"
                                 >
-                                    {event.sender?.name &&
-                                        (event.getContent().membership === KnownMembership.Join
-                                            ? `${event.sender.name} a rejoint le salon`
-                                            : `${event.sender.name} a quitté le salon`)}
+                                    {messageText}
                                 </div>
                             );
                         }
@@ -552,17 +604,19 @@ export const TextChat: FC<Props> = ({ roomId }) => {
 
                     <div ref={bottomRef} />
 
-                    <div className="sticky bottom-4 m-4 flex flex-1 items-end justify-end">
-                        <Button
-                            variant="ghost"
-                            className="bg-secondary hover:bg-primary hover:text-primary-foreground rounded-full p-3 shadow-lg"
-                            onClick={() =>
-                                bottomRef.current?.scrollIntoView({ behavior: "smooth" })
-                            }
-                        >
-                            <ArrowDown className="size-4" />
-                        </Button>
-                    </div>
+                    {messages.length >= 5 && (
+                        <div className="sticky bottom-4 m-4 flex flex-1 items-end justify-end">
+                            <Button
+                                variant="ghost"
+                                className="bg-secondary hover:bg-primary hover:text-primary-foreground rounded-full p-3 shadow-lg"
+                                onClick={() =>
+                                    bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+                                }
+                            >
+                                <ArrowDown className="size-4" />
+                            </Button>
+                        </div>
+                    )}
                 </div>
 
                 {error && (
@@ -681,7 +735,7 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                                 onKeyDown={handleKeyDown}
                                 placeholder={`Message #${client.getRoom(roomId)?.name ?? roomId}`}
                                 rows={1}
-                                className="max-h-[40vh] min-h-12 w-full flex-1 resize-none overflow-y-auto border-0 px-2 py-3 text-base leading-relaxed shadow-none focus-visible:ring-0 md:text-base"
+                                className="max-h-[40vh] min-h-12 w-full flex-1 resize-none overflow-y-auto border-0 bg-transparent px-2 py-3 text-base leading-relaxed shadow-none focus-visible:ring-0 md:text-base dark:bg-transparent"
                             />
 
                             <Button
@@ -711,9 +765,11 @@ export const TextChat: FC<Props> = ({ roomId }) => {
                     }}
                 />
             ) : (
-                <div className="h-full w-80 shrink-0 border-l">
-                    <PresenceSidenav />
-                </div>
+                !isDM && (
+                    <div className="h-full w-80 shrink-0 border-l">
+                        <PresenceSidenav />
+                    </div>
+                )
             )}
         </div>
     );
